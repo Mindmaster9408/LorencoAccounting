@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenco Accounting - Contacts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            height: 56px;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        
+        .nav-item {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item > a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .nav-item > a::after {
+            content: '▼';
+            font-size: 8px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover > a {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .nav-item:hover > a::after {
+            transform: rotate(-180deg);
+        }
+        
+        .nav-item > a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .nav-item > a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 260px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border: 1px solid #e8eaed;
+            border-radius: 0 0 12px 12px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-item:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #5f6368;
+            text-decoration: none;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.15s;
+        }
+        
+        .dropdown a::before {
+            content: '→';
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s;
+            color: #0066cc;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown a:hover {
+            background: linear-gradient(90deg, #e6f3ff 0%, #ffffff 100%);
+            color: #0066cc;
+            padding-left: 25px;
+        }
+        
+        .dropdown a:hover::before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .dropdown-header {
+            padding: 10px 20px 6px;
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #fafbfc;
+            letter-spacing: 0.5px;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: #e8eaed;
+            margin: 4px 0;
+        }
+        
+        .main-content {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 32px;
+            color: #202124;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.4);
+        }
+        
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #e8eaed;
+            margin-bottom: 24px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #5f6368;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            color: #0066cc;
+            background: #f0f8ff;
+        }
+        
+        .tab.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+        
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+        }
+        
+        .filter-dropdown {
+            padding: 10px 16px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-dropdown:hover {
+            border-color: #0066cc;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th {
+            background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #5f6368;
+            font-size: 13px;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #202124;
+            font-size: 13px;
+        }
+        
+        table tr:hover {
+            background: #f0f8ff;
+            cursor: pointer;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-customer {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+        }
+        
+        .badge-supplier {
+            background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+            color: white;
+        }
+        
+        .badge-both {
+            background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+            color: white;
+        }
+        
+        .badge-active {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+        }
+        
+        .badge-inactive {
+            background: linear-gradient(135deg, #757575 0%, #9e9e9e 100%);
+            color: white;
+        }
+        
+        .amount-positive {
+            color: #4caf50;
+            font-weight: 600;
+        }
+        
+        .amount-negative {
+            color: #f44336;
+            font-weight: 600;
+        }
+        
+        .amount-zero {
+            color: #9aa0a6;
+        }
+        
+        .contact-name {
+            font-weight: 600;
+            color: #0066cc;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #5f6368;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #e8eaed;
+            margin-bottom: 25px;
+        }
+        
+        .modal-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        
+        .modal-tab:hover {
+            color: #0066cc;
+        }
+        
+        .modal-tab.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #5f6368;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 14px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e8eaed;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #202124;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 2px;
+        }
+        
+        .sean-ai-section {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            border: 2px solid #0066cc;
+            border-radius: 12px;
+            padding: 20px !important;
+        }
+        
+        .sean-ai-section .form-section-title {
+            color: #0066cc;
+        }
+        
+        .sean-ai-section .form-section-title::before {
+            background: linear-gradient(135deg, #0066cc 0%, #00aaff 100%);
+        }
+        
+        .sean-ai-section textarea {
+            background: white;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .sean-ai-section textarea:focus {
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+        
+        .sean-ai-section input[type="text"] {
+            background: white;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .sean-ai-section input[type="text"]:focus {
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+        
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .action-btn-small {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn-small:hover {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            border-color: #0066cc;
+            transform: translateY(-1px);
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        .btn-cancel {
+            padding: 12px 24px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn-save {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+        }
+        
+        .btn-delete {
+            padding: 12px 24px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: auto;
+        }
+        
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+        
+        /* Contact Detail View */
+        .contact-header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        
+        .contact-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .contact-info h3 {
+            font-size: 24px;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+        
+        .contact-info p {
+            color: #5f6368;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .contact-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .contact-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .contact-stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .contact-stat-card .label {
+            font-size: 12px;
+            color: #5f6368;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .contact-stat-card .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #202124;
+        }
+        
+        .contact-stat-card .value.positive {
+            color: #4caf50;
+        }
+        
+        .contact-stat-card .value.negative {
+            color: #f44336;
+        }
+        
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e6f3ff;
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .activity-details {
+            flex: 1;
+        }
+        
+        .activity-details .title {
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 2px;
+        }
+        
+        .activity-details .meta {
+            font-size: 12px;
+            color: #9aa0a6;
+        }
+        
+        .activity-amount {
+            font-weight: 600;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="brand-section">
+            <div class="logo">
+                <div class="logo-icon">L</div>
+                <span>Lorenco</span>
+            </div>
+            <div class="company-selector">
+                <span id="companyName">Select Company</span>
+                <span style="opacity: 0.7;">▼</span>
+            </div>
+        </div>
+        <div class="right-section">
+            <button class="icon-btn" title="Quick Add">+</button>
+            <button class="icon-btn" title="Search">🔍</button>
+            <button class="icon-btn" title="Notifications">🔔</button>
+            <button class="icon-btn" title="Help">?</button>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">D</div>
+                <span class="user-name" id="userName">Demo User</span>
+                <span style="opacity: 0.7; font-size: 11px;">▼</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="demoNotice" style="background: linear-gradient(135deg, #0099ff 0%, #66ccff 100%); color: white; padding: 12px 25px; text-align: center; font-weight: 600; font-size: 13px; box-shadow: 0 2px 8px rgba(0,153,255,0.3);">
+        ⚠️ DEMO MODE - Displaying sample contact data
+    </div>
+    
+    <div class="navbar">
+        <div class="nav-item">
+            <a href="#">Home</a>
+            <div class="dropdown">
+                <a href="dashboard.html">Dashboard Overview</a>
+                <a href="#">My Tasks</a>
+                <a href="#">Favorites</a>
+                <a href="#">Recent Activity</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Quick View</a>
+            <div class="dropdown">
+                <a href="#">Summary</a>
+                <a href="#">Cash Flow</a>
+                <a href="#">P&L Overview</a>
+                <a href="#">Balance Sheet Summary</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Customers</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Sales</div>
+                <a href="#">Customer List</a>
+                <a href="#">New Customer</a>
+                <a href="#">Invoices</a>
+                <a href="#">Quotes</a>
+                <a href="#">Credit Notes</a>
+                <div class="dropdown-header">Payments</div>
+                <a href="#">Customer Receipts</a>
+                <a href="#">Customer Aging</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Suppliers</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Purchases</div>
+                <a href="#">Supplier List</a>
+                <a href="#">New Supplier</a>
+                <a href="#">Purchase Orders</a>
+                <a href="#">Supplier Invoices</a>
+                <div class="dropdown-header">Payments</div>
+                <a href="#">Supplier Payments</a>
+                <a href="#">Supplier Aging</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Items</a>
+            <div class="dropdown">
+                <a href="#">Product List</a>
+                <a href="#">Service List</a>
+                <a href="#">New Item</a>
+                <a href="#">Stock Adjustments</a>
+                <a href="#">Price Lists</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="bank.html">Banking</a>
+            <div class="dropdown">
+                <a href="bank.html">Bank Transactions</a>
+                <a href="#">Bank Reconciliation</a>
+                <a href="#">Payment Processing</a>
+                <a href="#">Bank Rules</a>
+                <a href="#">Import Statements</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="accounts.html">Accounts</a>
+            <div class="dropdown">
+                <a href="accounts.html">Chart of Accounts</a>
+                <a href="journals.html">Journal Entries</a>
+                <a href="#">Nominal Ledger</a>
+                <a href="#">Trial Balance</a>
+                <a href="#">Period End</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="reports.html">Reports</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Financial</div>
+                <a href="reports.html">Profit & Loss</a>
+                <a href="balance-sheet.html">Balance Sheet</a>
+                <a href="cashflow.html">Cash Flow Statement</a>
+                <a href="trial-balance.html">Trial Balance</a>
+                <div class="dropdown-header">Analysis</div>
+                <a href="sales-analysis.html">Sales Analysis</a>
+                <a href="purchase-analysis.html">Purchase Analysis</a>
+                <a href="vat-return.html">VAT Return</a>
+                <a href="aged-debtors.html">Aged Debtors</a>
+                <a href="aged-creditors.html">Aged Creditors</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Tax</a>
+            <div class="dropdown">
+                <a href="paye.html">PAYE</a>
+                <a href="vat.html">VAT</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#" class="active">Company</a>
+            <div class="dropdown">
+                <a href="#">Company Settings</a>
+                <a href="contacts.html">Contacts</a>
+                <a href="#">Users & Permissions</a>
+                <a href="#">Financial Year</a>
+                <a href="#">Tax Settings</a>
+                <a href="#">Backup & Restore</a>
+                <a href="settings.html">⚙️ General Settings</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Administration</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Monitoring</div>
+                <a href="audit.html">Audit Log</a>
+                <a href="system-health.html">System Health</a>
+                <a href="user-activity.html">User Activity</a>
+                <div class="dropdown-header">Data Management</div>
+                <a href="data-export.html">Data Export</a>
+                <a href="data-import.html">Data Import</a>
+                <a href="archive.html">Archive & Delete</a>
+                <div class="dropdown-header">Security</div>
+                <a href="security-log.html">Security Log</a>
+                <a href="api-keys.html">API Keys</a>
+                <a href="integrations.html">Integrations</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Sean AI</a>
+            <div class="dropdown">
+                <div class="dropdown-header">AI Features</div>
+                <a href="ai-settings.html">AI Settings</a>
+                <a href="ai-review.html">AI Review Queue</a>
+                <div class="dropdown-header">Automation</div>
+                <a href="#">Document Upload</a>
+                <a href="#">OCR Processing</a>
+                <a href="#">Auto-categorization</a>
+                <a href="#">Approval Queue</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Contacts</h1>
+            <button class="btn-primary" onclick="addNewContact()">+ Add New Contact</button>
+        </div>
+        
+        <div class="section">
+            <div class="summary-stats" id="summaryStats">
+                <div class="stat-item">
+                    <div class="stat-label">Total Contacts</div>
+                    <div class="stat-value" id="totalContacts">15</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Customers</div>
+                    <div class="stat-value" id="totalCustomers">8</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Suppliers</div>
+                    <div class="stat-value" id="totalSuppliers">7</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Receivables</div>
+                    <div class="stat-value" style="color: #4caf50;" id="totalReceivables">R 145,750</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Payables</div>
+                    <div class="stat-value" style="color: #f44336;" id="totalPayables">R 89,200</div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="filterContacts('all')">All Contacts</button>
+                <button class="tab" onclick="filterContacts('customer')">Customers</button>
+                <button class="tab" onclick="filterContacts('supplier')">Suppliers</button>
+            </div>
+            
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search contacts..." onkeyup="searchContacts()">
+                </div>
+                <select class="filter-dropdown" id="statusFilter" onchange="applyFilters()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                </select>
+                <select class="filter-dropdown" id="sortBy" onchange="applyFilters()">
+                    <option value="name">Sort by Name</option>
+                    <option value="balance-high">Balance (High to Low)</option>
+                    <option value="balance-low">Balance (Low to High)</option>
+                    <option value="recent">Recently Added</option>
+                </select>
+            </div>
+            
+            <table id="contactsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Type</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="contactsTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Contact Modal -->
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Contact</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchModalTab('details', this)">Contact Details</button>
+                    <button class="modal-tab" onclick="switchModalTab('financial', this)">Financial</button>
+                    <button class="modal-tab" onclick="switchModalTab('addresses', this)">Addresses</button>
+                </div>
+                
+                <form id="contactForm">
+                    <input type="hidden" id="contactId">
+                    
+                    <!-- Details Tab -->
+                    <div class="tab-content active" id="tab-details">
+                        <div class="form-section">
+                            <div class="form-section-title">Basic Information</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Contact Name *</label>
+                                    <input type="text" id="contactName" required placeholder="Company or individual name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Contact Type *</label>
+                                    <select id="contactType" required>
+                                        <option value="">Select type...</option>
+                                        <option value="customer">Customer</option>
+                                        <option value="supplier">Supplier</option>
+                                        <option value="both">Both (Customer & Supplier)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Primary Contact Person</label>
+                                    <input type="text" id="primaryPerson" placeholder="Full name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Job Title</label>
+                                    <input type="text" id="jobTitle" placeholder="e.g., Finance Manager">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Contact Information</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Email Address *</label>
+                                    <input type="email" id="contactEmail" required placeholder="email@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="contactPhone" placeholder="+27 XX XXX XXXX">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Mobile Number</label>
+                                    <input type="tel" id="contactMobile" placeholder="+27 XX XXX XXXX">
+                                </div>
+                                <div class="form-group">
+                                    <label>Website</label>
+                                    <input type="url" id="contactWebsite" placeholder="https://www.example.com">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Tax Information</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>VAT Number</label>
+                                    <input type="text" id="vatNumber" placeholder="e.g., 4123456789">
+                                </div>
+                                <div class="form-group">
+                                    <label>Company Registration</label>
+                                    <input type="text" id="companyReg" placeholder="e.g., 2020/123456/07">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section sean-ai-section">
+                            <div class="form-section-title">
+                                <span style="display: flex; align-items: center; gap: 8px;">
+                                    🤖 Sean AI Learning
+                                    <span style="font-size: 11px; font-weight: 400; color: #6c757d; background: #e9ecef; padding: 2px 8px; border-radius: 4px;">Helps Sean understand this contact</span>
+                                </span>
+                            </div>
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="color: #0066cc;">💡</span>
+                                        What does this company do? What services/products do they provide?
+                                    </label>
+                                    <textarea id="seanAiDescriptionDetails" placeholder="Example: ABC Corp is a supplier of office furniture and equipment. They usually send invoices for desks, chairs, and office accessories. Monthly orders are typically between R5,000 - R20,000. Their invoices usually have 'ABC-INV' reference numbers." style="min-height: 100px;"></textarea>
+                                    <div style="margin-top: 8px; padding: 10px; background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%); border-radius: 8px; border-left: 3px solid #0066cc;">
+                                        <div style="font-size: 12px; color: #495057;">
+                                            <strong style="color: #0066cc;">🎯 How Sean uses this:</strong>
+                                            <span style="color: #6c757d;">When invoices arrive from this contact, Sean will automatically categorize transactions and suggest correct accounts.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Tab -->
+                    <div class="tab-content" id="tab-financial">
+                        <div class="form-section">
+                            <div class="form-section-title">Payment Settings</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Payment Terms</label>
+                                    <select id="paymentTerms">
+                                        <option value="immediate">Due on Receipt</option>
+                                        <option value="7">Net 7 Days</option>
+                                        <option value="14">Net 14 Days</option>
+                                        <option value="30" selected>Net 30 Days</option>
+                                        <option value="60">Net 60 Days</option>
+                                        <option value="90">Net 90 Days</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Credit Limit (ZAR)</label>
+                                    <input type="number" id="creditLimit" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Default Currency</label>
+                                    <select id="currency">
+                                        <option value="ZAR" selected>ZAR - South African Rand</option>
+                                        <option value="USD">USD - US Dollar</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                        <option value="GBP">GBP - British Pound</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Discount (%)</label>
+                                    <input type="number" id="discount" placeholder="0" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Bank Details</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Bank Name</label>
+                                    <input type="text" id="bankName" placeholder="e.g., First National Bank">
+                                </div>
+                                <div class="form-group">
+                                    <label>Branch Code</label>
+                                    <input type="text" id="branchCode" placeholder="e.g., 250655">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Account Number</label>
+                                    <input type="text" id="accountNumber" placeholder="Account number">
+                                </div>
+                                <div class="form-group">
+                                    <label>Account Type</label>
+                                    <select id="accountType">
+                                        <option value="">Select type...</option>
+                                        <option value="cheque">Cheque Account</option>
+                                        <option value="savings">Savings Account</option>
+                                        <option value="transmission">Transmission Account</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Default Accounts</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Sales Account</label>
+                                    <select id="salesAccount">
+                                        <option value="4000">4000 - Sales Revenue</option>
+                                        <option value="4100">4100 - Service Revenue</option>
+                                        <option value="4200">4200 - Other Income</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Purchases Account</label>
+                                    <select id="purchasesAccount">
+                                        <option value="5000">5000 - Cost of Sales</option>
+                                        <option value="6000">6000 - Operating Expenses</option>
+                                        <option value="6100">6100 - Office Supplies</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Addresses Tab -->
+                    <div class="tab-content" id="tab-addresses">
+                        <div class="form-section">
+                            <div class="form-section-title">Physical Address</div>
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label>Street Address</label>
+                                    <input type="text" id="physicalStreet" placeholder="Street address">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="physicalCity" placeholder="City">
+                                </div>
+                                <div class="form-group">
+                                    <label>Province/State</label>
+                                    <input type="text" id="physicalProvince" placeholder="Province">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Postal Code</label>
+                                    <input type="text" id="physicalPostal" placeholder="Postal code">
+                                </div>
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <select id="physicalCountry">
+                                        <option value="ZA" selected>South Africa</option>
+                                        <option value="NA">Namibia</option>
+                                        <option value="BW">Botswana</option>
+                                        <option value="ZW">Zimbabwe</option>
+                                        <option value="MZ">Mozambique</option>
+                                        <option value="SZ">Eswatini</option>
+                                        <option value="LS">Lesotho</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Postal Address</div>
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="checkbox" id="sameAsPhysical" onchange="copyPhysicalAddress()">
+                                        Same as physical address
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label>Postal Address</label>
+                                    <input type="text" id="postalStreet" placeholder="PO Box or street address">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="postalCity" placeholder="City">
+                                </div>
+                                <div class="form-group">
+                                    <label>Postal Code</label>
+                                    <input type="text" id="postalPostalCode" placeholder="Postal code">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">Notes</div>
+                            <div class="form-row single">
+                                <div class="form-group">
+                                    <label>Internal Notes</label>
+                                    <textarea id="notes" placeholder="Add any notes about this contact..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-delete" id="deleteBtn" onclick="deleteContact()" style="display:none;">Delete Contact</button>
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn-save" onclick="saveContact()">Save Contact</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Contact Modal -->
+    <div class="modal-overlay" id="viewContactModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Contact Details</h2>
+                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="contact-header">
+                    <div class="contact-avatar-large" id="viewAvatar">A</div>
+                    <div class="contact-info">
+                        <h3 id="viewName">Contact Name</h3>
+                        <p id="viewEmail">email@example.com</p>
+                        <p id="viewPhone">+27 XX XXX XXXX</p>
+                        <div class="contact-badges" id="viewBadges"></div>
+                    </div>
+                </div>
+                
+                <div class="contact-stats-grid">
+                    <div class="contact-stat-card">
+                        <div class="label">Outstanding</div>
+                        <div class="value" id="viewBalance">R 0.00</div>
+                    </div>
+                    <div class="contact-stat-card">
+                        <div class="label">Total Invoiced</div>
+                        <div class="value" id="viewTotalInvoiced">R 0.00</div>
+                    </div>
+                    <div class="contact-stat-card">
+                        <div class="label">This Year</div>
+                        <div class="value" id="viewThisYear">R 0.00</div>
+                    </div>
+                </div>
+                
+                <div class="form-section-title">Recent Activity</div>
+                <div class="activity-list" id="activityList">
+                    <!-- Activities populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeViewModal()">Close</button>
+                <button type="button" class="btn-save" onclick="editFromView()">Edit Contact</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Demo contact data
+        const contacts = [
+            { id: 1, name: 'ABC Manufacturing Ltd', email: 'accounts@abcmfg.co.za', phone: '+27 11 234 5678', type: 'customer', balance: 45750.00, status: 'active' },
+            { id: 2, name: 'XYZ Suppliers (Pty) Ltd', email: 'invoices@xyzsuppliers.co.za', phone: '+27 21 876 5432', type: 'supplier', balance: -28400.00, status: 'active' },
+            { id: 3, name: 'Global Tech Solutions', email: 'finance@globaltech.co.za', phone: '+27 31 555 1234', type: 'both', balance: 12500.00, status: 'active' },
+            { id: 4, name: 'Premier Office Supplies', email: 'sales@premieroffice.co.za', phone: '+27 12 987 6543', type: 'supplier', balance: -15600.00, status: 'active' },
+            { id: 5, name: 'Innovative Designs CC', email: 'admin@innovativedesigns.co.za', phone: '+27 41 333 2222', type: 'customer', balance: 8900.00, status: 'active' },
+            { id: 6, name: 'Coastal Transport Services', email: 'billing@coastaltransport.co.za', phone: '+27 21 444 5555', type: 'supplier', balance: -22100.00, status: 'active' },
+            { id: 7, name: 'Metro Construction Group', email: 'accounts@metroconstruction.co.za', phone: '+27 11 789 4561', type: 'customer', balance: 67800.00, status: 'active' },
+            { id: 8, name: 'Elite Marketing Agency', email: 'info@elitemarketing.co.za', phone: '+27 31 222 3333', type: 'customer', balance: 0.00, status: 'active' },
+            { id: 9, name: 'Industrial Equipment Co', email: 'sales@industrialequip.co.za', phone: '+27 12 666 7777', type: 'supplier', balance: -18900.00, status: 'active' },
+            { id: 10, name: 'Rainbow Retail Holdings', email: 'finance@rainbowretail.co.za', phone: '+27 11 888 9999', type: 'customer', balance: 5400.00, status: 'active' },
+            { id: 11, name: 'ProTech Services', email: 'info@protech.co.za', phone: '+27 21 111 2222', type: 'customer', balance: 3200.00, status: 'inactive' },
+            { id: 12, name: 'Quality Packaging Ltd', email: 'orders@qualitypkg.co.za', phone: '+27 31 333 4444', type: 'supplier', balance: -4200.00, status: 'active' },
+            { id: 13, name: 'Summit Consulting', email: 'accounts@summitconsult.co.za', phone: '+27 12 555 6666', type: 'customer', balance: 18900.00, status: 'active' },
+            { id: 14, name: 'Digital Print Solutions', email: 'admin@digitalprint.co.za', phone: '+27 41 777 8888', type: 'both', balance: -2100.00, status: 'active' },
+            { id: 15, name: 'Heritage Properties', email: 'finance@heritageprops.co.za', phone: '+27 11 999 0000', type: 'customer', balance: 0.00, status: 'inactive' }
+        ];
+        
+        let currentFilter = 'all';
+        let allContacts = [...contacts];
+        
+        // Auto-login demo mode
+        window.addEventListener('DOMContentLoaded', function() {
+            const companyName = document.getElementById('companyName');
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            companyName.textContent = 'Demo Company (Pty) Ltd';
+            userName.textContent = 'Demo User';
+            userAvatar.textContent = 'D';
+            
+            renderContacts();
+        });
+        
+        function renderContacts() {
+            const tbody = document.getElementById('contactsTableBody');
+            let contactsToShow = allContacts;
+            
+            // Apply type filter
+            if (currentFilter !== 'all') {
+                contactsToShow = contactsToShow.filter(c => c.type === currentFilter || c.type === 'both');
+            }
+            
+            // Apply status filter
+            const statusFilter = document.getElementById('statusFilter').value;
+            if (statusFilter !== 'all') {
+                contactsToShow = contactsToShow.filter(c => c.status === statusFilter);
+            }
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                contactsToShow = contactsToShow.filter(c => 
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    c.email.toLowerCase().includes(searchTerm) ||
+                    c.phone.includes(searchTerm)
+                );
+            }
+            
+            // Apply sorting
+            const sortBy = document.getElementById('sortBy').value;
+            if (sortBy === 'name') {
+                contactsToShow.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortBy === 'balance-high') {
+                contactsToShow.sort((a, b) => b.balance - a.balance);
+            } else if (sortBy === 'balance-low') {
+                contactsToShow.sort((a, b) => a.balance - b.balance);
+            } else if (sortBy === 'recent') {
+                contactsToShow.sort((a, b) => b.id - a.id);
+            }
+            
+            tbody.innerHTML = '';
+            
+            contactsToShow.forEach(contact => {
+                const row = document.createElement('tr');
+                
+                let typeClass = 'badge-customer';
+                let typeText = 'Customer';
+                if (contact.type === 'supplier') {
+                    typeClass = 'badge-supplier';
+                    typeText = 'Supplier';
+                } else if (contact.type === 'both') {
+                    typeClass = 'badge-both';
+                    typeText = 'Both';
+                }
+                
+                let balanceClass = 'amount-zero';
+                let balanceText = 'R 0.00';
+                if (contact.balance > 0) {
+                    balanceClass = 'amount-positive';
+                    balanceText = 'R ' + contact.balance.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } else if (contact.balance < 0) {
+                    balanceClass = 'amount-negative';
+                    balanceText = 'R ' + Math.abs(contact.balance).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                
+                const statusClass = contact.status === 'active' ? 'badge-active' : 'badge-inactive';
+                const statusText = contact.status.charAt(0).toUpperCase() + contact.status.slice(1);
+                
+                row.innerHTML = `
+                    <td><span class="contact-name">${contact.name}</span></td>
+                    <td>${contact.email}</td>
+                    <td>${contact.phone}</td>
+                    <td><span class="badge ${typeClass}">${typeText}</span></td>
+                    <td><span class="${balanceClass}">${balanceText}</span></td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td class="actions-cell">
+                        <button class="action-btn-small" onclick="event.stopPropagation(); viewContact(${contact.id})" title="View">👁️</button>
+                        <button class="action-btn-small" onclick="event.stopPropagation(); editContact(${contact.id})" title="Edit">✏️</button>
+                    </td>
+                `;
+                
+                row.onclick = () => viewContact(contact.id);
+                tbody.appendChild(row);
+            });
+            
+            // Update summary stats
+            updateStats(contactsToShow);
+        }
+        
+        function updateStats(contactsToShow) {
+            const totalContacts = contactsToShow.length;
+            const customers = contactsToShow.filter(c => c.type === 'customer' || c.type === 'both').length;
+            const suppliers = contactsToShow.filter(c => c.type === 'supplier' || c.type === 'both').length;
+            const receivables = contactsToShow.reduce((sum, c) => sum + (c.balance > 0 ? c.balance : 0), 0);
+            const payables = contactsToShow.reduce((sum, c) => sum + (c.balance < 0 ? Math.abs(c.balance) : 0), 0);
+            
+            document.getElementById('totalContacts').textContent = totalContacts;
+            document.getElementById('totalCustomers').textContent = customers;
+            document.getElementById('totalSuppliers').textContent = suppliers;
+            document.getElementById('totalReceivables').textContent = 'R ' + receivables.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            document.getElementById('totalPayables').textContent = 'R ' + payables.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+        
+        function filterContacts(type) {
+            currentFilter = type;
+            
+            // Update active tab
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderContacts();
+        }
+        
+        function searchContacts() {
+            renderContacts();
+        }
+        
+        function applyFilters() {
+            renderContacts();
+        }
+        
+        function viewContact(id) {
+            const contact = contacts.find(c => c.id === id);
+            if (!contact) return;
+            
+            currentViewingContact = contact;
+            
+            // Populate view modal
+            document.getElementById('viewAvatar').textContent = contact.name.charAt(0).toUpperCase();
+            document.getElementById('viewName').textContent = contact.name;
+            document.getElementById('viewEmail').textContent = contact.email;
+            document.getElementById('viewPhone').textContent = contact.phone;
+            
+            // Badges
+            let badgesHtml = '';
+            if (contact.type === 'customer') {
+                badgesHtml = '<span class="badge badge-customer">Customer</span>';
+            } else if (contact.type === 'supplier') {
+                badgesHtml = '<span class="badge badge-supplier">Supplier</span>';
+            } else {
+                badgesHtml = '<span class="badge badge-customer">Customer</span><span class="badge badge-supplier">Supplier</span>';
+            }
+            badgesHtml += `<span class="badge ${contact.status === 'active' ? 'badge-active' : 'badge-inactive'}">${contact.status}</span>`;
+            document.getElementById('viewBadges').innerHTML = badgesHtml;
+            
+            // Balance
+            const balanceEl = document.getElementById('viewBalance');
+            if (contact.balance > 0) {
+                balanceEl.textContent = 'R ' + contact.balance.toLocaleString('en-ZA', {minimumFractionDigits: 2});
+                balanceEl.className = 'value positive';
+            } else if (contact.balance < 0) {
+                balanceEl.textContent = 'R ' + Math.abs(contact.balance).toLocaleString('en-ZA', {minimumFractionDigits: 2});
+                balanceEl.className = 'value negative';
+            } else {
+                balanceEl.textContent = 'R 0.00';
+                balanceEl.className = 'value';
+            }
+            
+            // Demo totals
+            document.getElementById('viewTotalInvoiced').textContent = 'R ' + (Math.abs(contact.balance) * 3.5).toLocaleString('en-ZA', {minimumFractionDigits: 2});
+            document.getElementById('viewThisYear').textContent = 'R ' + (Math.abs(contact.balance) * 1.2).toLocaleString('en-ZA', {minimumFractionDigits: 2});
+            
+            // Activity list (demo data)
+            const activities = [
+                { icon: '📄', title: 'Invoice #INV-2026-001', date: '14 Jan 2026', amount: 'R 12,500.00', type: 'invoice' },
+                { icon: '💳', title: 'Payment Received', date: '10 Jan 2026', amount: 'R 8,000.00', type: 'payment' },
+                { icon: '📄', title: 'Invoice #INV-2025-089', date: '28 Dec 2025', amount: 'R 15,750.00', type: 'invoice' },
+                { icon: '💳', title: 'Payment Received', date: '15 Dec 2025', amount: 'R 15,750.00', type: 'payment' },
+                { icon: '📝', title: 'Quote #QT-2025-045', date: '01 Dec 2025', amount: 'R 22,000.00', type: 'quote' }
+            ];
+            
+            const activityHtml = activities.map(a => `
+                <div class="activity-item">
+                    <div class="activity-icon">${a.icon}</div>
+                    <div class="activity-details">
+                        <div class="title">${a.title}</div>
+                        <div class="meta">${a.date}</div>
+                    </div>
+                    <div class="activity-amount ${a.type === 'payment' ? 'amount-positive' : ''}">${a.amount}</div>
+                </div>
+            `).join('');
+            document.getElementById('activityList').innerHTML = activityHtml;
+            
+            document.getElementById('viewContactModal').classList.add('active');
+        }
+        
+        function closeViewModal() {
+            document.getElementById('viewContactModal').classList.remove('active');
+            currentViewingContact = null;
+        }
+        
+        function editFromView() {
+            closeViewModal();
+            if (currentViewingContact) {
+                editContact(currentViewingContact.id);
+            }
+        }
+        
+        let currentViewingContact = null;
+        
+        function addNewContact() {
+            document.getElementById('modalTitle').textContent = 'Add New Contact';
+            document.getElementById('contactForm').reset();
+            document.getElementById('contactId').value = '';
+            document.getElementById('deleteBtn').style.display = 'none';
+            switchModalTab('details', document.querySelector('.modal-tab'));
+            document.getElementById('contactModal').classList.add('active');
+        }
+        
+        function editContact(id) {
+            const contact = contacts.find(c => c.id === id);
+            if (!contact) return;
+            
+            document.getElementById('modalTitle').textContent = 'Edit Contact';
+            document.getElementById('contactId').value = contact.id;
+            document.getElementById('contactName').value = contact.name;
+            document.getElementById('contactEmail').value = contact.email;
+            document.getElementById('contactPhone').value = contact.phone;
+            document.getElementById('contactType').value = contact.type;
+            document.getElementById('deleteBtn').style.display = 'block';
+            
+            switchModalTab('details', document.querySelector('.modal-tab'));
+            document.getElementById('contactModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('contactModal').classList.remove('active');
+        }
+        
+        function switchModalTab(tabName, btnElement) {
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            btnElement.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+        
+        function copyPhysicalAddress() {
+            if (document.getElementById('sameAsPhysical').checked) {
+                document.getElementById('postalStreet').value = document.getElementById('physicalStreet').value;
+                document.getElementById('postalCity').value = document.getElementById('physicalCity').value;
+                document.getElementById('postalPostalCode').value = document.getElementById('physicalPostal').value;
+            }
+        }
+        
+        function saveContact() {
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const type = document.getElementById('contactType').value;
+            
+            if (!name || !email || !type) {
+                alert('Please fill in all required fields (Name, Email, Type)');
+                return;
+            }
+            
+            const contactId = document.getElementById('contactId').value;
+            
+            if (contactId) {
+                // Update existing
+                const index = contacts.findIndex(c => c.id === parseInt(contactId));
+                if (index > -1) {
+                    contacts[index].name = name;
+                    contacts[index].email = email;
+                    contacts[index].phone = document.getElementById('contactPhone').value || contacts[index].phone;
+                    contacts[index].type = type;
+                    alert('Contact updated successfully!');
+                }
+            } else {
+                // Add new
+                const newContact = {
+                    id: contacts.length + 1,
+                    name: name,
+                    email: email,
+                    phone: document.getElementById('contactPhone').value || '+27 XX XXX XXXX',
+                    type: type,
+                    balance: 0,
+                    status: 'active'
+                };
+                contacts.push(newContact);
+                allContacts = [...contacts];
+                alert('Contact added successfully!');
+            }
+            
+            closeModal();
+            renderContacts();
+        }
+        
+        function deleteContact() {
+            const contactId = document.getElementById('contactId').value;
+            if (!contactId) return;
+            
+            if (confirm('Are you sure you want to delete this contact? This action cannot be undone.')) {
+                const index = contacts.findIndex(c => c.id === parseInt(contactId));
+                if (index > -1) {
+                    contacts.splice(index, 1);
+                    allContacts = [...contacts];
+                    alert('Contact deleted successfully!');
+                    closeModal();
+                    renderContacts();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

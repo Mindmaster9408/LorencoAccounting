@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transactions - Lorenco Accounting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            height: 56px;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        
+        .nav-item {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item > a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .nav-item > a::after {
+            content: '▼';
+            font-size: 8px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover > a {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .nav-item:hover > a::after {
+            transform: rotate(-180deg);
+        }
+        
+        .nav-item > a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .nav-item > a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 260px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border: 1px solid #e8eaed;
+            border-radius: 0 0 12px 12px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-item:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #5f6368;
+            text-decoration: none;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.15s;
+        }
+        
+        .dropdown a::before {
+            content: '→';
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s;
+            color: #0066cc;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown a:hover {
+            background: linear-gradient(90deg, #e6f3ff 0%, #ffffff 100%);
+            color: #0066cc;
+            padding-left: 25px;
+        }
+        
+        .dropdown a:hover::before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .dropdown-header {
+            padding: 10px 20px 6px;
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #fafbfc;
+            letter-spacing: 0.5px;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: #e8eaed;
+            margin: 4px 0;
+        }
+        
+        .navbar a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .navbar a:hover {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .navbar a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .navbar a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .main-content {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.4);
+        }
+        
+        .btn-secondary {
+            padding: 10px 20px;
+            background: white;
+            color: #5f6368;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .filter-bar {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #202124;
+            background: white;
+            min-width: 150px;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #c9a961;
+        }
+        
+        .bank-accounts-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            margin-bottom: 20px;
+        }
+        
+        .bank-accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .bank-account-card {
+            padding: 20px;
+            border: 2px solid #e8eaed;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bank-account-card:hover {
+            border-color: #0066cc;
+            box-shadow: 0 4px 12px rgba(0,102,204,0.15);
+        }
+        
+        .bank-account-card.active {
+            border-color: #0066cc;
+            background: linear-gradient(135deg, #e6f3ff 0%, #ffffff 100%);
+        }
+        
+        .account-name {
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .account-number {
+            font-size: 12px;
+            color: #9aa0a6;
+            margin-bottom: 12px;
+        }
+        
+        .account-balance {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .transactions-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #202124;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 8px 12px 8px 35px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 300px;
+        }
+        
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .transactions-table th:nth-child(1) { width: 40px; }  /* Checkbox */
+        .transactions-table th:nth-child(2) { width: 90px; }  /* Date */
+        .transactions-table th:nth-child(3) { width: auto; min-width: 180px; }  /* Description */
+        .transactions-table th:nth-child(4) { width: 95px; } /* Reference */
+        .transactions-table th:nth-child(5) { width: 105px; } /* Money In */
+        .transactions-table th:nth-child(6) { width: 105px; } /* Money Out */
+        .transactions-table th:nth-child(7) { width: 105px; } /* Balance */
+        .transactions-table th:nth-child(8) { width: 135px; } /* Transaction Type */
+        .transactions-table th:nth-child(9) { width: 150px; } /* Account */
+        .transactions-table th:nth-child(10) { width: 95px; } /* Status */
+        .transactions-table th:nth-child(11) { width: 55px; }  /* Upload */
+        .transactions-table th:nth-child(12) { width: 95px; } /* Attachments */
+        .transactions-table th:nth-child(13) { width: 85px; } /* Actions */
+        .transactions-table th:nth-child(14) { width: 85px; } /* AI */
+        
+        .transactions-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .transactions-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #5f6368;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .transactions-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #202124;
+            font-size: 13px;
+        }
+        
+        .transactions-table tbody tr {
+            transition: all 0.2s;
+        }
+        
+        .transactions-table tbody tr:hover {
+            background: #f0f8ff;
+        }
+        
+        .transaction-date {
+            color: #5f6368;
+            font-weight: 500;
+        }
+        
+        .transaction-description {
+            font-weight: 500;
+        }
+        
+        .transaction-reference {
+            color: #9aa0a6;
+            font-size: 12px;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .amount-in {
+            color: #34a853;
+        }
+        
+        .amount-out {
+            color: #ea4335;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-matched {
+            background: linear-gradient(135deg, #34a853 0%, #4caf50 100%);
+            color: white;
+        }
+        
+        .status-unmatched {
+            background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+            color: white;
+        }
+        
+        .status-reconciled {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+        }
+        
+        .action-btn {
+            padding: 6px 14px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: #5f6368;
+            font-weight: 500;
+        }
+        
+        .action-btn:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0066cc;
+        }
+        
+        .bulk-actions {
+            background: #e6f3ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #0066cc;
+        }
+        
+        .bulk-actions.active {
+            display: flex;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination button.active {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .allocation-select {
+            padding: 6px 10px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #202124;
+            background: white;
+            min-width: 160px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .allocation-select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+        }
+        
+        .allocation-select:hover {
+            border-color: #0066cc;
+        }
+        
+        .upload-link {
+            color: #0066cc;
+            text-decoration: none;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 4px;
+            line-height: 1;
+        }
+        
+        .upload-link:hover {
+            color: #0099ff;
+            transform: scale(1.3);
+        }
+        
+        .upload-link.has-files {
+            color: #28a745;
+        }
+        
+        .upload-link .file-count {
+            font-size: 10px;
+            background: #0066cc;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            margin-left: 2px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .upload-link.has-files .file-count {
+            background: #28a745;
+        }
+        
+        .ai-btn {
+            padding: 6px 14px;
+            border: 1px solid #0066cc;
+            background: linear-gradient(135deg, #e6f3ff 0%, #ffffff 100%);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: #0066cc;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .ai-btn:hover {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .ai-btn.active {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .ai-suggestion-row {
+            display: none;
+            background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%);
+            border-left: 4px solid #0066cc;
+        }
+        
+        .ai-suggestion-row.show {
+            display: table-row;
+        }
+        
+        .ai-suggestion-content {
+            padding: 20px;
+        }
+        
+        .ai-suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #0066cc;
+        }
+        
+        .ai-suggestion-header::before {
+            content: '🤖';
+            font-size: 20px;
+        }
+        
+        .ai-decision {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+            margin-bottom: 15px;
+        }
+        
+        .ai-decision-title {
+            font-size: 12px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .ai-decision-value {
+            font-size: 14px;
+            color: #202124;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .ai-confidence {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #34a853 0%, #4caf50 100%);
+            color: white;
+        }
+        
+        .ai-override {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+        
+        .ai-override-title {
+            font-size: 13px;
+            color: #202124;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .override-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-group label {
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group textarea {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #202124;
+            background: white;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+        }
+        
+        .override-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        
+        .tabs-container {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+            bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .tab.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+        }
+        
+        .tab-count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            background: #e8eaed;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .tab.active .tab-count {
+            background: rgba(0,102,204,0.15);
+            color: #0066cc;
+        }
+        
+        .transactions-table.readonly {
+            opacity: 0.85;
+        }
+        
+        .transactions-table.readonly tbody tr {
+            background: #f8f9fa;
+        }
+        
+        .transactions-table.readonly input,
+        .transactions-table.readonly select,
+        .transactions-table.readonly button {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        /* Attachment Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #0066cc;
+            background: #e6f3ff;
+        }
+        
+        .upload-area.drag-over {
+            border-color: #0066cc;
+            background: #e6f3ff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .attachments-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .attachment-item:hover {
+            background: #f8f9fa;
+            border-color: #0066cc;
+        }
+        
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .attachment-icon {
+            font-size: 24px;
+        }
+        
+        .attachment-details {
+            flex: 1;
+        }
+        
+        .attachment-name {
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 2px;
+        }
+        
+        .attachment-meta {
+            font-size: 11px;
+            color: #5f6368;
+        }
+        
+        .attachment-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .attachment-actions button {
+            padding: 6px 12px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .attachment-actions button:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .attachment-actions .delete-btn:hover {
+            border-color: #dc3545;
+            color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .no-attachments {
+            text-align: center;
+            padding: 40px 20px;
+            color: #5f6368;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="brand-section">
+            <div class="logo">
+                <div class="logo-icon">L</div>
+                <span>Lorenco</span>
+            </div>
+            <div class="company-selector">
+                <span id="companyName">Select Company</span>
+                <span style="opacity: 0.7;">▼</span>
+            </div>
+        </div>
+        <div class="right-section">
+            <button class="icon-btn" title="Quick Add">+</button>
+            <button class="icon-btn" title="Search">🔍</button>
+            <button class="icon-btn" title="Notifications">🔔</button>
+            <button class="icon-btn" title="Help">?</button>
+            <div class="user-menu" onclick="toggleUserMenu()">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span class="user-name" id="userName">User</span>
+                <span style="opacity: 0.7; font-size: 11px;">▼</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navbar">
+        <div class="nav-item">
+            <a href="dashboard.html">Home</a>
+            <div class="dropdown">
+                <a href="dashboard.html">Dashboard Overview</a>
+                <a href="#">My Tasks</a>
+                <a href="#">Favorites</a>
+                <a href="#">Recent Activity</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Quick View</a>
+            <div class="dropdown">
+                <a href="#">Summary</a>
+                <a href="#">Cash Flow</a>
+                <a href="#">P&L Overview</a>
+                <a href="#">Balance Sheet Summary</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Customers</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Sales</div>
+                <a href="#">Customer List</a>
+                <a href="#">New Customer</a>
+                <a href="#">Invoices</a>
+                <a href="#">Quotes</a>
+                <a href="#">Credit Notes</a>
+                <div class="dropdown-header">Payments</div>
+                <a href="#">Customer Receipts</a>
+                <a href="#">Customer Aging</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Suppliers</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Purchases</div>
+                <a href="#">Supplier List</a>
+                <a href="#">New Supplier</a>
+                <a href="#">Purchase Orders</a>
+                <a href="#">Supplier Invoices</a>
+                <div class="dropdown-header">Payments</div>
+                <a href="#">Supplier Payments</a>
+                <a href="#">Supplier Aging</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Items</a>
+            <div class="dropdown">
+                <a href="#">Product List</a>
+                <a href="#">Service List</a>
+                <a href="#">New Item</a>
+                <a href="#">Stock Adjustments</a>
+                <a href="#">Price Lists</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="bank.html" class="active">Banking</a>
+            <div class="dropdown">
+                <a href="bank.html">Bank Transactions</a>
+                <a href="bank-reconciliation.html">Bank Reconciliation</a>
+                <a href="#">Payment Processing</a>
+                <a href="#">Bank Rules</a>
+                <a href="#">Import Statements</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="accounts.html">Accounts</a>
+            <div class="dropdown">
+                <a href="accounts.html">Chart of Accounts</a>
+                <a href="journals.html">Journal Entries</a>
+                <a href="#">Nominal Ledger</a>
+                <a href="#">Trial Balance</a>
+                <a href="#">Period End</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="reports.html">Reports</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Financial</div>
+                <a href="reports.html">Profit & Loss</a>
+                <a href="balance-sheet.html">Balance Sheet</a>
+                <a href="cashflow.html">Cash Flow Statement</a>
+                <a href="trial-balance.html">Trial Balance</a>
+                <div class="dropdown-header">Analysis</div>
+                <a href="sales-analysis.html">Sales Analysis</a>
+                <a href="purchase-analysis.html">Purchase Analysis</a>
+                <a href="vat-return.html">VAT Return</a>
+                <a href="aged-debtors.html">Aged Debtors</a>
+                <a href="aged-creditors.html">Aged Creditors</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Tax</a>
+            <div class="dropdown">
+                <a href="paye.html">PAYE</a>
+                <a href="vat.html">VAT</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Company</a>
+            <div class="dropdown">
+                <a href="#">Company Settings</a>
+                <a href="contacts.html">Contacts</a>
+                <a href="#">Users & Permissions</a>
+                <a href="#">Financial Year</a>
+                <a href="#">Tax Settings</a>
+                <a href="#">Backup & Restore</a>
+                <a href="settings.html">⚙️ General Settings</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Administration</a>
+            <div class="dropdown">
+                <div class="dropdown-header">Monitoring</div>
+                <a href="audit.html">Audit Log</a>
+                <a href="system-health.html">System Health</a>
+                <a href="user-activity.html">User Activity</a>
+                <div class="dropdown-header">Data Management</div>
+                <a href="data-export.html">Data Export</a>
+                <a href="data-import.html">Data Import</a>
+                <a href="archive.html">Archive & Delete</a>
+                <div class="dropdown-header">Security</div>
+                <a href="security-log.html">Security Log</a>
+                <a href="api-keys.html">API Keys</a>
+                <a href="integrations.html">Integrations</a>
+            </div>
+        </div>
+        
+        <div class="nav-item">
+            <a href="#">Sean AI</a>
+            <div class="dropdown">
+                <div class="dropdown-header">AI Features</div>
+                <a href="ai-settings.html">AI Settings</a>
+                <a href="ai-review.html">AI Review Queue</a>
+                <div class="dropdown-header">Automation</div>
+                <a href="#">Document Upload</a>
+                <a href="#">OCR Processing</a>
+                <a href="#">Auto-categorization</a>
+                <a href="#">Approval Queue</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Bank Transactions</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="importStatement()">📥 Import Statement</button>
+                <button class="btn-secondary" onclick="bankRules()">⚙️ Bank Rules</button>
+                <button class="btn-primary" onclick="reconcile()">✓ Reconcile</button>
+            </div>
+        </div>
+        
+        <div class="bank-accounts-section">
+            <h2 style="margin-bottom: 15px; font-size: 16px; color: #202124;">Bank Accounts</h2>
+            <div class="bank-accounts-grid">
+                <div class="bank-account-card active" onclick="selectAccount(this)">
+                    <div class="account-name">Business Current Account</div>
+                    <div class="account-number">****1234</div>
+                    <div class="account-balance">R 45,230.50</div>
+                </div>
+                <div class="bank-account-card" onclick="selectAccount(this)">
+                    <div class="account-name">Savings Account</div>
+                    <div class="account-number">****5678</div>
+                    <div class="account-balance">R 120,450.00</div>
+                </div>
+                <div class="bank-account-card" onclick="selectAccount(this)">
+                    <div class="account-name">Petty Cash</div>
+                    <div class="account-number">CASH-001</div>
+                    <div class="account-balance">R 2,500.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Date From</label>
+                <input type="date" id="dateFrom" value="2026-01-01">
+            </div>
+            <div class="filter-group">
+                <label>Date To</label>
+                <input type="date" id="dateTo" value="2026-01-14">
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="statusFilter">
+                    <option value="">All Transactions</option>
+                    <option value="unmatched">Unmatched</option>
+                    <option value="matched">Matched</option>
+                    <option value="reconciled">Reconciled</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Type</label>
+                <select id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="in">Money In</option>
+                    <option value="out">Money Out</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="applyFilters()" style="margin-top: 18px;">Apply Filters</button>
+        </div>
+        
+        <div class="transactions-section">
+            <div class="tabs-container">
+                <button class="tab active" onclick="switchTab('new')">
+                    New Transactions<span class="tab-count" id="newCount">5</span>
+                </button>
+                <button class="tab" onclick="switchTab('reviewed')">
+                    Reviewed<span class="tab-count" id="reviewedCount">0</span>
+                </button>
+            </div>
+            
+            <div class="bulk-actions" id="bulkActions">
+                <span><strong id="selectedCount">0</strong> transactions selected</span>
+                <button class="action-btn" id="markReviewedBtn" onclick="markAsReviewed()">Mark as Reviewed</button>
+                <button class="action-btn" id="moveBackBtn" onclick="moveBackToNew()" style="display:none;">Move Back to New</button>
+                <button class="action-btn" onclick="bulkMatch()">Match Selected</button>
+                <button class="action-btn" onclick="bulkReconcile()">Reconcile Selected</button>
+                <button class="action-btn" onclick="bulkDelete()">Delete Selected</button>
+            </div>
+            
+            <div class="section-header">
+                <h2>Transactions</h2>
+                <div class="search-box">
+                    <input type="text" placeholder="Search transactions..." id="searchInput">
+                </div>
+            </div>
+            
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="checkbox" onclick="selectAll(this)"></th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Reference</th>
+                        <th>Money In</th>
+                        <th>Money Out</th>
+                        <th>Balance</th>
+                        <th>Transaction Type</th>
+                        <th>Account</th>
+                        <th>Status</th>
+                        <th>Upload</th>
+                        <th>Attachments</th>
+                        <th>Actions</th>
+                        <th id="aiHeader">AI</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">14 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Client Payment - ABC Corp</div>
+                            <div class="transaction-reference">INV-2026-001</div>
+                        </td>
+                        <td>PYMT123456</td>
+                        <td class="transaction-amount amount-in">R 15,500.00</td>
+                        <td>-</td>
+                        <td>R 45,230.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 1)">
+                                <option value="">Select Type...</option>
+                                <option value="customer" selected>Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="account">Account</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 1)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000" selected>4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-matched">Matched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink1" href="#" onclick="openUploadModal(1); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount1" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(1)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount1">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(1)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(1, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow1">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">Sean AI Analysis</div>
+                                
+                                <div class="ai-decision">
+                                    <div class="ai-decision-title">Sean's Decision</div>
+                                    <div class="ai-decision-value">
+                                        <strong>Transaction Type:</strong> Customer Payment<br>
+                                        <strong>Account:</strong> 4000 - Sales Revenue<br>
+                                        <strong>Reason:</strong> Payment received from customer ABC Corp matching invoice INV-2026-001
+                                    </div>
+                                    <div style="margin-top: 8px;">
+                                        <span class="ai-confidence">95% Confidence</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="ai-override">
+                                    <div class="ai-override-title">Override Sean's Decision</div>
+                                    <div class="override-form">
+                                        <div class="form-group">
+                                            <label>Transaction Type</label>
+                                            <select class="allocation-select">
+                                                <option value="customer" selected>Customer Payment</option>
+                                                <option value="supplier">Supplier Payment</option>
+                                                <option value="transfer">Transfer</option>
+                                                <option value="vat">VAT Payment</option>
+                                                <option value="account">Account</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Account</label>
+                                            <select class="allocation-select">
+                                                <optgroup label="Income">
+                                                    <option value="4000" selected>4000 - Sales Revenue</option>
+                                                    <option value="4100">4100 - Service Revenue</option>
+                                                </optgroup>
+                                                <optgroup label="Expenses">
+                                                    <option value="6000">6000 - Operating Expenses</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="grid-column: 1 / -1;">
+                                            <label>Tell Sean why this is different</label>
+                                            <textarea placeholder="Explain to Sean AI why the classification should be different..."></textarea>
+                                        </div>
+                                        <div class="override-actions">
+                                            <button class="btn-secondary" onclick="cancelOverride(1)">Cancel</button>
+                                            <button class="btn-primary" onclick="saveOverride(1)">Save & Teach Sean</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">13 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Office Supplies</div>
+                            <div class="transaction-reference">PO-456</div>
+                        </td>
+                        <td>DD789012</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 2,350.00</td>
+                        <td>R 29,730.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 2)">
+                                <option value="" selected>Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="account">Account</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 2)">
+                                <option value="" selected>Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-unmatched">Unmatched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink2" href="#" onclick="openUploadModal(2); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount2" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(2)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount2">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="allocateTransaction(2)">Allocate</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(2, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow2">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">Sean AI Analysis</div>
+                                
+                                <div class="ai-decision">
+                                    <div class="ai-decision-title">Sean's Decision</div>
+                                    <div class="ai-decision-value">
+                                        <strong>Transaction Type:</strong> Supplier Payment<br>
+                                        <strong>Account:</strong> 6200 - Office Supplies<br>
+                                        <strong>Reason:</strong> Payment for office supplies based on description and amount pattern
+                                    </div>
+                                    <div style="margin-top: 8px;">
+                                        <span class="ai-confidence">88% Confidence</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="ai-override">
+                                    <div class="ai-override-title">Override Sean's Decision</div>
+                                    <div class="override-form">
+                                        <div class="form-group">
+                                            <label>Transaction Type</label>
+                                            <select class="allocation-select">
+                                                <option value="customer">Customer Payment</option>
+                                                <option value="supplier" selected>Supplier Payment</option>
+                                                <option value="transfer">Transfer</option>
+                                                <option value="vat">VAT Payment</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Account</label>
+                                            <select class="allocation-select">
+                                                <optgroup label="Expenses">
+                                                    <option value="6000">6000 - Operating Expenses</option>
+                                                    <option value="6100">6100 - Utilities</option>
+                                                    <option value="6200" selected>6200 - Office Supplies</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="grid-column: 1 / -1;">
+                                            <label>Tell Sean why this is different</label>
+                                            <textarea placeholder="Explain to Sean AI why the classification should be different..."></textarea>
+                                        </div>
+                                        <div class="override-actions">
+                                            <button class="btn-secondary" onclick="cancelOverride(2)">Cancel</button>
+                                            <button class="btn-primary" onclick="saveOverride(2)">Save & Teach Sean</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">12 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Salary Payment - John Doe</div>
+                            <div class="transaction-reference">SAL-001-2026</div>
+                        </td>
+                        <td>TRAN345678</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 18,500.00</td>
+                        <td>R 32,080.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 3)">
+                                <option value="">Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier" selected>Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 3)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000" selected>6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-reconciled">Reconciled</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink3" href="#" onclick="openUploadModal(3); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount3" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(3)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount3">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(3)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(3, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">11 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Service Revenue - XYZ Ltd</div>
+                            <div class="transaction-reference">INV-2026-002</div>
+                        </td>
+                        <td>PYMT987654</td>
+                        <td class="transaction-amount amount-in">R 32,000.00</td>
+                        <td>-</td>
+                        <td>R 50,580.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 4)">
+                                <option value="">Select Type...</option>
+                                <option value="customer" selected>Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 4)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100" selected>4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-matched">Matched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink4" href="#" onclick="openUploadModal(4); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount4" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(4)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount4">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(4)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(4, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">10 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Utility Bill - Electricity</div>
+                            <div class="transaction-reference"></div>
+                        </td>
+                        <td>DD456789</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 3,250.00</td>
+                        <td>R 18,580.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 5)">
+                                <option value="">Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier" selected>Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 5)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100" selected>6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-unmatched">Unmatched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink5" href="#" onclick="openUploadModal(5); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount5" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(5)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount5">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="allocateTransaction(5)">Allocate</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(5, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button disabled>← Previous</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>Next →</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        // Check authentication - Demo Mode
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // Auto-login for demo mode
+        if (!token) {
+            console.log('No token found. Creating demo session...');
+            const mockUser = {
+                id: 1,
+                email: 'demo@lorenco.com',
+                firstName: 'Demo',
+                lastName: 'User',
+                role: 'admin',
+                companyId: 1,
+                companyName: 'Business Current Account',
+                companyStatus: 'active'
+            };
+            
+            token = 'demo-token-' + Date.now();
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('demoMode', 'true');
+            user = mockUser;
+        }
+        
+        // Display user info
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        document.getElementById('userName').textContent = fullName || user.email || 'User';
+        document.getElementById('companyName').textContent = user.companyName || 'My Company';
+        
+        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        
+        // Sean AI is always enabled for demo
+        localStorage.setItem('seanAIEnabled', 'true');
+        
+        // Store uploaded files for each transaction
+        const transactionFiles = {};
+        
+        function openUploadModal(transactionId) {
+            // Show upload modal/page for this transaction
+            const fileCount = transactionFiles[transactionId] ? transactionFiles[transactionId].length : 0;
+            
+            const uploadOptions = `
+📎 Upload Documents for Transaction #${transactionId}
+
+Current files: ${fileCount}
+
+In the full version, this would open a dedicated upload page where you can:
+• Drag and drop files
+• Take photos of receipts
+• Scan documents
+• Link to cloud storage (Google Drive, Dropbox)
+
+Sean AI will automatically:
+• Extract invoice details
+• Match to suppliers/customers
+• Suggest account allocation
+• Detect duplicate documents
+
+Click OK to simulate uploading a file.`;
+
+            if (confirm(uploadOptions)) {
+                // Simulate adding a file
+                if (!transactionFiles[transactionId]) {
+                    transactionFiles[transactionId] = [];
+                }
+                
+                transactionFiles[transactionId].push({
+                    name: 'Invoice_' + Date.now() + '.pdf',
+                    size: 125000,
+                    type: 'application/pdf',
+                    uploadedAt: new Date()
+                });
+                
+                const fileCount = transactionFiles[transactionId].length;
+                
+                // Update the paperclip link
+                const uploadLink = document.getElementById(`uploadLink${transactionId}`);
+                const fileCountSpan = document.getElementById(`fileCount${transactionId}`);
+                if (uploadLink && fileCountSpan) {
+                    uploadLink.classList.add('has-files');
+                    fileCountSpan.textContent = fileCount;
+                    fileCountSpan.style.display = 'inline';
+                }
+                
+                // Update attachment count
+                const attachCount = document.getElementById(`attachCount${transactionId}`);
+                if (attachCount) {
+                    attachCount.textContent = fileCount;
+                }
+                
+                alert(`✅ Document uploaded successfully!\n\nSean AI is analyzing the document...`);
+            }
+        }
+        }
+        
+        function selectAccount(card) {
+            // Remove active from all cards
+            document.querySelectorAll('.bank-account-card').forEach(c => c.classList.remove('active'));
+            // Add active to clicked card
+            card.classList.add('active');
+            
+            // Get account name
+            const accountName = card.querySelector('.account-name').textContent;
+            console.log('Selected account:', accountName);
+            
+            // In real implementation, this would reload transactions for the selected account
+            alert(`Switched to ${accountName}\n\nIn the full version, transactions would reload for this account.`);
+        }
+        
+        function selectAll(checkbox) {
+            document.querySelectorAll('.transactions-table tbody .checkbox').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (checked.length > 0) {
+                bulkActions.classList.add('active');
+                selectedCount.textContent = checked.length;
+            } else {
+                bulkActions.classList.remove('active');
+            }
+        }
+        
+        function applyFilters() {
+            alert('Filters applied! This would filter the transactions based on selected criteria.');
+        }
+        
+        function importStatement() {
+            alert('Import bank statement functionality - Upload CSV/OFX/QIF files');
+        }
+        
+        function bankRules() {
+            alert('Bank rules configuration - Set up automatic categorization rules');
+        }
+        
+        function reconcile() {
+            alert('Start bank reconciliation process');
+        }
+        
+        function viewTransaction(id) {
+            alert('View transaction details for ID: ' + id);
+        }
+        
+        function allocateTransaction(id) {
+            alert('Save allocation for transaction ID: ' + id);
+        }
+        
+        function updateAllocation(select, id) {
+            const type = select.value;
+            console.log(`Transaction ${id} type set to: ${type}`);
+            // In real implementation, this would save to database
+        }
+        
+        function updateAccount(select, id) {
+            const account = select.options[select.selectedIndex].text;
+            console.log(`Transaction ${id} account set to: ${account}`);
+            // In real implementation, this would save to database
+        }
+        
+        function toggleAISuggestion(id, button) {
+            console.log('Toggle AI suggestion clicked for ID:', id);
+            const row = document.getElementById('aiRow' + id);
+            console.log('Found row:', row);
+            
+            if (!row) {
+                console.error('AI row not found for ID:', id);
+                alert('Error: AI suggestion row not found. Please refresh the page.');
+                return;
+            }
+            
+            const isVisible = row.classList.contains('show');
+            console.log('Is currently visible:', isVisible);
+            
+            // Close all other AI rows
+            document.querySelectorAll('.ai-suggestion-row').forEach(r => {
+                r.classList.remove('show');
+            });
+            document.querySelectorAll('.ai-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Toggle current row
+            if (!isVisible) {
+                console.log('Showing AI row');
+                row.classList.add('show');
+                button.classList.add('active');
+            } else {
+                console.log('AI row was already visible, now hidden');
+            }
+        }
+        
+        function cancelOverride(id) {
+            const row = document.getElementById('aiRow' + id);
+            row.classList.remove('show');
+            document.querySelectorAll('.ai-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        function saveOverride(id) {
+            const row = document.getElementById('aiRow' + id);
+            const explanation = row.querySelector('textarea').value;
+            
+            if (!explanation.trim()) {
+                alert('Please explain to Sean why this classification is different.');
+                return;
+            }
+            
+            alert(`Override saved for transaction ${id}!\n\nSean AI will learn from this correction:\n"${explanation}"\n\nThis will improve future suggestions.`);
+            
+            row.classList.remove('show');
+            document.querySelectorAll('.ai-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        function bulkMatch() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            alert(`Match ${count} selected transactions`);
+        }
+        
+        function bulkReconcile() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            alert(`Reconcile ${count} selected transactions`);
+        }
+        
+        function bulkDelete() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            if (confirm(`Delete ${count} selected transactions?`)) {
+                alert('Transactions deleted');
+            }
+        }
+        
+        // Transaction review management
+        let currentTab = 'new';
+        let reviewedTransactions = JSON.parse(localStorage.getItem('reviewedTransactions') || '[]');
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Get all transaction rows (not AI suggestion rows)
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            const table = document.querySelector('.transactions-table');
+            
+            // Update button visibility
+            const markReviewedBtn = document.getElementById('markReviewedBtn');
+            const moveBackBtn = document.getElementById('moveBackBtn');
+            
+            if (tab === 'new') {
+                markReviewedBtn.style.display = '';
+                moveBackBtn.style.display = 'none';
+                table.classList.remove('readonly');
+                
+                // Show only non-reviewed transactions
+                rows.forEach(row => {
+                    const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                    if (txnId && reviewedTransactions.includes(txnId)) {
+                        row.style.display = 'none';
+                        // Hide corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = 'none';
+                        }
+                    } else {
+                        row.style.display = '';
+                    }
+                });
+            } else {
+                markReviewedBtn.style.display = 'none';
+                moveBackBtn.style.display = '';
+                table.classList.add('readonly');
+                
+                // Show only reviewed transactions
+                rows.forEach(row => {
+                    const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                    if (txnId && reviewedTransactions.includes(txnId)) {
+                        row.style.display = '';
+                        // Show corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = '';
+                        }
+                    } else {
+                        row.style.display = 'none';
+                        // Hide corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = 'none';
+                        }
+                    }
+                });
+            }
+            
+            updateCounts();
+            updateBulkActions(); // Reset selection
+        }
+        
+        function markAsReviewed() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            
+            if (checked.length === 0) {
+                alert('Please select at least one transaction to mark as reviewed.');
+                return;
+            }
+            
+            checked.forEach(cb => {
+                const txnId = cb.dataset.txnId;
+                if (txnId && !reviewedTransactions.includes(txnId)) {
+                    reviewedTransactions.push(txnId);
+                }
+                cb.checked = false;
+            });
+            
+            localStorage.setItem('reviewedTransactions', JSON.stringify(reviewedTransactions));
+            switchTab('new'); // Refresh the current view
+            
+            alert(`${checked.length} transaction(s) marked as reviewed and moved to Reviewed tab.`);
+        }
+        
+        function moveBackToNew() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            
+            if (checked.length === 0) {
+                alert('Please select at least one transaction to move back.');
+                return;
+            }
+            
+            checked.forEach(cb => {
+                const txnId = cb.dataset.txnId;
+                const index = reviewedTransactions.indexOf(txnId);
+                if (index > -1) {
+                    reviewedTransactions.splice(index, 1);
+                }
+                cb.checked = false;
+            });
+            
+            localStorage.setItem('reviewedTransactions', JSON.stringify(reviewedTransactions));
+            switchTab('reviewed'); // Refresh the reviewed view
+            
+            alert(`${checked.length} transaction(s) moved back to New Transactions.`);
+        }
+        
+        function updateCounts() {
+            const allRows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            let newCount = 0;
+            let reviewedCount = 0;
+            
+            allRows.forEach(row => {
+                const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                if (txnId) {
+                    if (reviewedTransactions.includes(txnId)) {
+                        reviewedCount++;
+                    } else {
+                        newCount++;
+                    }
+                }
+            });
+            
+            document.getElementById('newCount').textContent = newCount;
+            document.getElementById('reviewedCount').textContent = reviewedCount;
+        }
+        
+        // Initialize transaction IDs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            rows.forEach((row, index) => {
+                const checkbox = row.querySelector('.checkbox');
+                if (checkbox && !checkbox.dataset.txnId) {
+                    checkbox.dataset.txnId = 'txn-' + (index + 1);
+                }
+            });
+            updateCounts();
+        });
+        
+        function toggleUserMenu() {
+            const menu = confirm('Logout?');
+            if (menu) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+        
+        // ===================================
+        // ATTACHMENT FUNCTIONS
+        // ===================================
+        
+        let currentTransactionId = null;
+        
+        function showAttachments(transactionId) {
+            currentTransactionId = transactionId;
+            document.getElementById('attachmentModal').classList.add('show');
+            loadAttachments(transactionId);
+        }
+        
+        function closeAttachmentsModal() {
+            document.getElementById('attachmentModal').classList.remove('show');
+            currentTransactionId = null;
+        }
+        
+        async function loadAttachments(transactionId) {
+            // For demo, show sample attachments
+            const attachmentsListEl = document.getElementById('attachmentsList');
+            
+            // Demo data - in production this would fetch from API
+            const demoAttachments = transactionId === 1 ? [
+                {
+                    id: 1,
+                    original_filename: 'invoice_abc_corp.pdf',
+                    file_size: 245678,
+                    created_at: '2026-01-14T10:30:00',
+                    first_name: 'Demo',
+                    last_name: 'User'
+                },
+                {
+                    id: 2,
+                    original_filename: 'receipt.jpg',
+                    file_size: 125890,
+                    created_at: '2026-01-14T11:15:00',
+                    first_name: 'Demo',
+                    last_name: 'User'
+                }
+            ] : [];
+            
+            if (demoAttachments.length === 0) {
+                attachmentsListEl.innerHTML = '<div class="no-attachments">No attachments yet. Upload files to get started.</div>';
+            } else {
+                attachmentsListEl.innerHTML = demoAttachments.map(att => `
+                    <div class="attachment-item">
+                        <div class="attachment-info">
+                            <div class="attachment-icon">${getFileIcon(att.original_filename)}</div>
+                            <div class="attachment-details">
+                                <div class="attachment-name">${att.original_filename}</div>
+                                <div class="attachment-meta">
+                                    ${formatFileSize(att.file_size)} • Uploaded by ${att.first_name} ${att.last_name} • ${formatDate(att.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="attachment-actions">
+                            <button onclick="downloadAttachment(${att.id})">Download</button>
+                            <button class="delete-btn" onclick="deleteAttachment(${att.id})">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Update count badge
+            const countEl = document.getElementById(`attachCount${transactionId}`);
+            if (countEl) {
+                countEl.textContent = demoAttachments.length;
+            }
+        }
+        
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝',
+                'docx': '📝',
+                'xls': '📊',
+                'xlsx': '📊',
+                'csv': '📊',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️',
+                'gif': '🖼️',
+                'txt': '📝'
+            };
+            return icons[ext] || '📎';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+        
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 
+                                  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                  'text/csv', 'text/plain'];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Allowed types: images, PDF, DOC, XLS, CSV, TXT');
+                return;
+            }
+            
+            // In demo mode, just show success message
+            alert(`File "${file.name}" uploaded successfully!\n\nIn production, this would upload to: /api/bank/transactions/${currentTransactionId}/attachments`);
+            
+            // Reload attachments
+            loadAttachments(currentTransactionId);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        function downloadAttachment(attachmentId) {
+            alert(`Downloading attachment ${attachmentId}...\n\nIn production, this would download from: /api/bank/attachments/${attachmentId}/download`);
+        }
+        
+        function deleteAttachment(attachmentId) {
+            if (confirm('Are you sure you want to delete this attachment?')) {
+                alert(`Attachment ${attachmentId} deleted!\n\nIn production, this would call: DELETE /api/bank/attachments/${attachmentId}`);
+                loadAttachments(currentTransactionId);
+            }
+        }
+        
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('drag-over');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('drag-over');
+            });
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const fileInput = document.getElementById('fileInput');
+                fileInput.files = files;
+                handleFileUpload({ target: fileInput });
+            }
+        });
+    </script>
+    
+    <!-- Attachment Modal -->
+    <div id="attachmentModal" class="modal-overlay" onclick="if(event.target === this) closeAttachmentsModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📎 Attachments</h2>
+                <button class="modal-close" onclick="closeAttachmentsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="uploadArea" class="upload-area" onclick="triggerFileUpload()">
+                    <div class="upload-icon">📤</div>
+                    <div><strong>Click to upload</strong> or drag and drop</div>
+                    <div style="font-size: 12px; color: #5f6368; margin-top: 5px;">
+                        Images, PDF, DOC, XLS, CSV, TXT (Max 10MB)
+                    </div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileUpload(event)" 
+                       accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                
+                <div id="attachmentsList"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PAYE Reconciliation</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+    h2 { color: #0066cc; margin-bottom: 24px; }
+    .employee-list { max-width: 350px; float: left; margin-right: 32px; }
+    .employee-search { width: 100%; padding: 6px 10px; margin-bottom: 12px; border-radius: 4px; border: 1px solid #ccc; }
+    .employee-item { background: #f5f5f5; margin-bottom: 6px; border-radius: 4px; padding: 8px 12px; cursor: pointer; }
+    .employee-item.active { background: #e3f2fd; font-weight: 600; }
+    .recon-panel { overflow-x: auto; }
+    .recon-table { border-collapse: collapse; width: 100%; margin-bottom: 32px; }
+    .recon-table th, .recon-table td { border: 1px solid #ccc; padding: 6px 10px; text-align: right; }
+    .recon-table th { background: #e3f2fd; }
+    .recon-table .section-header { background: #f0f0f0; text-align: left; font-weight: 600; }
+    .recon-table .total-row { background: #f9fbe7; font-weight: 600; }
+    .recon-table input[type=number] { width: 80px; padding: 2px 6px; }
+    .approve-btn { background: #388e3c; color: #fff; border: none; border-radius: 4px; padding: 8px 24px; font-size: 16px; cursor: pointer; float: right; }
+    .approve-btn:active { background: #256029; }
+    .lock-btn { background: #d32f2f; color: #fff; border: none; border-radius: 4px; padding: 8px 24px; font-size: 16px; cursor: pointer; float: right; margin-left: 12px; }
+    .lock-btn:active { background: #a31515; }
+    .readonly { background: #f5f5f5; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>PAYE Reconciliation</h2>
+    <div style="display: flex;">
+      <div class="employee-list">
+        <input type="text" class="employee-search" placeholder="Search employee..." oninput="filterEmployees(this.value)">
+        <div id="employeeList"></div>
+      </div>
+      <div class="recon-panel" style="flex:1;">
+        <div id="reconGrid"></div>
+      </div>
+    </div>
+    <div style="clear: both; margin-top: 32px;">
+      <button class="approve-btn" onclick="approveReconciliation()">Approve PAYE Reconciliation</button>
+      <button class="lock-btn" onclick="lockReconciliation()">Lock PAYE Reconciliation</button>
+    </div>
+  </div>
+  <script>
+    // --- PAYE Reconciliation UI Logic (skeleton) ---
+    let employees = [];
+    let selectedEmployeeId = null;
+    let payeConfig = { incomeTypes: [], deductionTypes: [] };
+    let periodMonths = [ '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12' ];
+    let reconciliationData = {}; // { employeeId: { monthKey: { ... } } }
+    let status = 'DRAFT';
+
+    async function fetchEmployees() {
+      // TODO: Replace with real API call
+      employees = [
+        { id: 1, employeeCode: 'EMP001', firstName: 'John', lastName: 'Doe', isActive: true },
+        { id: 2, employeeCode: 'EMP002', firstName: 'Jane', lastName: 'Smith', isActive: true }
+      ];
+      renderEmployeeList();
+    }
+    async function fetchConfig() {
+      const res = await fetch('/api/paye/config');
+      payeConfig = await res.json();
+    }
+    async function fetchReconciliation() {
+      // TODO: Replace with real API call
+      // Should populate reconciliationData and status
+      reconciliationData = {};
+      employees.forEach(emp => {
+        reconciliationData[emp.id] = {};
+        periodMonths.forEach(month => {
+          reconciliationData[emp.id][month] = {
+            income: {}, deductions: {}, gross: 0, totalDeductions: 0, net: 0, bank: 0, diff: 0
+          };
+        });
+      });
+    }
+    function renderEmployeeList() {
+      const list = document.getElementById('employeeList');
+      list.innerHTML = '';
+      employees.forEach(emp => {
+        const div = document.createElement('div');
+        div.className = 'employee-item' + (selectedEmployeeId === emp.id ? ' active' : '');
+        div.textContent = `${emp.employeeCode} - ${emp.firstName} ${emp.lastName}`;
+        div.onclick = () => { selectedEmployeeId = emp.id; renderReconGrid(); renderEmployeeList(); };
+        list.appendChild(div);
+      });
+    }
+    function filterEmployees(query) {
+      query = query.toLowerCase();
+      document.querySelectorAll('.employee-item').forEach(div => {
+        div.style.display = div.textContent.toLowerCase().includes(query) ? '' : 'none';
+      });
+    }
+    function renderReconGrid() {
+      const grid = document.getElementById('reconGrid');
+      if (!selectedEmployeeId) { grid.innerHTML = '<div style="color:#888;">Select an employee to view reconciliation.</div>'; return; }
+      const emp = employees.find(e => e.id === selectedEmployeeId);
+      const data = reconciliationData[selectedEmployeeId];
+      let html = `<h3>${emp.firstName} ${emp.lastName} (${emp.employeeCode})</h3>`;
+      html += '<table class="recon-table"><thead><tr><th>Type</th>';
+      periodMonths.forEach(m => { html += `<th>${m}</th>`; });
+      html += '</tr></thead><tbody>';
+      // Income rows
+      payeConfig.incomeTypes.forEach(type => {
+        html += `<tr><td class="section-header">${type.label}</td>`;
+        periodMonths.forEach(month => {
+          html += `<td><input type="number" value="${data[month].income[type.key]||''}" onchange="updateIncome('${type.key}','${month}',this.value)" ${status!=='DRAFT'?'readonly class=readonly':''}></td>`;
+        });
+        html += '</tr>';
+      });
+      // Gross Income
+      html += '<tr class="total-row"><td>Gross Income</td>';
+      periodMonths.forEach(month => {
+        html += `<td>${data[month].gross||0}</td>`;
+      });
+      html += '</tr>';
+      // Deduction rows
+      payeConfig.deductionTypes.forEach(type => {
+        html += `<tr><td class="section-header">${type.label}</td>`;
+        periodMonths.forEach(month => {
+          html += `<td><input type="number" value="${data[month].deductions[type.key]||''}" onchange="updateDeduction('${type.key}','${month}',this.value)" ${status!=='DRAFT'?'readonly class=readonly':''}></td>`;
+        });
+        html += '</tr>';
+      });
+      // Total Deductions
+      html += '<tr class="total-row"><td>Total Deductions</td>';
+      periodMonths.forEach(month => {
+        html += `<td>${data[month].totalDeductions||0}</td>`;
+      });
+      html += '</tr>';
+      // Net Salary
+      html += '<tr class="total-row"><td>Net Salary</td>';
+      periodMonths.forEach(month => {
+        html += `<td>${data[month].net||0}</td>`;
+      });
+      html += '</tr>';
+      // Bank Paid
+      html += '<tr><td class="section-header">Bank Paid</td>';
+      periodMonths.forEach(month => {
+        html += `<td><input type="number" value="${data[month].bank||''}" onchange="updateBank('${month}',this.value)" ${status!=='DRAFT'?'readonly class=readonly':''}></td>`;
+      });
+      html += '</tr>';
+      // Difference
+      html += '<tr class="total-row"><td>Difference</td>';
+      periodMonths.forEach(month => {
+        html += `<td>${data[month].diff||0}</td>`;
+      });
+      html += '</tr>';
+      html += '</tbody></table>';
+      grid.innerHTML = html;
+    }
+    window.updateIncome = function(typeKey, month, value) {
+      reconciliationData[selectedEmployeeId][month].income[typeKey] = parseFloat(value)||0;
+      recalc(selectedEmployeeId, month);
+      renderReconGrid();
+    }
+    window.updateDeduction = function(typeKey, month, value) {
+      reconciliationData[selectedEmployeeId][month].deductions[typeKey] = parseFloat(value)||0;
+      recalc(selectedEmployeeId, month);
+      renderReconGrid();
+    }
+    window.updateBank = function(month, value) {
+      reconciliationData[selectedEmployeeId][month].bank = parseFloat(value)||0;
+      recalc(selectedEmployeeId, month);
+      renderReconGrid();
+    }
+    function recalc(empId, month) {
+      const d = reconciliationData[empId][month];
+      d.gross = Object.values(d.income).reduce((a,b)=>a+(parseFloat(b)||0),0);
+      d.totalDeductions = Object.values(d.deductions).reduce((a,b)=>a+(parseFloat(b)||0),0);
+      d.net = d.gross - d.totalDeductions;
+      d.diff = d.net - (parseFloat(d.bank)||0);
+    }
+    async function approveReconciliation() {
+      // TODO: Call backend to approve
+      alert('Approve action (not implemented)');
+    }
+    async function lockReconciliation() {
+      // TODO: Call backend to lock
+      alert('Lock action (not implemented)');
+    }
+    // Init
+    (async function(){
+      await fetchConfig();
+      await fetchEmployees();
+      await fetchReconciliation();
+      renderEmployeeList();
+      renderReconGrid();
+    })();
+  </script>
+</body>
+</html>

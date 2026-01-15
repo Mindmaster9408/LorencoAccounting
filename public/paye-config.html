@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PAYE Configuration</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+    .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+    h2 { color: #0066cc; margin-bottom: 24px; }
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+    .type-list { margin-bottom: 12px; }
+    .type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .type-row input[type=text] { width: 180px; padding: 4px 8px; }
+    .type-row .remove-btn { color: #d32f2f; background: none; border: none; cursor: pointer; font-size: 16px; }
+    .add-btn { background: #0066cc; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; cursor: pointer; font-size: 14px; margin-top: 8px; }
+    .add-btn:active { background: #004c99; }
+    .save-btn { background: #388e3c; color: #fff; border: none; border-radius: 4px; padding: 8px 24px; font-size: 16px; cursor: pointer; float: right; }
+    .save-btn:active { background: #256029; }
+    .default-label { color: #888; font-size: 13px; margin-left: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>PAYE Configuration</h2>
+    <form id="payeConfigForm">
+      <div class="section">
+        <div class="section-title">Income Types</div>
+        <div id="incomeTypesList" class="type-list"></div>
+        <button type="button" class="add-btn" onclick="addIncomeType()">Add Income</button>
+      </div>
+      <div class="section">
+        <div class="section-title">Deduction Types</div>
+        <div id="deductionTypesList" class="type-list"></div>
+        <button type="button" class="add-btn" onclick="addDeductionType()">Add Deduction</button>
+      </div>
+      <button type="submit" class="save-btn">Save Configuration</button>
+    </form>
+  </div>
+  <script>
+    // --- PAYE Config UI Logic ---
+    let incomeTypes = [];
+    let deductionTypes = [];
+    const defaultIncomeTypes = [ { key: 'basic_salary', label: 'Basic Salary', isDefault: true, isCustom: false } ];
+    const defaultDeductionTypes = [
+      { key: 'paye', label: 'PAYE', isDefault: true, isCustom: false },
+      { key: 'uif', label: 'UIF', isDefault: true, isCustom: false }
+    ];
+    // Fetch config from backend
+    async function fetchConfig() {
+      const res = await fetch('/api/paye/config');
+      const data = await res.json();
+      incomeTypes = data.incomeTypes.length ? data.incomeTypes : [...defaultIncomeTypes];
+      deductionTypes = data.deductionTypes.length ? data.deductionTypes : [...defaultDeductionTypes];
+      renderTypes();
+    }
+    function renderTypes() {
+      // Income
+      const incomeList = document.getElementById('incomeTypesList');
+      incomeList.innerHTML = '';
+      incomeTypes.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'type-row';
+        row.innerHTML = `<input type="text" value="${t.label}" ${t.isDefault ? 'readonly' : ''} onchange="incomeTypes[${idx}].label=this.value">` +
+          (t.isDefault ? '<span class="default-label">(default)</span>' : `<button type="button" class="remove-btn" onclick="removeIncomeType(${idx})">&times;</button>`);
+        incomeList.appendChild(row);
+      });
+      // Deduction
+      const deductionList = document.getElementById('deductionTypesList');
+      deductionList.innerHTML = '';
+      deductionTypes.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'type-row';
+        row.innerHTML = `<input type="text" value="${t.label}" ${t.isDefault ? 'readonly' : ''} onchange="deductionTypes[${idx}].label=this.value">` +
+          (t.isDefault ? '<span class="default-label">(default)</span>' : `<button type="button" class="remove-btn" onclick="removeDeductionType(${idx})">&times;</button>`);
+        deductionList.appendChild(row);
+      });
+    }
+    window.addIncomeType = function() {
+      const label = prompt('Enter new income type name:');
+      if (label) incomeTypes.push({ key: 'custom_' + Date.now(), label, isDefault: false, isCustom: true });
+      renderTypes();
+    }
+    window.addDeductionType = function() {
+      const label = prompt('Enter new deduction type name:');
+      if (label) deductionTypes.push({ key: 'custom_' + Date.now(), label, isDefault: false, isCustom: true });
+      renderTypes();
+    }
+    window.removeIncomeType = function(idx) {
+      if (!incomeTypes[idx].isDefault) incomeTypes.splice(idx, 1);
+      renderTypes();
+    }
+    window.removeDeductionType = function(idx) {
+      if (!deductionTypes[idx].isDefault) deductionTypes.splice(idx, 1);
+      renderTypes();
+    }
+    document.getElementById('payeConfigForm').onsubmit = async function(e) {
+      e.preventDefault();
+      await fetch('/api/paye/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incomeTypes, deductionTypes })
+      });
+      alert('Configuration saved!');
+    }
+    fetchConfig();
+  </script>
+</body>
+</html>
