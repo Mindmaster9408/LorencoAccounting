@@ -234,6 +234,17 @@ if (posRoutes) {
 }
 
 if (payrollRoutes) {
+  // SEAN × Payroll integration (mount BEFORE generic payroll so /api/payroll/sean/* matches first)
+  if (isModuleEnabled('sean')) {
+    const seanPayrollRoutes = require('./modules/payroll/routes/sean-integration');
+    app.use('/api/payroll/sean',
+      authenticateToken,
+      requireModule('payroll'),
+      seanPayrollRoutes
+    );
+    console.log('  🧠 SEAN × Payroll intelligence — ACTIVE');
+  }
+
   app.use('/api/payroll',
     authenticateToken,
     requireModule('payroll'),

@@ -290,6 +290,51 @@
             font-size: 0.95rem; margin-bottom: 20px; transition: border-color 0.2s;
         }
         .search-bar:focus { outline: none; border-color: #667eea; }
+
+        /* ─── SEAN AI STYLES ────────────────────────────────────────── */
+        .sean-panel { background: #f7fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; }
+        .sean-panel h3 { color: #667eea; font-size: 1.2rem; }
+        .sean-summary-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .sean-stat { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .sean-stat.green { background: #d4edda; color: #155724; }
+        .sean-stat.red { background: #f8d7da; color: #721c24; }
+        .sean-stat.orange { background: #fff3cd; color: #856404; }
+        .sean-stat.yellow { background: #fff3cd; color: #856404; }
+        .sean-stat.blue { background: #d1ecf1; color: #0c5460; }
+        .sean-stat.purple { background: #e8d5f5; color: #5b2c8c; }
+        .sean-alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; font-weight: 600; font-size: 0.95rem; }
+        .sean-alert.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .sean-alert.error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .sean-section { margin-top: 15px; }
+        .sean-section h4 { margin-bottom: 10px; }
+        .sean-item { padding: 12px 16px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #e0e0e0; background: white; }
+        .sean-item.error { border-left-color: #dc3545; }
+        .sean-item.warning { border-left-color: #ffc107; }
+        .sean-item.info { border-left-color: #667eea; }
+        .sean-item-header { font-weight: 600; color: #333; margin-bottom: 4px; }
+        .sean-item-body { font-size: 0.9rem; color: #555; }
+        .sean-employees { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
+        .emp-chip { background: #eee; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; color: #333; }
+        .severity-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .severity-badge.critical { background: #dc3545; color: white; }
+        .severity-badge.high { background: #e53e3e; color: white; }
+        .severity-badge.medium { background: #dd6b20; color: white; }
+        .severity-badge.low { background: #38a169; color: white; }
+        .severity-badge.info { background: #667eea; color: white; }
+        .sean-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        .sean-table th { background: #edf2f7; padding: 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #e2e8f0; }
+        .sean-table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        .confidence-bar { position: relative; background: #eee; border-radius: 10px; height: 20px; overflow: hidden; }
+        .confidence-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 10px; transition: width 0.5s; }
+        .confidence-bar span { position: relative; z-index: 1; font-size: 0.75rem; font-weight: 700; padding-left: 6px; line-height: 20px; }
+        .sean-spinner { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #667eea; border-radius: 50%; animation: sean-spin 0.8s linear infinite; display: inline-block; }
+        @keyframes sean-spin { to { transform: rotate(360deg); } }
+        .sean-tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .sean-tool-card { background: white; border-radius: 12px; padding: 20px; border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.3s; }
+        .sean-tool-card:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.15); }
+        .sean-tool-icon { font-size: 2rem; margin-bottom: 8px; }
+        .sean-tool-title { font-weight: 700; color: #333; margin-bottom: 4px; }
+        .sean-tool-desc { font-size: 0.85rem; color: #777; }
     </style>
     <link rel="stylesheet" href="css/mobile-responsive.css">
 </head>
@@ -337,6 +382,7 @@
             <div class="top-tabs">
                 <button class="top-tab active" onclick="switchTopTab('payslips')">📄 Payslips</button>
                 <button class="top-tab" onclick="switchTopTab('payruns')">💰 Payroll Runs</button>
+                <button class="top-tab" onclick="switchTopTab('sean')">🧠 SEAN Insights</button>
             </div>
 
             <!-- PAYSLIPS TAB -->
@@ -358,6 +404,45 @@
 
                 <!-- Historical Pay Runs -->
                 <div id="historical-payruns"></div>
+            </div>
+
+            <!-- SEAN INSIGHTS TAB -->
+            <div id="sean-view" class="tab-view">
+                <div style="margin-bottom:20px;">
+                    <h2 style="color:#667eea; margin-bottom:5px;">🧠 SEAN AI — Payroll Intelligence</h2>
+                    <p style="color:#888; font-size:0.9rem;">Privacy-first payroll analysis. All processing happens locally — zero external API costs.</p>
+                </div>
+
+                <div class="sean-tools-grid">
+                    <div class="sean-tool-card" onclick="seanRunPreflight()">
+                        <div class="sean-tool-icon">🛡️</div>
+                        <div class="sean-tool-title">Pre-Flight Checks</div>
+                        <div class="sean-tool-desc">Scan payroll for errors before processing — catch mistakes SEAN has learned to spot.</div>
+                    </div>
+                    <div class="sean-tool-card" onclick="seanShowTaxOptimizations()">
+                        <div class="sean-tool-icon">💰</div>
+                        <div class="sean-tool-title">Tax Optimizations</div>
+                        <div class="sean-tool-desc">SA-specific tax saving strategies — travel allowances, pension, medical aid credits.</div>
+                    </div>
+                    <div class="sean-tool-card" onclick="seanShowForecast()">
+                        <div class="sean-tool-icon">📊</div>
+                        <div class="sean-tool-title">Cash Flow Forecast</div>
+                        <div class="sean-tool-desc">Predict payroll costs for the next 3–12 months including bonuses & increases.</div>
+                    </div>
+                    <div class="sean-tool-card" onclick="seanCheckCompliance()">
+                        <div class="sean-tool-icon">⚖️</div>
+                        <div class="sean-tool-title">Compliance Audit</div>
+                        <div class="sean-tool-desc">Check against SA labour laws — BCEA, UIF Act, National Minimum Wage, Income Tax Act.</div>
+                    </div>
+                    <div class="sean-tool-card" onclick="seanShowEmployeeCostPicker()">
+                        <div class="sean-tool-icon">👤</div>
+                        <div class="sean-tool-title">Employee Cost Analysis</div>
+                        <div class="sean-tool-desc">True cost breakdown for any employee — beyond salary, including UIF, SDL, WCA.</div>
+                    </div>
+                </div>
+
+                <!-- Results Area -->
+                <div id="sean-results" style="display:none;"></div>
             </div>
         </div>
     </div>
@@ -547,6 +632,7 @@
     <script src="js/audit.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/payroll-engine.js"></script>
+    <script src="js/sean-helper.js"></script>
     <script>
         let currentCompanyId = null;
         let employees = [];
@@ -622,6 +708,96 @@
             document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById(tab + '-view').classList.add('active');
+        }
+
+        // ========== SEAN AI FUNCTIONS ==========
+        async function seanRunPreflight() {
+            // Find the latest pending payrun period
+            const stored = localStorage.getItem('payruns_' + currentCompanyId);
+            const runs = stored ? JSON.parse(stored) : [];
+            const pending = runs.find(r => r.status === 'pending' || r.status === 'draft');
+            const periodId = pending ? pending.id : '1';
+
+            SeanPayrollHelper.showLoading('sean-results', 'Running pre-flight checks on payroll...');
+            try {
+                const result = await SeanPayrollHelper.runPreflightChecks(periodId);
+                SeanPayrollHelper.displayPreflightResults(result, 'sean-results');
+            } catch (err) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">❌ ' + err.message + '</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+            }
+        }
+
+        async function seanShowTaxOptimizations() {
+            SeanPayrollHelper.showLoading('sean-results', 'Analyzing SA tax optimization opportunities...');
+            try {
+                const result = await SeanPayrollHelper.getTaxOptimizations();
+                SeanPayrollHelper.displayTaxOptimizations(result, 'sean-results');
+            } catch (err) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">❌ ' + err.message + '</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+            }
+        }
+
+        async function seanShowForecast() {
+            SeanPayrollHelper.showLoading('sean-results', 'Forecasting payroll cash flow...');
+            try {
+                const result = await SeanPayrollHelper.getCashFlowForecast(6);
+                SeanPayrollHelper.displayCashFlowForecast(result, 'sean-results');
+            } catch (err) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">❌ ' + err.message + '</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+            }
+        }
+
+        async function seanCheckCompliance() {
+            SeanPayrollHelper.showLoading('sean-results', 'Checking SA labour law compliance...');
+            try {
+                const result = await SeanPayrollHelper.checkCompliance();
+                SeanPayrollHelper.displayComplianceReport(result, 'sean-results');
+            } catch (err) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">❌ ' + err.message + '</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+            }
+        }
+
+        function seanShowEmployeeCostPicker() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            const emps = stored ? JSON.parse(stored) : [];
+            if (emps.length === 0) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">No employees found. Add employees first.</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+                return;
+            }
+            let html = '<div class="sean-panel"><h3 style="margin-bottom:15px;">🧠 Select Employee for Cost Analysis</h3>';
+            html += '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px;">';
+            emps.forEach(function(emp) {
+                html += '<div class="sean-tool-card" onclick="seanAnalyzeEmployee(\'' + emp.id + '\')" style="padding:15px;">';
+                html += '<div style="font-weight:700;">' + (emp.first_name || '') + ' ' + (emp.last_name || '') + '</div>';
+                html += '<div style="font-size:0.85rem;color:#667eea;">' + (emp.employee_number || '') + '</div>';
+                html += '<div style="font-size:0.8rem;color:#999;">' + (emp.position || emp.department || '') + '</div>';
+                html += '</div>';
+            });
+            html += '</div></div>';
+            document.getElementById('sean-results').innerHTML = html;
+            document.getElementById('sean-results').style.display = 'block';
+        }
+
+        async function seanAnalyzeEmployee(employeeId) {
+            SeanPayrollHelper.showLoading('sean-results', 'Analyzing true employee cost...');
+            try {
+                const result = await SeanPayrollHelper.analyzeEmployeeCost(employeeId);
+                SeanPayrollHelper.displayEmployeeCost(result, 'sean-results');
+            } catch (err) {
+                document.getElementById('sean-results').innerHTML =
+                    '<div class="sean-panel"><div class="sean-alert error">❌ ' + err.message + '</div></div>';
+                document.getElementById('sean-results').style.display = 'block';
+            }
         }
 
         // ========== PAYSLIPS TAB ==========
