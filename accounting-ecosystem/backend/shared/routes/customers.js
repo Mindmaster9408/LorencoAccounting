@@ -1,0 +1,299 @@
+/**
+ * ============================================================================
+ * Shared Customers Routes - Top-level /api/customers
+ * ============================================================================
+ * Customer CRUD, search, loyalty, and account management.
+ * Accessible from POS and other modules.
+ * ============================================================================
+ */
+
+const express = require('express');
+const { supabase } = require('../../config/database');
+const { authenticateToken, requireCompany } = require('../../middleware/auth');
+const { auditFromReq } = require('../../middleware/audit');
+
+const router = express.Router();
+
+router.use(authenticateToken);
+router.use(requireCompany);
+
+/**
+ * GET /api/customers
+ * List customers with search and filters
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { search, active_only, group, page = 1, limit = 100 } = req.query;
+
+    let query = supabase
+      .from('customers')
+      .select('*', { count: 'exact' })
+      .eq('company_id', req.companyId);
+
+    if (active_only !== 'false') query = query.eq('is_active', true);
+    if (group) query = query.eq('customer_group', group);
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%,contact_number.ilike.%${search}%`);
+    }
+
+    query = query.order('name');
+
+    const { data, error, count } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ customers: data || [], total: count });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/customers/search
+ * Quick search for customer autocomplete
+ */
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ customers: [] });
+
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, name, phone, email, customer_number, loyalty_points, current_balance')
+      .eq('company_id', req.companyId)
+      .eq('is_active', true)
+      .or(`name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%,customer_number.ilike.%${q}%`)
+      .order('name')
+      .limit(20);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ customers: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/customers/:id
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Customer not found' });
+    res.json({ customer: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/customers
+ */
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, phone, address_line_1, id_number, customer_group, notes, contact_number } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
+
+    const customerNumber = `C-${Date.now().toString(36).toUpperCase()}`;
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({
+        company_id: req.companyId,
+        name,
+        email: email || null,
+        phone: phone || contact_number || null,
+        contact_number: contact_number || phone || null,
+        address_line_1: address_line_1 || null,
+        id_number: id_number || null,
+        customer_number: customerNumber,
+        customer_group: customer_group || 'retail',
+        loyalty_points: 0,
+        current_balance: 0,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    await auditFromReq(req, 'CREATE', 'customer', data.id, { module: 'pos', newValue: data });
+    res.status(201).json({ customer: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * PUT /api/customers/:id
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const allowed = ['name', 'email', 'phone', 'contact_number', 'address_line_1', 'id_number', 'customer_group', 'notes', 'is_active'];
+    const updates = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update(updates)
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ customer: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/customers/:id/loyalty
+ * Get loyalty info for a customer
+ */
+router.get('/:id/loyalty', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, name, loyalty_points, customer_group')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Customer not found' });
+
+    let tier = 'bronze';
+    if (data.loyalty_points >= 5000) tier = 'gold';
+    else if (data.loyalty_points >= 1000) tier = 'silver';
+
+    res.json({ loyalty: { ...data, tier } });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/customers/:id/account
+ * Get account balance for a customer
+ */
+router.get('/:id/account', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, name, current_balance, credit_limit')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Customer not found' });
+    res.json({ account: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/customers/:id/loyalty/earn
+ * Add loyalty points
+ */
+router.post('/:id/loyalty/earn', async (req, res) => {
+  try {
+    const { points } = req.body;
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('loyalty_points')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+    const newPoints = (customer.loyalty_points || 0) + (points || 0);
+    const { data, error } = await supabase
+      .from('customers')
+      .update({ loyalty_points: newPoints })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ customer: data, points_earned: points, total_points: newPoints });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/customers/:id/loyalty/redeem
+ * Redeem loyalty points
+ */
+router.post('/:id/loyalty/redeem', async (req, res) => {
+  try {
+    const { points } = req.body;
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('loyalty_points')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    if ((customer.loyalty_points || 0) < points) {
+      return res.status(400).json({ error: 'Insufficient loyalty points' });
+    }
+
+    const newPoints = customer.loyalty_points - points;
+    const { data, error } = await supabase
+      .from('customers')
+      .update({ loyalty_points: newPoints })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ customer: data, points_redeemed: points, total_points: newPoints });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/customers/:id/account/payment
+ * Record a payment against a customer account
+ */
+router.post('/:id/account/payment', async (req, res) => {
+  try {
+    const { amount, reference } = req.body;
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('current_balance')
+      .eq('id', req.params.id)
+      .eq('company_id', req.companyId)
+      .single();
+
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+    const newBalance = (customer.current_balance || 0) - (amount || 0);
+    const { data, error } = await supabase
+      .from('customers')
+      .update({ current_balance: newBalance })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ customer: data, payment: amount, new_balance: newBalance });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+module.exports = router;

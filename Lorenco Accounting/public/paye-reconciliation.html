@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PAYE Reconciliation - Lorenco Accounting</title>
+  <script src="js/navigation.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; background: #f8f9fa; }
+    .content { padding: 20px; }
+
+    .header-section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .header-section h1 { font-size: 18px; color: #333; margin-bottom: 10px; }
+    .company-name { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+    .period-info { font-size: 12px; color: #666; margin-bottom: 15px; }
+
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+    .toolbar select, .toolbar input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
+    .toolbar button { padding: 6px 16px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: 600; }
+    .btn-save { background: #0066cc; color: white; }
+    .btn-approve { background: #28a745; color: white; }
+    .btn-lock { background: #dc3545; color: white; }
+    .btn-config { background: #6c757d; color: white; }
+    .btn-save:hover { background: #0052a3; }
+    .btn-approve:hover { background: #218838; }
+    .btn-lock:hover { background: #c82333; }
+
+    .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
+    .status-draft { background: #e3f2fd; color: #1976d2; }
+    .status-approved { background: #c8e6c9; color: #388e3c; }
+    .status-locked { background: #ffecb3; color: #f57c00; }
+
+    .recon-container { background: #fff; padding: 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 10px; background: white; }
+    th, td { border: 1px solid #000; padding: 4px 6px; text-align: right; white-space: nowrap; }
+    th { background: #4472c4; color: white; font-weight: bold; text-align: center; position: sticky; top: 0; z-index: 10; }
+
+    .employee-header { background: #f0f0f0; color: #333; font-weight: bold; text-align: left; cursor: pointer; -webkit-user-select: none; user-select: none; border-bottom: 2px solid #4472c4; }
+    .employee-header:hover { background: #e0e0e0; }
+    .employee-header .expand-icon { display: inline-block; width: 20px; text-align: center; font-weight: bold; margin-right: 8px; }
+    .employee-data { display: none; }
+    .employee-data.expanded { display: table-row; }
+    .row-label { text-align: left; font-weight: 600; background: #fff; padding-left: 20px; }
+    .section-label { background: #d9e1f2; font-weight: bold; text-align: left; padding-left: 10px; }
+
+    .total-row { background: #fff2cc; font-weight: bold; }
+    .netto-row { background: #c6e0b4; font-weight: bold; }
+    .variance-row { background: #fce4d6; font-weight: bold; }
+
+    td input { width: 100%; border: none; padding: 2px 4px; text-align: right; background: transparent; font-size: 10px; }
+    td input:focus { outline: 1px solid #0066cc; background: #f0f8ff; }
+    td.readonly, td.readonly input { background: #f0f0f0; color: #666; cursor: not-allowed; }
+
+    .grand-total-row { background: #4472c4; color: white; font-weight: bold; font-size: 11px; }
+
+    .month-col { min-width: 70px; }
+    .name-col { min-width: 200px; text-align: left; padding-left: 10px; background: #fff; position: sticky; left: 0; z-index: 5; }
+  </style>
+</head>
+<body>
+  <div class="content">
+  <div class="header-section">
+    <h1>PAYE Reconciliation</h1>
+    <div class="company-name" id="companyName">THEKSTRA BAKKERT (Pty) Ltd</div>
+    <div class="period-info">Salary Variantities: <span id="periodDates">2025-03 - 2026-02</span></div>
+    <div style="margin-top: 10px;">
+      Status: <span class="status-badge status-draft" id="statusBadge">DRAFT</span>
+    </div>
+  </div>
+
+  <div class="header-section">
+    <div class="toolbar">
+      <label>Period:</label>
+      <select id="periodSelect" onchange="loadPeriod()">
+        <option value="2025-2026">2025/2026 Tax Year</option>
+      </select>
+      <button class="btn-config" onclick="window.location.href='paye-config.html'">⚙ Configuration</button>
+      <div style="flex: 1;"></div>
+      <button id="saveBtn" class="btn-save" onclick="saveDraft()">💾 Save Draft</button>
+      <button id="approveBtn" class="btn-approve" onclick="approveRecon()">✓ Approve</button>
+      <button id="lockBtn" class="btn-lock" onclick="lockRecon()">🔒 Lock</button>
+    </div>
+  </div>
+
+  <div class="recon-container">
+    <table id="reconTable">
+      <thead id="reconHead">
+        <!-- Will be populated by JavaScript -->
+      </thead>
+      <tbody id="reconBody">
+        <!-- Will be populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <script>
+    const months = ['MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB'];
+    const monthKeys = ['2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02'];
+
+    let employees = [];
+    let config = { incomeTypes: [], deductionTypes: [] };
+    let reconData = {}; // { employeeId: { monthKey: { income: {}, deductions: {} } } }
+    let emp201Data = {}; // { monthKey: { paye: 0, uif: 0, sdl: 0 } }
+    let status = 'DRAFT';
+    let currentPeriodId = 1;
+    let currentReconId = null;
+
+    async function init() {
+      await loadConfig();
+      await loadEmployees();
+      renderTable();
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/paye/config', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          config.incomeTypes = data.incomeTypes || [];
+          config.deductionTypes = data.deductionTypes || [];
+        } else {
+          throw new Error('Config API failed');
+        }
+      } catch (err) {
+        console.warn('Config load failed, using defaults');
+        config.incomeTypes = [
+          { key: 'basic_salary', label: 'Basic Salary', isDefault: true },
+          { key: 'overtime', label: 'Overtime', isDefault: false },
+          { key: 'allowance', label: 'Allowance', isDefault: false },
+          { key: 'bonus', label: 'Bonus', isDefault: false },
+          { key: 'commission', label: 'Commission', isDefault: false }
+        ];
+        config.deductionTypes = [
+          { key: 'paye', label: 'PAYE', isDefault: true },
+          { key: 'uif', label: 'UIF', isDefault: true },
+          { key: 'pension', label: 'Pension Fund', isDefault: false },
+          { key: 'medical_aid', label: 'Medical Aid', isDefault: false },
+          { key: 'garnishee', label: 'Garnishee Order', isDefault: false }
+        ];
+      }
+    }
+
+    async function loadEmployees() {
+      try {
+        const res = await fetch(`/api/paye/reconciliation/draft/${currentPeriodId}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          employees = data.employees || [];
+          status = data.status || 'DRAFT';
+        } else {
+          throw new Error('Employees API failed');
+        }
+      } catch (err) {
+        console.warn('Employees load failed, using demo data');
+        employees = [
+          { id: 1, employeeCode: 'EMP001', firstName: 'John', lastName: 'Smith', isActive: true },
+          { id: 2, employeeCode: 'EMP002', firstName: 'Sarah', lastName: 'Johnson', isActive: true },
+          { id: 3, employeeCode: 'EMP003', firstName: 'Michael', lastName: 'Williams', isActive: true },
+          { id: 4, employeeCode: 'EMP004', firstName: 'Emma', lastName: 'Brown', isActive: true },
+          { id: 5, employeeCode: 'EMP005', firstName: 'David', lastName: 'Jones', isActive: true }
+        ];
+      }
+
+      // Initialize emp201Data structure
+      monthKeys.forEach(mk => {
+        emp201Data[mk] = { paye: 0, uif: 0, sdl: 0 };
+      });
+
+      // Initialize data structure
+      employees.forEach(emp => {
+        reconData[emp.id] = {};
+        monthKeys.forEach((mk, idx) => {
+          reconData[emp.id][mk] = {
+            income: {},
+            deductions: {},
+            gross: 0,
+            totalDed: 0,
+            netto: 0,
+            bank: 0,
+            diff: 0
+          };
+
+          // Add demo data for all employees
+          const baseData = [
+            { basic: 25000, overtime: 1500, allowance: 2000, paye: 4250, uif: 148.50, pension: 2500, medical: 1850, garnishee: 0, bank: 19000 },
+            { basic: 18000, overtime: 1200, allowance: 1500, paye: 2800, uif: 107.10, pension: 1800, medical: 1650, garnishee: 500, bank: 13500 },
+            { basic: 22000, overtime: 1800, allowance: 1800, paye: 3600, uif: 130.90, pension: 2200, medical: 1750, garnishee: 0, bank: 16500 },
+            { basic: 16000, overtime: 1000, allowance: 1200, paye: 2400, uif: 95.20, pension: 1600, medical: 1500, garnishee: 300, bank: 12000 },
+            { basic: 30000, overtime: 2000, allowance: 2500, paye: 5200, uif: 178.50, pension: 3000, medical: 2000, garnishee: 0, bank: 22000 }
+          ];
+
+          if (emp.id >= 1 && emp.id <= 5) {
+            const data = baseData[emp.id - 1];
+            reconData[emp.id][mk].income = {
+              basic_salary: data.basic + (idx * 100),
+              overtime: idx % 2 === (emp.id % 2) ? data.overtime : 0,
+              allowance: data.allowance,
+              bonus: idx === 11 ? data.basic * 0.2 : 0,
+              commission: idx % 3 === 0 ? (emp.id * 200) : 0
+            };
+            reconData[emp.id][mk].deductions = {
+              paye: data.paye + (idx * 15),
+              uif: data.uif,
+              pension: data.pension,
+              medical_aid: data.medical,
+              garnishee: data.garnishee
+            };
+            reconData[emp.id][mk].bank = data.bank + (idx * 50);
+          }
+        });
+      });
+
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = status;
+      badge.className = 'status-badge status-' + status.toLowerCase();
+
+      const readonly = status !== 'DRAFT';
+      document.getElementById('saveBtn').disabled = readonly;
+      document.getElementById('approveBtn').disabled = status !== 'DRAFT';
+      document.getElementById('lockBtn').disabled = status !== 'APPROVED';
+    }
+
+    function renderTable() {
+      console.log('renderTable called');
+      console.log('Employees:', employees);
+      console.log('Config:', config);
+      console.log('ReconData:', reconData);
+
+      const thead = document.getElementById('reconHead');
+      const tbody = document.getElementById('reconBody');
+
+      // Build header row with all income types, gross, deduction types, netto, bank, diff
+      let headerRow = '<tr><th class="name-col">Month</th>';
+
+      // Income columns
+      config.incomeTypes.forEach(inc => {
+        headerRow += `<th>${inc.label}</th>`;
+      });
+
+      // Gross Income
+      headerRow += '<th class="total-row">Gross Income</th>';
+
+      // Deduction columns
+      config.deductionTypes.forEach(ded => {
+        headerRow += `<th>${ded.label}</th>`;
+      });
+
+      // Totals
+      headerRow += '<th class="total-row">Total Deductions</th>';
+      headerRow += '<th class="netto-row">Netto</th>';
+      headerRow += '<th>Bank</th>';
+      headerRow += '<th class="variance-row">Difference</th>';
+      headerRow += '</tr>';
+
+      thead.innerHTML = headerRow;
+      tbody.innerHTML = '';
+
+      employees.forEach(emp => {
+        // Employee header row spanning all columns
+        const empRow = tbody.insertRow();
+        empRow.className = 'employee-header';
+        empRow.onclick = () => toggleEmployee(emp.id);
+        let cell = empRow.insertCell();
+        cell.className = 'name-col';
+        cell.innerHTML = `<span class="expand-icon" id="icon-${emp.id}">▶</span>${emp.firstName} ${emp.lastName}`;
+        cell.colSpan = 1 + config.incomeTypes.length + 1 + config.deductionTypes.length + 1 + 1 + 1 + 1;
+
+        // Create a row for each month
+        monthKeys.forEach((mk, idx) => {
+          const monthRow = tbody.insertRow();
+          monthRow.className = `employee-data emp-${emp.id}`;
+
+          // Month name cell
+          let monthCell = monthRow.insertCell();
+          monthCell.className = 'name-col';
+          monthCell.textContent = months[idx];
+
+          // Income type cells
+          config.incomeTypes.forEach(inc => {
+            let cell = monthRow.insertCell();
+            const val = reconData[emp.id][mk].income[inc.key] || 0;
+            cell.innerHTML = status === 'DRAFT'
+              ? `<input type="number" step="0.01" value="${val||''}" onchange="updateIncome(${emp.id},'${mk}','${inc.key}',this.value)">`
+              : (val ? val.toFixed(2) : '-');
+          });
+
+          // Gross Income cell
+          let grossCell = monthRow.insertCell();
+          grossCell.className = 'total-row';
+          const gross = calculateGross(emp.id, mk);
+          reconData[emp.id][mk].gross = gross;
+          grossCell.textContent = gross ? gross.toFixed(2) : '-';
+
+          // Deduction type cells
+          config.deductionTypes.forEach(ded => {
+            let cell = monthRow.insertCell();
+            const val = reconData[emp.id][mk].deductions[ded.key] || 0;
+            cell.innerHTML = status === 'DRAFT'
+              ? `<input type="number" step="0.01" value="${val||''}" onchange="updateDeduction(${emp.id},'${mk}','${ded.key}',this.value)">`
+              : (val ? val.toFixed(2) : '-');
+          });
+
+          // Total Deductions cell
+          let totalDedCell = monthRow.insertCell();
+          totalDedCell.className = 'total-row';
+          const totalDed = calculateTotalDed(emp.id, mk);
+          reconData[emp.id][mk].totalDeductions = totalDed;
+          totalDedCell.textContent = totalDed ? totalDed.toFixed(2) : '-';
+
+          // Netto cell
+          let nettoCell = monthRow.insertCell();
+          nettoCell.className = 'netto-row';
+          const netto = calculateNetto(emp.id, mk);
+          reconData[emp.id][mk].netto = netto;
+          nettoCell.textContent = netto ? netto.toFixed(2) : '-';
+
+          // Bank cell
+          let bankCell = monthRow.insertCell();
+          const bank = reconData[emp.id][mk].bank || 0;
+          bankCell.innerHTML = status === 'DRAFT'
+            ? `<input type="number" step="0.01" value="${bank||''}" onchange="updateBank(${emp.id},'${mk}',this.value)">`
+            : (bank ? bank.toFixed(2) : '-');
+
+          // Difference cell
+          let diffCell = monthRow.insertCell();
+          diffCell.className = 'variance-row';
+          const diff = calculateDiff(emp.id, mk);
+          reconData[emp.id][mk].diff = diff;
+          diffCell.textContent = diff ? diff.toFixed(2) : '-';
+        });
+
+        // TOTAL row for employee
+        const totalRow = tbody.insertRow();
+        totalRow.className = `total-row employee-data emp-${emp.id}`;
+        let totalLabel = totalRow.insertCell();
+        totalLabel.className = 'name-col';
+        totalLabel.textContent = 'TOTAL';
+
+        // Income totals
+        config.incomeTypes.forEach(inc => {
+          let cell = totalRow.insertCell();
+          let total = 0;
+          monthKeys.forEach(mk => {
+            total += parseFloat(reconData[emp.id][mk].income[inc.key]) || 0;
+          });
+          cell.textContent = total ? total.toFixed(2) : '-';
+        });
+
+        // Gross total
+        let grossTotal = 0;
+        monthKeys.forEach(mk => {
+          grossTotal += calculateGross(emp.id, mk);
+        });
+        let grossTotalCell = totalRow.insertCell();
+        grossTotalCell.textContent = grossTotal ? grossTotal.toFixed(2) : '-';
+
+        // Deduction totals
+        config.deductionTypes.forEach(ded => {
+          let cell = totalRow.insertCell();
+          let total = 0;
+          monthKeys.forEach(mk => {
+            total += parseFloat(reconData[emp.id][mk].deductions[ded.key]) || 0;
+          });
+          cell.textContent = total ? total.toFixed(2) : '-';
+        });
+
+        // Total deductions sum
+        let totalDedSum = 0;
+        monthKeys.forEach(mk => {
+          totalDedSum += calculateTotalDed(emp.id, mk);
+        });
+        let totalDedCell = totalRow.insertCell();
+        totalDedCell.textContent = totalDedSum ? totalDedSum.toFixed(2) : '-';
+
+        // Netto total
+        let nettoTotal = 0;
+        monthKeys.forEach(mk => {
+          nettoTotal += calculateNetto(emp.id, mk);
+        });
+        let nettoTotalCell = totalRow.insertCell();
+        nettoTotalCell.textContent = nettoTotal ? nettoTotal.toFixed(2) : '-';
+
+        // Bank total
+        let bankTotal = 0;
+        monthKeys.forEach(mk => {
+          bankTotal += parseFloat(reconData[emp.id][mk].bank) || 0;
+        });
+        let bankTotalCell = totalRow.insertCell();
+        bankTotalCell.textContent = bankTotal ? bankTotal.toFixed(2) : '-';
+
+        // Difference total
+        let diffTotal = 0;
+        monthKeys.forEach(mk => {
+          diffTotal += calculateDiff(emp.id, mk);
+        });
+        let diffTotalCell = totalRow.insertCell();
+        diffTotalCell.textContent = diffTotal ? diffTotal.toFixed(2) : '-';
+
+        // Empty row for spacing
+        const emptyRow = tbody.insertRow();
+        emptyRow.className = `employee-data emp-${emp.id}`;
+        emptyRow.style.height = '10px';
+        let emptyCell = emptyRow.insertCell();
+        emptyCell.colSpan = 1 + config.incomeTypes.length + 1 + config.deductionTypes.length + 1 + 1 + 1 + 1;
+      });
+
+      // === COMPANY SUMMARY SECTIONS ===
+      renderCompanySummary(tbody);
+      renderEMP201Section(tbody);
+      renderDifferencesSection(tbody);
+    }
+
+    function renderCompanySummary(tbody) {
+      // Add spacing
+      const spacingRow = tbody.insertRow();
+      spacingRow.style.height = '20px';
+      let spacingCell = spacingRow.insertCell();
+      spacingCell.colSpan = 20;
+
+      // Section header
+      const headerRow = tbody.insertRow();
+      headerRow.className = 'section-label';
+      let headerCell = headerRow.insertCell();
+      headerCell.className = 'name-col';
+      headerCell.textContent = 'COMPANY SUMMARY - MONTHLY TOTALS';
+      headerCell.colSpan = 20;
+      headerCell.style.background = '#4472c4';
+      headerCell.style.color = 'white';
+      headerCell.style.fontWeight = 'bold';
+      headerCell.style.textAlign = 'center';
+      headerCell.style.fontSize = '12px';
+      headerCell.style.padding = '8px';
+
+      // Summary header row
+      const summaryHeaderRow = tbody.insertRow();
+      let hMonth = summaryHeaderRow.insertCell();
+      hMonth.className = 'name-col';
+      hMonth.textContent = 'Month';
+      hMonth.style.background = '#d9e1f2';
+      hMonth.style.fontWeight = 'bold';
+
+      let hGross = summaryHeaderRow.insertCell();
+      hGross.textContent = 'Gross Salary';
+      hGross.style.background = '#d9e1f2';
+      hGross.style.fontWeight = 'bold';
+
+      let hPaye = summaryHeaderRow.insertCell();
+      hPaye.textContent = 'PAYE';
+      hPaye.style.background = '#d9e1f2';
+      hPaye.style.fontWeight = 'bold';
+
+      let hUif = summaryHeaderRow.insertCell();
+      hUif.textContent = 'UIF';
+      hUif.style.background = '#d9e1f2';
+      hUif.style.fontWeight = 'bold';
+
+      let hSdl = summaryHeaderRow.insertCell();
+      hSdl.textContent = 'SDL';
+      hSdl.style.background = '#d9e1f2';
+      hSdl.style.fontWeight = 'bold';
+
+      let hTotal = summaryHeaderRow.insertCell();
+      hTotal.textContent = 'Total';
+      hTotal.style.background = '#d9e1f2';
+      hTotal.style.fontWeight = 'bold';
+
+      // Calculate monthly totals for all employees
+      monthKeys.forEach((mk, idx) => {
+        const monthRow = tbody.insertRow();
+
+        // Month name
+        let monthCell = monthRow.insertCell();
+        monthCell.className = 'name-col';
+        monthCell.textContent = months[idx];
+
+        // Calculate totals across all employees
+        let totalGross = 0;
+        let totalPaye = 0;
+        let totalUif = 0;
+
+        employees.forEach(emp => {
+          totalGross += calculateGross(emp.id, mk);
+          totalPaye += reconData[emp.id][mk].deductions['paye'] || 0;
+          totalUif += reconData[emp.id][mk].deductions['uif'] || 0;
+        });
+
+        // UIF x 2 (employee + employer contribution)
+        const uifTotal = totalUif * 2;
+
+        // SDL (Skills Development Levy) = 1% of gross salary
+        const sdl = totalGross * 0.01;
+
+        // Total = PAYE + UIF + SDL
+        const total = totalPaye + uifTotal + sdl;
+
+        // Gross Salary cell
+        let grossCell = monthRow.insertCell();
+        grossCell.textContent = totalGross.toFixed(2);
+        grossCell.style.background = '#fff2cc';
+
+        // PAYE cell
+        let payeCell = monthRow.insertCell();
+        payeCell.textContent = totalPaye.toFixed(2);
+
+        // UIF cell
+        let uifCell = monthRow.insertCell();
+        uifCell.textContent = uifTotal.toFixed(2);
+
+        // SDL cell
+        let sdlCell = monthRow.insertCell();
+        sdlCell.textContent = sdl.toFixed(2);
+
+        // Total cell
+        let totalCell = monthRow.insertCell();
+        totalCell.textContent = total.toFixed(2);
+        totalCell.style.background = '#c6e0b4';
+        totalCell.style.fontWeight = 'bold';
+      });
+
+      // TOTAL row for summary
+      const summaryTotalRow = tbody.insertRow();
+      summaryTotalRow.className = 'total-row';
+      let totalLabel = summaryTotalRow.insertCell();
+      totalLabel.className = 'name-col';
+      totalLabel.textContent = 'TOTAL';
+
+      // Calculate year totals
+      let yearGross = 0;
+      let yearPaye = 0;
+      let yearUif = 0;
+      let yearSdl = 0;
+
+      monthKeys.forEach(mk => {
+        employees.forEach(emp => {
+          yearGross += calculateGross(emp.id, mk);
+          yearPaye += reconData[emp.id][mk].deductions['paye'] || 0;
+          yearUif += reconData[emp.id][mk].deductions['uif'] || 0;
+        });
+      });
+
+      yearUif = yearUif * 2;
+      yearSdl = yearGross * 0.01;
+      const yearTotal = yearPaye + yearUif + yearSdl;
+
+      let grossTotalCell = summaryTotalRow.insertCell();
+      grossTotalCell.textContent = yearGross.toFixed(2);
+
+      let payeTotalCell = summaryTotalRow.insertCell();
+      payeTotalCell.textContent = yearPaye.toFixed(2);
+
+      let uifTotalCell = summaryTotalRow.insertCell();
+      uifTotalCell.textContent = yearUif.toFixed(2);
+
+      let sdlTotalCell = summaryTotalRow.insertCell();
+      sdlTotalCell.textContent = yearSdl.toFixed(2);
+
+      let totalTotalCell = summaryTotalRow.insertCell();
+      totalTotalCell.textContent = yearTotal.toFixed(2);
+    }
+
+    function renderEMP201Section(tbody) {
+      // Add spacing
+      const spacingRow = tbody.insertRow();
+      spacingRow.style.height = '20px';
+      let spacingCell = spacingRow.insertCell();
+      spacingCell.colSpan = 20;
+
+      // Section header
+      const headerRow = tbody.insertRow();
+      headerRow.className = 'section-label';
+      let headerCell = headerRow.insertCell();
+      headerCell.className = 'name-col';
+      headerCell.textContent = 'EMP201 SUBMITTED TO SARS';
+      headerCell.colSpan = 20;
+      headerCell.style.background = '#28a745';
+      headerCell.style.color = 'white';
+      headerCell.style.fontWeight = 'bold';
+      headerCell.style.textAlign = 'center';
+      headerCell.style.fontSize = '12px';
+      headerCell.style.padding = '8px';
+
+      // Header row
+      const emp201HeaderRow = tbody.insertRow();
+      let hMonth = emp201HeaderRow.insertCell();
+      hMonth.className = 'name-col';
+      hMonth.textContent = 'Month';
+      hMonth.style.background = '#d4edda';
+      hMonth.style.fontWeight = 'bold';
+
+      let hPaye = emp201HeaderRow.insertCell();
+      hPaye.textContent = 'PAYE';
+      hPaye.style.background = '#d4edda';
+      hPaye.style.fontWeight = 'bold';
+
+      let hUif = emp201HeaderRow.insertCell();
+      hUif.textContent = 'UIF';
+      hUif.style.background = '#d4edda';
+      hUif.style.fontWeight = 'bold';
+
+      let hSdl = emp201HeaderRow.insertCell();
+      hSdl.textContent = 'SDL';
+      hSdl.style.background = '#d4edda';
+      hSdl.style.fontWeight = 'bold';
+
+      let hTotal = emp201HeaderRow.insertCell();
+      hTotal.textContent = 'Total';
+      hTotal.style.background = '#d4edda';
+      hTotal.style.fontWeight = 'bold';
+
+      // Monthly input rows
+      monthKeys.forEach((mk, idx) => {
+        const monthRow = tbody.insertRow();
+
+        // Month name
+        let monthCell = monthRow.insertCell();
+        monthCell.className = 'name-col';
+        monthCell.textContent = months[idx];
+
+        // PAYE input
+        let payeCell = monthRow.insertCell();
+        payeCell.innerHTML = status === 'DRAFT'
+          ? `<input type="number" step="0.01" value="${emp201Data[mk].paye||''}" onchange="updateEMP201('${mk}','paye',this.value)">`
+          : (emp201Data[mk].paye ? emp201Data[mk].paye.toFixed(2) : '-');
+
+        // UIF input
+        let uifCell = monthRow.insertCell();
+        uifCell.innerHTML = status === 'DRAFT'
+          ? `<input type="number" step="0.01" value="${emp201Data[mk].uif||''}" onchange="updateEMP201('${mk}','uif',this.value)">`
+          : (emp201Data[mk].uif ? emp201Data[mk].uif.toFixed(2) : '-');
+
+        // SDL input
+        let sdlCell = monthRow.insertCell();
+        sdlCell.innerHTML = status === 'DRAFT'
+          ? `<input type="number" step="0.01" value="${emp201Data[mk].sdl||''}" onchange="updateEMP201('${mk}','sdl',this.value)">`
+          : (emp201Data[mk].sdl ? emp201Data[mk].sdl.toFixed(2) : '-');
+
+        // Total calculated
+        const total = (parseFloat(emp201Data[mk].paye) || 0) + (parseFloat(emp201Data[mk].uif) || 0) + (parseFloat(emp201Data[mk].sdl) || 0);
+        let totalCell = monthRow.insertCell();
+        totalCell.textContent = total.toFixed(2);
+        totalCell.style.background = '#c6e0b4';
+        totalCell.style.fontWeight = 'bold';
+      });
+
+      // TOTAL row
+      const emp201TotalRow = tbody.insertRow();
+      emp201TotalRow.className = 'total-row';
+      let totalLabel = emp201TotalRow.insertCell();
+      totalLabel.className = 'name-col';
+      totalLabel.textContent = 'TOTAL';
+
+      let yearPaye = 0;
+      let yearUif = 0;
+      let yearSdl = 0;
+
+      monthKeys.forEach(mk => {
+        yearPaye += parseFloat(emp201Data[mk].paye) || 0;
+        yearUif += parseFloat(emp201Data[mk].uif) || 0;
+        yearSdl += parseFloat(emp201Data[mk].sdl) || 0;
+      });
+
+      const yearTotal = yearPaye + yearUif + yearSdl;
+
+      let payeTotalCell = emp201TotalRow.insertCell();
+      payeTotalCell.textContent = yearPaye.toFixed(2);
+
+      let uifTotalCell = emp201TotalRow.insertCell();
+      uifTotalCell.textContent = yearUif.toFixed(2);
+
+      let sdlTotalCell = emp201TotalRow.insertCell();
+      sdlTotalCell.textContent = yearSdl.toFixed(2);
+
+      let totalTotalCell = emp201TotalRow.insertCell();
+      totalTotalCell.textContent = yearTotal.toFixed(2);
+    }
+
+    function renderDifferencesSection(tbody) {
+      // Add spacing
+      const spacingRow = tbody.insertRow();
+      spacingRow.style.height = '20px';
+      let spacingCell = spacingRow.insertCell();
+      spacingCell.colSpan = 20;
+
+      // Section header
+      const headerRow = tbody.insertRow();
+      headerRow.className = 'section-label';
+      let headerCell = headerRow.insertCell();
+      headerCell.className = 'name-col';
+      headerCell.textContent = 'RECONCILIATION DIFFERENCES (Calculated - Submitted)';
+      headerCell.colSpan = 20;
+      headerCell.style.background = '#dc3545';
+      headerCell.style.color = 'white';
+      headerCell.style.fontWeight = 'bold';
+      headerCell.style.textAlign = 'center';
+      headerCell.style.fontSize = '12px';
+      headerCell.style.padding = '8px';
+
+      // Header row
+      const diffHeaderRow = tbody.insertRow();
+      let hMonth = diffHeaderRow.insertCell();
+      hMonth.className = 'name-col';
+      hMonth.textContent = 'Month';
+      hMonth.style.background = '#f8d7da';
+      hMonth.style.fontWeight = 'bold';
+
+      let hPaye = diffHeaderRow.insertCell();
+      hPaye.textContent = 'PAYE Diff';
+      hPaye.style.background = '#f8d7da';
+      hPaye.style.fontWeight = 'bold';
+
+      let hUif = diffHeaderRow.insertCell();
+      hUif.textContent = 'UIF Diff';
+      hUif.style.background = '#f8d7da';
+      hUif.style.fontWeight = 'bold';
+
+      let hSdl = diffHeaderRow.insertCell();
+      hSdl.textContent = 'SDL Diff';
+      hSdl.style.background = '#f8d7da';
+      hSdl.style.fontWeight = 'bold';
+
+      let hTotal = diffHeaderRow.insertCell();
+      hTotal.textContent = 'Total Diff';
+      hTotal.style.background = '#f8d7da';
+      hTotal.style.fontWeight = 'bold';
+
+      // Calculate differences for each month
+      monthKeys.forEach((mk, idx) => {
+        const monthRow = tbody.insertRow();
+
+        // Month name
+        let monthCell = monthRow.insertCell();
+        monthCell.className = 'name-col';
+        monthCell.textContent = months[idx];
+
+        // Calculate Section 1 values (from company summary)
+        let calcGross = 0;
+        let calcPaye = 0;
+        let calcUif = 0;
+
+        employees.forEach(emp => {
+          calcGross += calculateGross(emp.id, mk);
+          calcPaye += reconData[emp.id][mk].deductions['paye'] || 0;
+          calcUif += reconData[emp.id][mk].deductions['uif'] || 0;
+        });
+
+        const calcUifTotal = calcUif * 2;
+        const calcSdl = calcGross * 0.01;
+
+        // Get Section 2 values (EMP201 submitted)
+        const submittedPaye = parseFloat(emp201Data[mk].paye) || 0;
+        const submittedUif = parseFloat(emp201Data[mk].uif) || 0;
+        const submittedSdl = parseFloat(emp201Data[mk].sdl) || 0;
+
+        // Calculate differences
+        const payeDiff = calcPaye - submittedPaye;
+        const uifDiff = calcUifTotal - submittedUif;
+        const sdlDiff = calcSdl - submittedSdl;
+        const totalDiff = payeDiff + uifDiff + sdlDiff;
+
+        // PAYE Diff cell
+        let payeDiffCell = monthRow.insertCell();
+        payeDiffCell.textContent = payeDiff.toFixed(2);
+        payeDiffCell.style.background = payeDiff !== 0 ? '#fce4d6' : '#d4edda';
+        payeDiffCell.style.color = payeDiff < 0 ? '#dc3545' : (payeDiff > 0 ? '#856404' : '#155724');
+        payeDiffCell.style.fontWeight = payeDiff !== 0 ? 'bold' : 'normal';
+
+        // UIF Diff cell
+        let uifDiffCell = monthRow.insertCell();
+        uifDiffCell.textContent = uifDiff.toFixed(2);
+        uifDiffCell.style.background = uifDiff !== 0 ? '#fce4d6' : '#d4edda';
+        uifDiffCell.style.color = uifDiff < 0 ? '#dc3545' : (uifDiff > 0 ? '#856404' : '#155724');
+        uifDiffCell.style.fontWeight = uifDiff !== 0 ? 'bold' : 'normal';
+
+        // SDL Diff cell
+        let sdlDiffCell = monthRow.insertCell();
+        sdlDiffCell.textContent = sdlDiff.toFixed(2);
+        sdlDiffCell.style.background = sdlDiff !== 0 ? '#fce4d6' : '#d4edda';
+        sdlDiffCell.style.color = sdlDiff < 0 ? '#dc3545' : (sdlDiff > 0 ? '#856404' : '#155724');
+        sdlDiffCell.style.fontWeight = sdlDiff !== 0 ? 'bold' : 'normal';
+
+        // Total Diff cell
+        let totalDiffCell = monthRow.insertCell();
+        totalDiffCell.textContent = totalDiff.toFixed(2);
+        totalDiffCell.style.background = totalDiff !== 0 ? '#fce4d6' : '#c6e0b4';
+        totalDiffCell.style.color = totalDiff < 0 ? '#dc3545' : (totalDiff > 0 ? '#856404' : '#155724');
+        totalDiffCell.style.fontWeight = 'bold';
+      });
+
+      // TOTAL row for differences
+      const diffTotalRow = tbody.insertRow();
+      diffTotalRow.className = 'total-row';
+      let totalLabel = diffTotalRow.insertCell();
+      totalLabel.className = 'name-col';
+      totalLabel.textContent = 'TOTAL';
+
+      // Calculate year totals
+      let yearPayeDiff = 0;
+      let yearUifDiff = 0;
+      let yearSdlDiff = 0;
+
+      monthKeys.forEach(mk => {
+        let calcGross = 0;
+        let calcPaye = 0;
+        let calcUif = 0;
+
+        employees.forEach(emp => {
+          calcGross += calculateGross(emp.id, mk);
+          calcPaye += reconData[emp.id][mk].deductions['paye'] || 0;
+          calcUif += reconData[emp.id][mk].deductions['uif'] || 0;
+        });
+
+        const calcUifTotal = calcUif * 2;
+        const calcSdl = calcGross * 0.01;
+
+        yearPayeDiff += calcPaye - (parseFloat(emp201Data[mk].paye) || 0);
+        yearUifDiff += calcUifTotal - (parseFloat(emp201Data[mk].uif) || 0);
+        yearSdlDiff += calcSdl - (parseFloat(emp201Data[mk].sdl) || 0);
+      });
+
+      const yearTotalDiff = yearPayeDiff + yearUifDiff + yearSdlDiff;
+
+      let payeDiffTotalCell = diffTotalRow.insertCell();
+      payeDiffTotalCell.textContent = yearPayeDiff.toFixed(2);
+      payeDiffTotalCell.style.color = yearPayeDiff < 0 ? '#dc3545' : (yearPayeDiff > 0 ? '#856404' : '#155724');
+
+      let uifDiffTotalCell = diffTotalRow.insertCell();
+      uifDiffTotalCell.textContent = yearUifDiff.toFixed(2);
+      uifDiffTotalCell.style.color = yearUifDiff < 0 ? '#dc3545' : (yearUifDiff > 0 ? '#856404' : '#155724');
+
+      let sdlDiffTotalCell = diffTotalRow.insertCell();
+      sdlDiffTotalCell.textContent = yearSdlDiff.toFixed(2);
+      sdlDiffTotalCell.style.color = yearSdlDiff < 0 ? '#dc3545' : (yearSdlDiff > 0 ? '#856404' : '#155724');
+
+      let totalDiffTotalCell = diffTotalRow.insertCell();
+      totalDiffTotalCell.textContent = yearTotalDiff.toFixed(2);
+      totalDiffTotalCell.style.color = yearTotalDiff < 0 ? '#dc3545' : (yearTotalDiff > 0 ? '#856404' : '#155724');
+      totalDiffTotalCell.style.fontWeight = 'bold';
+    }
+
+    window.updateEMP201 = function(monthKey, field, value) {
+      emp201Data[monthKey][field] = parseFloat(value) || 0;
+      renderTable();
+    }
+
+    function calculateGross(empId, monthKey) {
+      const data = reconData[empId][monthKey];
+      return Object.values(data.income).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    }
+
+    function calculateTotalDed(empId, monthKey) {
+      const data = reconData[empId][monthKey];
+      return Object.values(data.deductions).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    }
+
+    function calculateNetto(empId, monthKey) {
+      const gross = calculateGross(empId, monthKey);
+      const totalDed = calculateTotalDed(empId, monthKey);
+      return gross - totalDed;
+    }
+
+    function calculateDiff(empId, monthKey) {
+      const netto = calculateNetto(empId, monthKey);
+      const bank = parseFloat(reconData[empId][monthKey].bank) || 0;
+      return netto - bank;
+    }
+
+    window.updateIncome = function(empId, monthKey, incKey, value) {
+      reconData[empId][monthKey].income[incKey] = parseFloat(value) || 0;
+      renderTable();
+    }
+
+    window.updateDeduction = function(empId, monthKey, dedKey, value) {
+      reconData[empId][monthKey].deductions[dedKey] = parseFloat(value) || 0;
+      renderTable();
+    }
+
+    window.updateBank = function(empId, monthKey, value) {
+      reconData[empId][monthKey].bank = parseFloat(value) || 0;
+      renderTable();
+    }
+
+    async function saveDraft() {
+      if (status !== 'DRAFT') {
+        alert('Cannot save - reconciliation is ' + status);
+        return;
+      }
+
+      const employeeLines = [];
+      const incomeLines = [];
+      const deductionLines = [];
+
+      employees.forEach(emp => {
+        monthKeys.forEach(mk => {
+          const data = reconData[emp.id][mk];
+          employeeLines.push({
+            employeeId: emp.id,
+            monthKey: mk,
+            grossIncome: data.gross,
+            totalDeductions: data.totalDed,
+            netSalary: data.netto,
+            bankPaidAmount: data.bank,
+            differenceAmount: data.diff
+          });
+
+          Object.entries(data.income).forEach(([key, amount]) => {
+            if (amount) incomeLines.push({ employeeId: emp.id, monthKey: mk, incomeTypeKey: key, amount });
+          });
+
+          Object.entries(data.deductions).forEach(([key, amount]) => {
+            if (amount) deductionLines.push({ employeeId: emp.id, monthKey: mk, deductionTypeKey: key, amount });
+          });
+        });
+      });
+
+      try {
+        const res = await fetch(`/api/paye/reconciliation/draft/${currentPeriodId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ employeeLines, incomeLines, deductionLines, emp201Data })
+        });
+
+        if (res.ok) {
+          alert('Draft saved successfully!');
+        } else {
+          throw new Error('Save failed');
+        }
+      } catch (err) {
+        alert('Failed to save draft');
+        console.error(err);
+      }
+    }
+
+    async function approveRecon() {
+      if (!confirm('Approve this reconciliation? It will become read-only.')) return;
+
+      try {
+        const res = await fetch(`/api/paye/reconciliation/approve/${currentReconId}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+
+        if (res.ok) {
+          status = 'APPROVED';
+          updateStatus();
+          renderTable();
+          alert('Reconciliation approved!');
+        } else {
+          throw new Error('Approve failed');
+        }
+      } catch (err) {
+        alert('Failed to approve');
+        console.error(err);
+      }
+    }
+
+    async function lockRecon() {
+      if (!confirm('Lock this reconciliation? This is FINAL and cannot be undone.')) return;
+
+      try {
+        const res = await fetch(`/api/paye/reconciliation/lock/${currentReconId}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+
+        if (res.ok) {
+          status = 'LOCKED';
+          updateStatus();
+          renderTable();
+          alert('Reconciliation locked!');
+        } else {
+          throw new Error('Lock failed');
+        }
+      } catch (err) {
+        alert('Failed to lock');
+        console.error(err);
+      }
+    }
+
+    function loadPeriod() {
+      init();
+    }
+
+    window.toggleEmployee = function(empId) {
+      const rows = document.querySelectorAll(`.emp-${empId}`);
+      const icon = document.getElementById(`icon-${empId}`);
+      const isExpanded = rows[0]?.classList.contains('expanded');
+
+      rows.forEach(row => {
+        if (isExpanded) {
+          row.classList.remove('expanded');
+        } else {
+          row.classList.add('expanded');
+        }
+      });
+
+      if (icon) {
+        icon.textContent = isExpanded ? '▶' : '▼';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

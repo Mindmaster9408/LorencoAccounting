@@ -1,0 +1,186 @@
+/**
+ * ============================================================================
+ * Company Routes - Unified Ecosystem
+ * ============================================================================
+ * CRUD for companies. Shared across all modules.
+ * BUG FIX #1: Default company only created if none exist (handled in database.js).
+ * ============================================================================
+ */
+
+const express = require('express');
+const { supabase } = require('../../config/database');
+const { authenticateToken, requireCompany, requirePermission, requireSuperAdmin } = require('../../middleware/auth');
+const { auditFromReq } = require('../../middleware/audit');
+
+const router = express.Router();
+
+router.use(authenticateToken);
+
+/**
+ * GET /api/companies
+ * List companies accessible to the user (or all for super admin)
+ */
+router.get('/', async (req, res) => {
+  try {
+    if (req.user.isSuperAdmin) {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('company_name');
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ companies: data });
+    }
+
+    // Non-admin: only companies the user has access to
+    const { data, error } = await supabase
+      .from('user_company_access')
+      .select(`
+        company_id, role, is_primary,
+        companies:company_id (*)
+      `)
+      .eq('user_id', req.user.userId)
+      .eq('is_active', true);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    const companies = (data || []).filter(c => c.companies).map(c => ({
+      ...c.companies,
+      userRole: c.role,
+      isPrimary: c.is_primary,
+    }));
+
+    res.json({ companies });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/companies/:id
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Company not found' });
+    res.json({ company: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/companies
+ * Create a new company
+ */
+router.post('/', requirePermission('COMPANIES.CREATE'), async (req, res) => {
+  try {
+    const {
+      company_name, trading_name, registration_number, vat_number,
+      contact_email, contact_phone, address, modules_enabled
+    } = req.body;
+
+    if (!company_name) {
+      return res.status(400).json({ error: 'company_name is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('companies')
+      .insert({
+        company_name,
+        trading_name: trading_name || company_name,
+        registration_number,
+        vat_number,
+        contact_email,
+        contact_phone,
+        address,
+        modules_enabled: modules_enabled || ['pos'],
+        is_active: true,
+        subscription_status: 'active'
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Link creating user as business_owner
+    await supabase.from('user_company_access').insert({
+      user_id: req.user.userId,
+      company_id: data.id,
+      role: 'business_owner',
+      is_primary: false,
+      is_active: true
+    });
+
+    await auditFromReq(req, 'CREATE', 'company', data.id, { newValue: data });
+
+    res.status(201).json({ company: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * PUT /api/companies/:id
+ * Update company details
+ */
+router.put('/:id', requireCompany, requirePermission('COMPANIES.EDIT'), async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    // Get old values for audit
+    const { data: old } = await supabase.from('companies').select('*').eq('id', id).single();
+
+    const updates = {};
+    const allowed = ['company_name', 'trading_name', 'registration_number', 'vat_number',
+      'contact_email', 'contact_phone', 'address', 'modules_enabled', 'is_active'];
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('companies')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Company not found' });
+
+    await auditFromReq(req, 'UPDATE', 'company', id, {
+      oldValue: old,
+      newValue: data,
+    });
+
+    res.json({ company: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * DELETE /api/companies/:id  (soft delete)
+ */
+router.delete('/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('companies')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    await auditFromReq(req, 'DELETE', 'company', req.params.id);
+    res.json({ success: true, message: 'Company deactivated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+module.exports = router;

@@ -1,0 +1,481 @@
+/* =============================================
+   MOBILE RESPONSIVE STYLESHEET
+   Payroll App - Shared across all pages
+   ============================================= */
+
+/* ---- Viewport Fix ---- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* ---- Mobile Hamburger Button ---- */
+.mobile-hamburger {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.mobile-hamburger:active {
+    transform: scale(0.95);
+}
+
+/* ---- Mobile Overlay ---- */
+.mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* ---- Mobile Bottom Navigation ---- */
+.mobile-bottom-nav {
+    display: none;
+}
+
+/* ---- Responsive Table Wrapper ---- */
+.responsive-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* =============================================
+   TABLET BREAKPOINT (max-width: 1024px)
+   ============================================= */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 250px !important;
+        min-width: 250px !important;
+    }
+
+    .main-content {
+        padding: 20px !important;
+    }
+
+    /* Grids reduce columns */
+    .employee-grid,
+    .report-cards,
+    .stat-cards,
+    .stats-grid,
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .section-grid,
+    .form-row,
+    .detail-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* =============================================
+   MOBILE BREAKPOINT (max-width: 768px)
+   ============================================= */
+@media (max-width: 768px) {
+
+    /* ---- Show Mobile Elements ---- */
+    .mobile-hamburger {
+        display: block;
+    }
+
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
+        z-index: 900;
+        padding: 6px 0 env(safe-area-inset-bottom, 6px);
+        border-top: 1px solid #eee;
+    }
+
+    .mobile-nav-item {
+        flex: 1;
+        text-align: center;
+        padding: 6px 4px;
+        color: #888;
+        text-decoration: none;
+        font-size: 10px;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .mobile-nav-item.active {
+        color: #667eea;
+    }
+
+    .mobile-nav-icon {
+        font-size: 18px;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .mobile-nav-label {
+        font-size: 10px;
+    }
+
+    /* ---- Sidebar Behavior ---- */
+    .sidebar {
+        position: fixed !important;
+        left: -300px;
+        top: 0;
+        height: 100vh !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: none;
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+        box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ---- Main Content Full Width ---- */
+    .wrapper {
+        flex-direction: column !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        padding: 65px 12px 80px 12px !important;
+        margin-left: 0 !important;
+    }
+
+    /* ---- Touch-Friendly Controls ---- */
+    button, .btn, .btn-sm, a.btn {
+        min-height: 40px;
+        font-size: 14px !important;
+    }
+
+    input, select, textarea {
+        min-height: 42px;
+        font-size: 16px !important; /* Prevents iOS zoom */
+    }
+
+    .sidebar-link {
+        padding: 14px 20px !important;
+        font-size: 15px !important;
+    }
+
+    /* ---- Grids to Single Column ---- */
+    .employee-grid,
+    .report-cards,
+    .stat-cards,
+    .stats-grid,
+    .dashboard-stats,
+    .section-grid,
+    .form-row,
+    .detail-grid,
+    .cards-grid,
+    .return-cards {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    /* ---- Employee Info Header ---- */
+    .employee-header,
+    .employee-info {
+        flex-direction: column !important;
+        text-align: center;
+    }
+
+    .employee-header .employee-actions {
+        margin-top: 10px;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    /* ---- Tabs ---- */
+    .tabs, .top-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        padding-bottom: 4px;
+    }
+
+    .tabs::-webkit-scrollbar,
+    .top-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab, .top-tab {
+        flex-shrink: 0;
+        min-width: auto;
+        white-space: nowrap;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+    }
+
+    /* ---- Cards ---- */
+    .card {
+        padding: 15px !important;
+        margin-bottom: 12px !important;
+        border-radius: 10px !important;
+    }
+
+    /* ---- Modals ---- */
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh !important;
+        overflow-y: auto;
+        padding: 15px !important;
+        margin: 5vh auto !important;
+    }
+
+    /* ---- Tables on Mobile ---- */
+    .responsive-table-wrapper {
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
+
+    table {
+        font-size: 12px !important;
+    }
+
+    table th, table td {
+        padding: 8px 6px !important;
+        white-space: nowrap;
+    }
+
+    /* ---- Mobile Card View for Tables ---- */
+    .mobile-cards-container {
+        display: block;
+    }
+
+    .mobile-card {
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .mobile-card-field {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dotted #eee;
+    }
+
+    .mobile-card-field:last-child {
+        border-bottom: none;
+    }
+
+    .mobile-card-label {
+        font-size: 12px;
+        color: #888;
+        font-weight: 500;
+    }
+
+    .mobile-card-value {
+        font-size: 13px;
+        color: #333;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    /* ---- Page Header ---- */
+    .page-header, .section-header {
+        flex-direction: column !important;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .page-header h1, .page-header h2 {
+        font-size: 1.3rem !important;
+    }
+
+    /* ---- Payslip Summary ---- */
+    .payroll-summary, .payslip-summary {
+        padding: 15px !important;
+    }
+
+    .summary-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    /* ---- Company Carousel ---- */
+    .company-carousel {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 5px;
+    }
+
+    .company-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .company-carousel-item {
+        flex-shrink: 0;
+        min-width: 180px;
+    }
+
+    /* ---- Stat Cards ---- */
+    .stat-card, .summary-card, .metric-card {
+        padding: 12px !important;
+    }
+
+    .stat-card .stat-value,
+    .summary-card .value,
+    .metric-card .metric-value {
+        font-size: 1.5rem !important;
+    }
+
+    /* ---- Search Bars ---- */
+    .search-bar, .search-container, .filter-bar {
+        flex-direction: column !important;
+        gap: 8px;
+    }
+
+    .search-bar input, .search-container input {
+        width: 100% !important;
+    }
+
+    /* ---- Action Buttons Row ---- */
+    .actions-row, .button-group, .btn-group {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* ---- Period Selector ---- */
+    .period-selector {
+        flex-direction: column !important;
+        gap: 8px;
+    }
+
+    .period-selector select {
+        width: 100% !important;
+    }
+
+    /* ---- Payment Breakdowns ---- */
+    .payment-breakdowns {
+        padding: 10px !important;
+    }
+
+    .breakdown-header {
+        flex-direction: column !important;
+        gap: 8px;
+    }
+
+    .breakdown-total {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* ---- Statutory Return Cards ---- */
+    .return-card {
+        padding: 12px !important;
+    }
+
+    /* ---- Login Page ---- */
+    .login-container, .login-card {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 20px !important;
+    }
+
+    /* ---- Hide on Mobile ---- */
+    .hide-mobile {
+        display: none !important;
+    }
+
+    /* ---- Show on Mobile ---- */
+    .show-mobile {
+        display: block !important;
+    }
+
+    /* ---- Body Padding for Bottom Nav ---- */
+    body {
+        padding-bottom: 60px;
+    }
+}
+
+/* =============================================
+   SMALL MOBILE (max-width: 480px)
+   ============================================= */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 60px 8px 80px 8px !important;
+    }
+
+    .card {
+        padding: 12px !important;
+    }
+
+    .page-header h1, .page-header h2, h1, h2 {
+        font-size: 1.1rem !important;
+    }
+
+    h3 {
+        font-size: 1rem !important;
+    }
+
+    .stat-cards, .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .btn {
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* =============================================
+   PRINT STYLES (hide mobile elements)
+   ============================================= */
+@media print {
+    .mobile-hamburger,
+    .mobile-overlay,
+    .mobile-bottom-nav,
+    .sidebar {
+        display: none !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .wrapper {
+        display: block !important;
+    }
+}

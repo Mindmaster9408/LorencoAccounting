@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenco Paytime</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+        .loading {
+            font-size: 1rem;
+            color: #999;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .version {
+            margin-top: 2rem;
+            color: #999;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Lorenco Paytime</h1>
+        <p class="subtitle">Employee & Payroll Management</p>
+        <div class="spinner"></div>
+        <div class="loading">Redirecting to login...</div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if user is already logged in
+        window.addEventListener('load', function() {
+            // ── SSO Pickup from Ecosystem Dashboard ──
+            const ssoSource = localStorage.getItem('sso_source');
+            if (ssoSource === 'ecosystem') {
+                const ssoToken = localStorage.getItem('token');
+                const ssoUser = localStorage.getItem('user');
+                const ssoCompany = localStorage.getItem('company');
+                if (ssoToken && ssoUser) {
+                    try {
+                        const user = JSON.parse(ssoUser);
+                        const company = ssoCompany ? JSON.parse(ssoCompany) : null;
+                        const session = {
+                            user_id: user.id,
+                            username: user.username || user.email,
+                            full_name: user.fullName,
+                            email: user.email,
+                            role: company ? company.role : (user.role || 'admin'),
+                            company_id: company ? company.id : null,
+                            company_name: company ? company.company_name : null,
+                            is_super_admin: user.isSuperAdmin || false,
+                        };
+                        AUTH.setSession(session);
+                        localStorage.removeItem('sso_source');
+                        // Fall through to normal routing below
+                    } catch (e) {
+                        console.warn('[SSO] Failed to parse ecosystem data:', e);
+                        localStorage.removeItem('sso_source');
+                    }
+                }
+            }
+
+            const session = AUTH.getSession();
+            
+            if (session) {
+                // User is logged in, redirect based on role
+                if (session.role === 'super_admin') {
+                    window.location.href = 'super-admin-dashboard.html';
+                } else if (session.company_id) {
+                    window.location.href = 'company-dashboard.html';
+                } else {
+                    window.location.href = 'company-selection.html';
+                }
+            } else {
+                // Not logged in, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

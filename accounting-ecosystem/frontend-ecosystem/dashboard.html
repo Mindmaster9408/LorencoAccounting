@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lorenco Ecosystem — Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0f0c29;
+            --surface: rgba(255,255,255,0.06);
+            --surface-hover: rgba(255,255,255,0.1);
+            --border: rgba(255,255,255,0.08);
+            --text: #fff;
+            --text-muted: rgba(255,255,255,0.5);
+            --accent: #667eea;
+            --accent-glow: rgba(102, 126, 234, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        /* ── Top Bar ──────────────────────────────────────────── */
+        .topbar {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .topbar-logo {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            transform: rotate(-5deg);
+        }
+        .topbar-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px 6px 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-badge:hover { background: var(--surface-hover); }
+        .user-avatar {
+            width: 30px; height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .btn-logout {
+            padding: 8px 16px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fecaca;
+        }
+
+        /* ── Main Content ────────────────────────────────────── */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 28px;
+        }
+
+        .welcome {
+            margin-bottom: 40px;
+        }
+        .welcome h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .welcome h1 span { color: var(--accent); }
+        .welcome p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ── Company Selector ────────────────────────────────── */
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .company-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        .company-chip {
+            padding: 10px 20px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .company-chip:hover {
+            background: var(--surface-hover);
+            border-color: rgba(255,255,255,0.15);
+        }
+        .company-chip.active {
+            border-color: var(--accent);
+            background: rgba(102, 126, 234, 0.12);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .company-chip .company-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .company-chip .company-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .company-chip .company-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .company-chip .company-role {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── App Grid ────────────────────────────────────────── */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .app-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--app-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .app-card:hover {
+            background: var(--surface-hover);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        .app-card:hover::before { opacity: 1; }
+        .app-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .app-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .app-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+        .app-card .app-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .app-card .app-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .app-card .app-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .app-card .app-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .app-status {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .app-status.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+        }
+        .app-status.disabled {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+        }
+        .app-btn-launch {
+            padding: 8px 18px;
+            background: linear-gradient(135deg, var(--app-color), var(--app-color-dark));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .app-btn-launch:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* App-specific colors */
+        .app-card.pos   { --app-color: #3b82f6; --app-color-dark: #2563eb; }
+        .app-card.payroll { --app-color: #10b981; --app-color-dark: #059669; }
+        .app-card.accounting { --app-color: #f59e0b; --app-color-dark: #d97706; }
+        .app-card.sean  { --app-color: #8b5cf6; --app-color-dark: #7c3aed; }
+
+        .app-card.pos .app-icon   { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .app-card.payroll .app-icon { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+        .app-card.accounting .app-icon { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .app-card.sean .app-icon  { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+
+        /* ── Quick Stats ─────────────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Loading overlay ─────────────────────────────────── */
+        .launch-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .launch-overlay.show { display: flex; }
+        .launch-spinner {
+            width: 50px; height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .launch-text {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main { padding: 24px 16px; }
+            .welcome h1 { font-size: 1.5rem; }
+            .apps-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .topbar { padding: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo">&#9670;</div>
+            <span class="topbar-title">Lorenco Ecosystem</span>
+        </div>
+        <div class="topbar-right">
+            <div class="user-badge" id="userBadge">
+                <div class="user-avatar" id="userAvatar"></div>
+                <span class="user-name" id="userName"></span>
+            </div>
+            <button class="btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+
+        <!-- Welcome -->
+        <div class="welcome">
+            <h1>Welcome back, <span id="welcomeName"></span></h1>
+            <p>Select a company and launch an app to get started.</p>
+        </div>
+
+        <!-- Company Selector -->
+        <div class="section-label">Your Companies</div>
+        <div class="company-selector" id="companySelector">
+            <!-- Filled by JS -->
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-value" id="statApps">0</div>
+                <div class="stat-label">Active Apps</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCompanies">0</div>
+                <div class="stat-label">Companies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statRole">—</div>
+                <div class="stat-label">Current Role</div>
+            </div>
+        </div>
+
+        <!-- App Grid -->
+        <div class="section-label">Your Applications</div>
+        <div class="apps-grid" id="appsGrid">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- Launch overlay -->
+    <div class="launch-overlay" id="launchOverlay">
+        <div class="launch-spinner"></div>
+        <div class="launch-text" id="launchText">Launching app...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // ── App Definitions ──
+        const APP_DEFS = [
+            {
+                key: 'pos',
+                name: 'Checkout Charlie',
+                subtitle: 'Point of Sale',
+                icon: '&#128722;',
+                desc: 'Complete POS system — products, sales, tills, inventory, customers, receipts.',
+                path: '/pos',
+                cssClass: 'pos',
+            },
+            {
+                key: 'payroll',
+                name: 'Lorenco Paytime',
+                subtitle: 'Payroll Management',
+                icon: '&#128176;',
+                desc: 'Full payroll — pay runs, payslips, PAYE/UIF, attendance, leave management.',
+                path: '/payroll',
+                cssClass: 'payroll',
+            },
+            {
+                key: 'accounting',
+                name: 'Lorenco Accounting',
+                subtitle: 'General Ledger',
+                icon: '&#128200;',
+                desc: 'Chart of accounts, journals, bank reconciliation, VAT returns, financial reports.',
+                path: '/accounting',
+                cssClass: 'accounting',
+            },
+            {
+                key: 'sean',
+                name: 'SEAN AI',
+                subtitle: 'Smart Assistant',
+                icon: '&#129302;',
+                desc: 'Privacy-first AI — auto cash book allocation, bank imports, self-learning codex.',
+                path: '/sean',
+                cssClass: 'sean',
+            }
+        ];
+
+        // ── State ──
+        let currentUser = null;
+        let companies = [];
+        let selectedCompany = null;
+        let isSuperAdmin = false;
+        let enabledModules = [];
+
+        // ── Init ──
+        async function init() {
+            const token = localStorage.getItem('eco_token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Load user data from localStorage
+            try {
+                currentUser = JSON.parse(localStorage.getItem('eco_user'));
+                companies = JSON.parse(localStorage.getItem('eco_companies') || '[]');
+                isSuperAdmin = localStorage.getItem('eco_super_admin') === 'true';
+            } catch (e) {
+                window.location.href = '/';
+                return;
+            }
+
+            if (!currentUser) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Fetch module status
+            try {
+                const modRes = await fetch(`${API_BASE}/api/modules`);
+                const modData = await modRes.json();
+                enabledModules = modData.enabled || [];
+            } catch (e) {
+                enabledModules = ['pos', 'payroll', 'accounting', 'sean'];
+            }
+
+            // Render UI
+            renderUser();
+            renderCompanies();
+            renderApps();
+            renderStats();
+        }
+
+        // ── Render User ──
+        function renderUser() {
+            const name = currentUser.fullName || currentUser.username || currentUser.email;
+            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+            document.getElementById('userAvatar').textContent = initials;
+            document.getElementById('userName').textContent = name;
+            document.getElementById('welcomeName').textContent = name.split(' ')[0];
+        }
+
+        // ── Render Companies ──
+        function renderCompanies() {
+            const container = document.getElementById('companySelector');
+
+            if (isSuperAdmin && companies.length === 0) {
+                // Super admin sees all companies
+                companies = [
+                    { id: 1, company_name: 'All Companies', trading_name: 'Super Admin', role: 'super_admin', modules_enabled: enabledModules }
+                ];
+            }
+
+            if (companies.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No companies assigned. Contact your administrator.</p>';
+                return;
+            }
+
+            // Auto-select first company
+            selectedCompany = companies[0];
+
+            container.innerHTML = companies.map((c, i) => `
+                <div class="company-chip ${i === 0 ? 'active' : ''}" onclick="selectCompany(${i})" data-idx="${i}">
+                    <div class="company-icon">&#127970;</div>
+                    <div class="company-info">
+                        <span class="company-name">${c.trading_name || c.company_name}</span>
+                        <span class="company-role">${c.role || 'user'}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('statCompanies').textContent = companies.length;
+        }
+
+        function selectCompany(idx) {
+            selectedCompany = companies[idx];
+            document.querySelectorAll('.company-chip').forEach((el, i) => {
+                el.classList.toggle('active', i === idx);
+            });
+            document.getElementById('statRole').textContent = (selectedCompany.role || 'user').replace('_', ' ');
+            renderApps();
+        }
+
+        // ── Render Apps ──
+        function renderApps() {
+            const container = document.getElementById('appsGrid');
+            const companyModules = selectedCompany?.modules_enabled || enabledModules;
+            let activeCount = 0;
+
+            container.innerHTML = APP_DEFS.map(app => {
+                const isEnabled = enabledModules.includes(app.key);
+                const hasAccess = isSuperAdmin || (companyModules && companyModules.includes(app.key));
+                const isActive = isEnabled && hasAccess;
+                if (isActive) activeCount++;
+
+                return `
+                    <div class="app-card ${app.cssClass} ${isActive ? '' : 'disabled'}" onclick="${isActive ? `launchApp('${app.key}')` : ''}">
+                        <div class="app-card-header">
+                            <div class="app-icon">${app.icon}</div>
+                            <div>
+                                <div class="app-title">${app.name}</div>
+                                <div class="app-subtitle">${app.subtitle}</div>
+                            </div>
+                        </div>
+                        <div class="app-desc">${app.desc}</div>
+                        <div class="app-footer">
+                            <span class="app-status ${isActive ? 'active' : 'disabled'}">${isActive ? '● Active' : '○ Disabled'}</span>
+                            ${isActive ? `<button class="app-btn-launch" onclick="event.stopPropagation(); launchApp('${app.key}')">Launch →</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('statApps').textContent = activeCount;
+            if (selectedCompany) {
+                document.getElementById('statRole').textContent = (selectedCompany.role || 'user').replace('_', ' ');
+            }
+        }
+
+        // ── Render Stats ──
+        function renderStats() {
+            // Already done inline during render
+        }
+
+        // ── Launch App (SSO) ──
+        async function launchApp(appKey) {
+            const app = APP_DEFS.find(a => a.key === appKey);
+            if (!app) return;
+
+            const overlay = document.getElementById('launchOverlay');
+            const text = document.getElementById('launchText');
+            overlay.classList.add('show');
+            text.textContent = `Launching ${app.name}...`;
+
+            try {
+                const token = localStorage.getItem('eco_token');
+
+                // Call SSO endpoint to get an app-specific token
+                const res = await fetch(`${API_BASE}/api/auth/sso-launch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        targetApp: appKey,
+                        companyId: selectedCompany?.id || null
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'SSO launch failed');
+                }
+
+                const data = await res.json();
+
+                // Store the app-specific token so the target app picks it up
+                localStorage.setItem('token', data.appToken);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                if (data.company) {
+                    localStorage.setItem('company', JSON.stringify(data.company));
+                    localStorage.setItem('selectedCompanyId', data.company.id);
+                }
+
+                // Also store under app-specific keys for apps that use different storage
+                localStorage.setItem(`${appKey}_token`, data.appToken);
+                localStorage.setItem(`${appKey}_user`, JSON.stringify(data.user));
+                localStorage.setItem('sso_source', 'ecosystem');
+
+                // Navigate to the app
+                text.textContent = `Opening ${app.name}...`;
+                setTimeout(() => {
+                    window.location.href = app.path;
+                }, 500);
+
+            } catch (err) {
+                overlay.classList.remove('show');
+                alert(`Failed to launch ${app.name}: ${err.message}`);
+            }
+        }
+
+        // ── Logout ──
+        function logout() {
+            localStorage.removeItem('eco_token');
+            localStorage.removeItem('eco_user');
+            localStorage.removeItem('eco_companies');
+            localStorage.removeItem('eco_super_admin');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('company');
+            localStorage.removeItem('sso_source');
+            window.location.href = '/';
+        }
+
+        // ── Start ──
+        init();
+    </script>
+</body>
+</html>

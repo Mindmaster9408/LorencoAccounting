@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run init-db:*)",
+      "Bash(npm start)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(curl:*)",
+      "Bash(timeout 3 curl:*)",
+      "Bash(del:*)",
+      "Bash(npm run init-sean:*)",
+      "Bash(npm run init-barcodes:*)"
+    ]
+  }
+}

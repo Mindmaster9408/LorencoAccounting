@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suppliers - Lorenco Accounting</title>
+  <script src="js/navigation.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+
+    .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page-header h1 { font-size: 24px; color: #333; }
+    .page-header .actions { display: flex; gap: 10px; }
+
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .stat-card .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #333; margin-top: 5px; }
+    .stat-card .sub { font-size: 12px; color: #888; margin-top: 5px; }
+    .stat-card.highlight { background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%); }
+    .stat-card.highlight .label, .stat-card.highlight .value, .stat-card.highlight .sub { color: white; }
+
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-header { padding: 15px 20px; border-bottom: 1px solid #e8eaed; display: flex; justify-content: space-between; align-items: center; }
+    .card-header h2 { font-size: 16px; color: #333; }
+    .card-body { padding: 20px; }
+
+    .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+    .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .filters input[type="text"] { width: 250px; }
+    .search-box { position: relative; }
+    .search-box input { padding-left: 35px; }
+    .search-box::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e8eaed; }
+    th { background: #f8f9fa; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:hover { background: #f8f9fa; }
+
+    .supplier-name { font-weight: 600; color: #0066cc; cursor: pointer; }
+    .supplier-name:hover { text-decoration: underline; }
+    .supplier-code { font-size: 11px; color: #888; }
+
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    .status-overdue { background: #fff3cd; color: #856404; }
+    .status-paid { background: #d4edda; color: #155724; }
+    .status-unpaid { background: #f8d7da; color: #721c24; }
+    .status-partial { background: #fff3cd; color: #856404; }
+    .status-pending { background: #e2e3e5; color: #383d41; }
+    .status-approved { background: #cce5ff; color: #004085; }
+
+    .amount { font-family: 'Courier New', monospace; font-weight: 600; }
+    .amount-positive { color: #28a745; }
+    .amount-negative { color: #dc3545; }
+
+    .action-btns { display: flex; gap: 5px; }
+    .action-btn { padding: 5px 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+    .action-btn:hover { background: #f0f0f0; border-color: #ccc; }
+    .action-btn.primary { border-color: #0066cc; color: #0066cc; }
+    .action-btn.primary:hover { background: #e6f3ff; }
+
+    .tabs { display: flex; border-bottom: 2px solid #e8eaed; margin-bottom: 20px; }
+    .tab { padding: 12px 20px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+    .tab:hover { color: #0066cc; }
+    .tab.active { color: #0066cc; border-bottom-color: #0066cc; font-weight: 600; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; }
+    .pagination-info { font-size: 13px; color: #666; }
+    .pagination-btns { display: flex; gap: 5px; }
+    .pagination-btns button { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; }
+    .pagination-btns button.active { background: #0066cc; color: white; border-color: #0066cc; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; border-radius: 12px; width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px; border-bottom: 1px solid #e8eaed; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 18px; color: #333; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 15px 20px; border-top: 1px solid #e8eaed; display: flex; justify-content: flex-end; gap: 10px; }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #333; font-size: 13px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="page-header">
+      <h1>Suppliers</h1>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="exportSuppliers()">Export</button>
+        <button class="btn btn-primary" onclick="openNewSupplierModal()">+ New Supplier</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card highlight">
+        <div class="label">Total Payable</div>
+        <div class="value" id="totalPayable">R 0.00</div>
+        <div class="sub">Accounts payable</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Suppliers</div>
+        <div class="value" id="totalSuppliers">0</div>
+        <div class="sub">Active accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Overdue</div>
+        <div class="value" id="totalOverdue">R 0.00</div>
+        <div class="sub" id="overdueCount">0 invoices</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">This Month</div>
+        <div class="value" id="monthPayments">R 0.00</div>
+        <div class="sub">Payments made</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('suppliers')">Supplier List</div>
+      <div class="tab" onclick="switchTab('invoices')">Supplier Invoices</div>
+      <div class="tab" onclick="switchTab('orders')">Purchase Orders</div>
+      <div class="tab" onclick="switchTab('payments')">Payments</div>
+      <div class="tab" onclick="switchTab('aging')">Aging Report</div>
+    </div>
+
+    <!-- Supplier List Tab -->
+    <div id="tab-suppliers" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2>Supplier List</h2>
+          <div class="filters">
+            <div class="search-box">
+              <input type="text" id="searchSupplier" placeholder="Search suppliers..." onkeyup="filterSuppliers()">
+            </div>
+            <select id="statusFilter" onchange="filterSuppliers()">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table id="supplierTable">
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Balance Owing</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="supplierTableBody">
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="pagination-info">Showing 1-10 of <span id="supplierCount">0</span> suppliers</div>
+            <div class="pagination-btns">
+              <button>Previous</button>
+              <button class="active">1</button>
+              <button>2</button>
+              <button>Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier Invoices Tab -->
+    <div id="tab-invoices" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Supplier Invoices</h2>
+          <button class="btn btn-primary" onclick="openNewInvoiceModal()">+ Record Invoice</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Supplier</th>
+                <th>Date</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchase Orders Tab -->
+    <div id="tab-orders" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Purchase Orders</h2>
+          <button class="btn btn-primary" onclick="openNewPOModal()">+ New Purchase Order</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>PO #</th>
+                <th>Supplier</th>
+                <th>Date</th>
+                <th>Delivery Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="poTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments Tab -->
+    <div id="tab-payments" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Supplier Payments</h2>
+          <button class="btn btn-primary" onclick="openNewPaymentModal()">+ Record Payment</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Payment #</th>
+                <th>Supplier</th>
+                <th>Date</th>
+                <th>Invoice</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="paymentTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aging Report Tab -->
+    <div id="tab-aging" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Supplier Aging Report</h2>
+          <button class="btn btn-secondary" onclick="exportAging()">Export PDF</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th>Current</th>
+                <th>30 Days</th>
+                <th>60 Days</th>
+                <th>90 Days</th>
+                <th>90+ Days</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="agingTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Supplier Modal -->
+  <div id="supplierModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="supplierModalTitle">New Supplier</h3>
+        <button class="modal-close" onclick="closeModal('supplierModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="supplierForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Supplier Code</label>
+              <input type="text" id="supplierCode" placeholder="Auto-generated" readonly>
+            </div>
+            <div class="form-group">
+              <label>Supplier Type</label>
+              <select id="supplierType">
+                <option value="company">Company</option>
+                <option value="individual">Individual</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Supplier Name *</label>
+            <input type="text" id="supplierName" required placeholder="Company or individual name">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Contact Person</label>
+              <input type="text" id="contactPerson" placeholder="Primary contact">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="supplierEmail" placeholder="email@example.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="supplierPhone" placeholder="+27 XX XXX XXXX">
+            </div>
+            <div class="form-group">
+              <label>VAT Number</label>
+              <input type="text" id="supplierVat" placeholder="VAT number if applicable">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea id="supplierAddress" rows="2" placeholder="Street address"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="supplierCity">
+            </div>
+            <div class="form-group">
+              <label>Postal Code</label>
+              <input type="text" id="supplierPostal">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Payment Terms</label>
+              <select id="paymentTerms">
+                <option value="0">Due on Receipt</option>
+                <option value="7">Net 7 Days</option>
+                <option value="14">Net 14 Days</option>
+                <option value="30" selected>Net 30 Days</option>
+                <option value="60">Net 60 Days</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Default Account</label>
+              <select id="defaultAccount">
+                <option value="5000">5000 - Cost of Sales</option>
+                <option value="6000">6000 - Operating Expenses</option>
+                <option value="6100">6100 - Utilities</option>
+                <option value="6200">6200 - Office Supplies</option>
+                <option value="6300">6300 - Professional Fees</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Bank Details</label>
+            <div class="form-row">
+              <input type="text" id="bankName" placeholder="Bank Name">
+              <input type="text" id="accountNumber" placeholder="Account Number">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('supplierModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSupplier()">Save Supplier</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let suppliers = [];
+    let invoices = [];
+    let purchaseOrders = [];
+    let payments = [];
+
+    function init() {
+      loadDemoData();
+      renderAll();
+    }
+
+    function loadDemoData() {
+      suppliers = [
+        { id: 1, code: 'SUP001', name: 'Office Supplies Co', type: 'company', contact: 'Mike Peters', email: 'mike@officesupplies.co.za', phone: '+27 11 234 5678', vat: '4567890123', address: '45 Industrial Road', city: 'Johannesburg', postal: '2000', terms: 30, balance: 12500.00, status: 'active' },
+        { id: 2, code: 'SUP002', name: 'Tech Hardware Ltd', type: 'company', contact: 'Lisa Chen', email: 'lisa@techhardware.co.za', phone: '+27 21 876 5432', vat: '4567891234', address: '78 Tech Park', city: 'Cape Town', postal: '8000', terms: 30, balance: 45000.00, status: 'active' },
+        { id: 3, code: 'SUP003', name: 'City Power', type: 'company', contact: 'Service Desk', email: 'accounts@citypower.co.za', phone: '+27 11 111 2222', vat: '4567892345', address: '1 Power Street', city: 'Johannesburg', postal: '2001', terms: 0, balance: 3250.00, status: 'active' },
+        { id: 4, code: 'SUP004', name: 'Telkom SA', type: 'company', contact: 'Business Support', email: 'business@telkom.co.za', phone: '+27 10 xxx xxxx', vat: '4567893456', address: 'Telkom Towers', city: 'Centurion', postal: '0157', terms: 30, balance: 1850.00, status: 'active' },
+        { id: 5, code: 'SUP005', name: 'Johnson Consulting', type: 'individual', contact: 'Peter Johnson', email: 'peter@johnson.co.za', phone: '+27 82 333 4444', vat: '', address: '12 Home Office', city: 'Sandton', postal: '2196', terms: 7, balance: 8500.00, status: 'active' },
+        { id: 6, code: 'SUP006', name: 'Old Supplier Inc', type: 'company', contact: 'N/A', email: 'info@oldsupplier.co.za', phone: '+27 11 000 0000', vat: '4567894567', address: '1 Old Street', city: 'Johannesburg', postal: '2000', terms: 30, balance: 0, status: 'inactive' }
+      ];
+
+      invoices = [
+        { id: 1, number: 'SINV-001234', supplierId: 1, supplierName: 'Office Supplies Co', date: '2026-01-10', dueDate: '2026-02-09', amount: 5500.00, paid: 0, status: 'unpaid' },
+        { id: 2, number: 'SINV-001235', supplierId: 1, supplierName: 'Office Supplies Co', date: '2026-01-05', dueDate: '2026-02-04', amount: 7000.00, paid: 0, status: 'unpaid' },
+        { id: 3, number: 'TH-2026-0089', supplierId: 2, supplierName: 'Tech Hardware Ltd', date: '2026-01-15', dueDate: '2026-02-14', amount: 45000.00, paid: 0, status: 'unpaid' },
+        { id: 4, number: 'CP-JAN2026', supplierId: 3, supplierName: 'City Power', date: '2026-01-20', dueDate: '2026-01-20', amount: 3250.00, paid: 0, status: 'overdue' },
+        { id: 5, number: 'TEL-B00123', supplierId: 4, supplierName: 'Telkom SA', date: '2026-01-18', dueDate: '2026-02-17', amount: 1850.00, paid: 0, status: 'unpaid' },
+        { id: 6, number: 'JC-INV-045', supplierId: 5, supplierName: 'Johnson Consulting', date: '2026-01-12', dueDate: '2026-01-19', amount: 8500.00, paid: 0, status: 'overdue' }
+      ];
+
+      purchaseOrders = [
+        { id: 1, number: 'PO-2026-001', supplierId: 1, supplierName: 'Office Supplies Co', date: '2026-01-18', deliveryDate: '2026-01-25', amount: 3500.00, status: 'pending' },
+        { id: 2, number: 'PO-2026-002', supplierId: 2, supplierName: 'Tech Hardware Ltd', date: '2026-01-20', deliveryDate: '2026-02-05', amount: 28000.00, status: 'approved' },
+        { id: 3, number: 'PO-2026-003', supplierId: 1, supplierName: 'Office Supplies Co', date: '2026-01-15', deliveryDate: '2026-01-22', amount: 1200.00, status: 'received' }
+      ];
+
+      payments = [
+        { id: 1, number: 'PAY-2026-001', supplierId: 3, supplierName: 'City Power', date: '2025-12-20', invoiceNumber: 'CP-DEC2025', amount: 2980.00, method: 'EFT' },
+        { id: 2, number: 'PAY-2026-002', supplierId: 4, supplierName: 'Telkom SA', date: '2025-12-18', invoiceNumber: 'TEL-B00122', amount: 1750.00, method: 'EFT' },
+        { id: 3, number: 'PAY-2026-003', supplierId: 1, supplierName: 'Office Supplies Co', date: '2026-01-05', invoiceNumber: 'SINV-001220', amount: 4500.00, method: 'EFT' }
+      ];
+    }
+
+    function renderAll() {
+      renderStats();
+      renderSuppliers();
+      renderInvoices();
+      renderPurchaseOrders();
+      renderPayments();
+      renderAging();
+    }
+
+    function renderStats() {
+      const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
+      const totalPayable = suppliers.reduce((sum, s) => sum + s.balance, 0);
+      const overdueInvoices = invoices.filter(i => i.status === 'overdue');
+      const overdueAmount = overdueInvoices.reduce((sum, i) => sum + (i.amount - i.paid), 0);
+      const monthPayments = payments.filter(p => p.date.startsWith('2026-01')).reduce((sum, p) => sum + p.amount, 0);
+
+      document.getElementById('totalPayable').textContent = formatCurrency(totalPayable);
+      document.getElementById('totalSuppliers').textContent = activeSuppliers;
+      document.getElementById('totalOverdue').textContent = formatCurrency(overdueAmount);
+      document.getElementById('overdueCount').textContent = `${overdueInvoices.length} invoices`;
+      document.getElementById('monthPayments').textContent = formatCurrency(monthPayments);
+    }
+
+    function renderSuppliers() {
+      const tbody = document.getElementById('supplierTableBody');
+      tbody.innerHTML = suppliers.map(s => `
+        <tr>
+          <td>
+            <div class="supplier-name" onclick="viewSupplier(${s.id})">${s.name}</div>
+            <div class="supplier-code">${s.code}</div>
+          </td>
+          <td>${s.contact}</td>
+          <td>${s.email}</td>
+          <td>${s.phone}</td>
+          <td class="amount ${s.balance > 0 ? 'amount-negative' : ''}">${formatCurrency(s.balance)}</td>
+          <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn primary" onclick="newInvoiceFor(${s.id})">Invoice</button>
+              <button class="action-btn" onclick="editSupplier(${s.id})">Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('supplierCount').textContent = suppliers.length;
+    }
+
+    function renderInvoices() {
+      const tbody = document.getElementById('invoiceTableBody');
+      tbody.innerHTML = invoices.map(i => `
+        <tr>
+          <td><strong>${i.number}</strong></td>
+          <td>${i.supplierName}</td>
+          <td>${formatDate(i.date)}</td>
+          <td>${formatDate(i.dueDate)}</td>
+          <td class="amount">${formatCurrency(i.amount)}</td>
+          <td class="amount">${formatCurrency(i.paid)}</td>
+          <td class="amount ${(i.amount - i.paid) > 0 ? 'amount-negative' : ''}">${formatCurrency(i.amount - i.paid)}</td>
+          <td><span class="status-badge status-${i.status}">${i.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewInvoice(${i.id})">View</button>
+              <button class="action-btn primary" onclick="payInvoice(${i.id})">Pay</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPurchaseOrders() {
+      const tbody = document.getElementById('poTableBody');
+      tbody.innerHTML = purchaseOrders.map(po => `
+        <tr>
+          <td><strong>${po.number}</strong></td>
+          <td>${po.supplierName}</td>
+          <td>${formatDate(po.date)}</td>
+          <td>${formatDate(po.deliveryDate)}</td>
+          <td class="amount">${formatCurrency(po.amount)}</td>
+          <td><span class="status-badge status-${po.status}">${po.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewPO(${po.id})">View</button>
+              ${po.status === 'pending' ? '<button class="action-btn primary" onclick="approvePO(' + po.id + ')">Approve</button>' : ''}
+              ${po.status === 'approved' ? '<button class="action-btn primary" onclick="receivePO(' + po.id + ')">Receive</button>' : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPayments() {
+      const tbody = document.getElementById('paymentTableBody');
+      tbody.innerHTML = payments.map(p => `
+        <tr>
+          <td><strong>${p.number}</strong></td>
+          <td>${p.supplierName}</td>
+          <td>${formatDate(p.date)}</td>
+          <td>${p.invoiceNumber}</td>
+          <td class="amount">${formatCurrency(p.amount)}</td>
+          <td>${p.method}</td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewPayment(${p.id})">View</button>
+              <button class="action-btn" onclick="printPayment(${p.id})">Print</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderAging() {
+      const tbody = document.getElementById('agingTableBody');
+      const agingData = suppliers.filter(s => s.balance > 0).map(s => ({
+        name: s.name,
+        current: s.balance * 0.35,
+        days30: s.balance * 0.30,
+        days60: s.balance * 0.20,
+        days90: s.balance * 0.10,
+        days90plus: s.balance * 0.05,
+        total: s.balance
+      }));
+
+      tbody.innerHTML = agingData.map(a => `
+        <tr>
+          <td><strong>${a.name}</strong></td>
+          <td class="amount">${formatCurrency(a.current)}</td>
+          <td class="amount">${formatCurrency(a.days30)}</td>
+          <td class="amount">${formatCurrency(a.days60)}</td>
+          <td class="amount">${formatCurrency(a.days90)}</td>
+          <td class="amount amount-negative">${formatCurrency(a.days90plus)}</td>
+          <td class="amount"><strong>${formatCurrency(a.total)}</strong></td>
+        </tr>
+      `).join('');
+
+      const totals = agingData.reduce((acc, a) => ({
+        current: acc.current + a.current,
+        days30: acc.days30 + a.days30,
+        days60: acc.days60 + a.days60,
+        days90: acc.days90 + a.days90,
+        days90plus: acc.days90plus + a.days90plus,
+        total: acc.total + a.total
+      }), { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0, total: 0 });
+
+      tbody.innerHTML += `
+        <tr style="background: #f8f9fa; font-weight: 600;">
+          <td>TOTAL</td>
+          <td class="amount">${formatCurrency(totals.current)}</td>
+          <td class="amount">${formatCurrency(totals.days30)}</td>
+          <td class="amount">${formatCurrency(totals.days60)}</td>
+          <td class="amount">${formatCurrency(totals.days90)}</td>
+          <td class="amount amount-negative">${formatCurrency(totals.days90plus)}</td>
+          <td class="amount">${formatCurrency(totals.total)}</td>
+        </tr>
+      `;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    function filterSuppliers() {
+      const search = document.getElementById('searchSupplier').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+
+      const filtered = suppliers.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(search) || s.code.toLowerCase().includes(search);
+        const matchesStatus = !status || s.status === status;
+        return matchesSearch && matchesStatus;
+      });
+
+      const tbody = document.getElementById('supplierTableBody');
+      tbody.innerHTML = filtered.map(s => `
+        <tr>
+          <td>
+            <div class="supplier-name" onclick="viewSupplier(${s.id})">${s.name}</div>
+            <div class="supplier-code">${s.code}</div>
+          </td>
+          <td>${s.contact}</td>
+          <td>${s.email}</td>
+          <td>${s.phone}</td>
+          <td class="amount ${s.balance > 0 ? 'amount-negative' : ''}">${formatCurrency(s.balance)}</td>
+          <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn primary" onclick="newInvoiceFor(${s.id})">Invoice</button>
+              <button class="action-btn" onclick="editSupplier(${s.id})">Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openNewSupplierModal() {
+      document.getElementById('supplierModalTitle').textContent = 'New Supplier';
+      document.getElementById('supplierForm').reset();
+      document.getElementById('supplierCode').value = 'SUP' + String(suppliers.length + 1).padStart(3, '0');
+      document.getElementById('supplierModal').classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    function saveSupplier() {
+      const name = document.getElementById('supplierName').value;
+      if (!name) {
+        alert('Please enter supplier name');
+        return;
+      }
+
+      const newSupplier = {
+        id: suppliers.length + 1,
+        code: document.getElementById('supplierCode').value,
+        name: name,
+        type: document.getElementById('supplierType').value,
+        contact: document.getElementById('contactPerson').value,
+        email: document.getElementById('supplierEmail').value,
+        phone: document.getElementById('supplierPhone').value,
+        vat: document.getElementById('supplierVat').value,
+        address: document.getElementById('supplierAddress').value,
+        city: document.getElementById('supplierCity').value,
+        postal: document.getElementById('supplierPostal').value,
+        terms: parseInt(document.getElementById('paymentTerms').value),
+        balance: 0,
+        status: 'active'
+      };
+
+      suppliers.push(newSupplier);
+      closeModal('supplierModal');
+      renderAll();
+      alert('Supplier saved successfully!');
+    }
+
+    function viewSupplier(id) {
+      const supplier = suppliers.find(s => s.id === id);
+      alert(`Supplier Details:\n\n${supplier.name}\n${supplier.email}\nBalance Owing: ${formatCurrency(supplier.balance)}`);
+    }
+
+    function editSupplier(id) {
+      const supplier = suppliers.find(s => s.id === id);
+      document.getElementById('supplierModalTitle').textContent = 'Edit Supplier';
+      document.getElementById('supplierCode').value = supplier.code;
+      document.getElementById('supplierName').value = supplier.name;
+      document.getElementById('supplierType').value = supplier.type;
+      document.getElementById('contactPerson').value = supplier.contact;
+      document.getElementById('supplierEmail').value = supplier.email;
+      document.getElementById('supplierPhone').value = supplier.phone;
+      document.getElementById('supplierVat').value = supplier.vat;
+      document.getElementById('supplierAddress').value = supplier.address;
+      document.getElementById('supplierCity').value = supplier.city;
+      document.getElementById('supplierPostal').value = supplier.postal;
+      document.getElementById('paymentTerms').value = supplier.terms;
+      document.getElementById('supplierModal').classList.add('show');
+    }
+
+    function newInvoiceFor(supplierId) { alert('Opening invoice form for supplier ID: ' + supplierId); }
+    function openNewInvoiceModal() { alert('New Supplier Invoice modal - Coming soon'); }
+    function openNewPOModal() { alert('New Purchase Order modal - Coming soon'); }
+    function openNewPaymentModal() { alert('New Payment modal - Coming soon'); }
+    function viewInvoice(id) { alert('View Invoice ' + id); }
+    function payInvoice(id) { alert('Pay Invoice ' + id); }
+    function viewPO(id) { alert('View PO ' + id); }
+    function approvePO(id) { alert('Approve PO ' + id); purchaseOrders.find(p => p.id === id).status = 'approved'; renderPurchaseOrders(); }
+    function receivePO(id) { alert('Receive PO ' + id); purchaseOrders.find(p => p.id === id).status = 'received'; renderPurchaseOrders(); }
+    function viewPayment(id) { alert('View Payment ' + id); }
+    function printPayment(id) { alert('Print Payment ' + id); }
+    function exportSuppliers() { alert('Exporting suppliers...'); }
+    function exportAging() { alert('Exporting aging report...'); }
+
+    function formatCurrency(amount) {
+      return 'R ' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    init();
+  </script>
+</body>
+</html>

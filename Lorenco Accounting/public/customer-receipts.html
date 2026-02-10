@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenco Accounting - Customer Receipts</title>
+    <script src="js/navigation.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            height: 56px;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        
+        .nav-item {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover {
+            color: #0066cc;
+            background: rgba(0,102,204,0.05);
+            border-bottom-color: #0066cc;
+        }
+        
+        .nav-item.active .nav-link {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            z-index: 1000;
+            margin-top: 4px;
+        }
+        
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e8eaed;
+            background: #f8f9fa;
+        }
+        
+        .dropdown a {
+            display: block;
+            padding: 10px 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .dropdown a:hover {
+            background: rgba(0,102,204,0.08);
+            color: #0066cc;
+            padding-left: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px 8px 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+        
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e8eaed;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        tbody tr {
+            transition: all 0.2s;
+        }
+        
+        tbody tr:hover {
+            background: rgba(0,102,204,0.04);
+        }
+        
+        .receipt-number {
+            font-weight: 600;
+            color: #0066cc;
+            cursor: pointer;
+        }
+        
+        .receipt-number:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .badge-allocated {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-unallocated {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #f8f9fa;
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #666;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #e8eaed;
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+
+        .allocation-section {
+            margin-top: 25px;
+            border-top: 1px solid #e8eaed;
+            padding-top: 25px;
+        }
+
+        .allocation-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .invoice-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+        }
+
+        .invoice-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e8eaed;
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 120px;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .invoice-item:last-child {
+            border-bottom: none;
+        }
+
+        .invoice-item:hover {
+            background: rgba(0,102,204,0.04);
+        }
+
+        .invoice-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .invoice-num {
+            font-weight: 600;
+            color: #0066cc;
+        }
+
+        .invoice-date {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .allocation-input {
+            width: 100%;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e8eaed;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .ai-suggestion {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ai-suggestion .icon {
+            font-size: 24px;
+        }
+
+        .ai-suggestion-text {
+            flex: 1;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .ai-suggestion .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Customer Receipts</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary">
+                    <span>📊</span>
+                    Export
+                </button>
+                <button class="btn btn-primary" onclick="openNewReceipt()">
+                    <span>+</span>
+                    Record Receipt
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">All Receipts</div>
+                <div class="search-box">
+                    <input type="text" placeholder="Search receipts..." oninput="filterReceipts(this.value)">
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="receiptTable">
+                    <thead>
+                        <tr>
+                            <th>Receipt #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Allocated</th>
+                            <th>Unallocated</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptTableBody">
+                        <!-- Receipts will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Receipt Modal -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Record Customer Receipt</h2>
+                <button class="close-btn" onclick="closeReceiptModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="aiSuggestion" class="ai-suggestion" style="display: none;">
+                    <span class="icon">🤖</span>
+                    <div class="ai-suggestion-text">
+                        <strong>Sean AI Suggestion:</strong>
+                        <div id="aiSuggestionText"></div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="applyAISuggestion()">Apply</button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Customer *</label>
+                        <select id="customerId" required onchange="loadCustomerInvoices()">
+                            <option value="">Select Customer</option>
+                            <option value="1">ABC Corporation</option>
+                            <option value="2">XYZ Enterprises</option>
+                            <option value="3">Tech Solutions Ltd</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Receipt Number *</label>
+                        <input type="text" id="receiptNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Receipt Date *</label>
+                        <input type="date" id="receiptDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Received *</label>
+                        <input type="number" id="amount" step="0.01" required oninput="updateUnallocated()">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method *</label>
+                        <select id="paymentMethod" required>
+                            <option value="">Select Method</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="EFT">EFT</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Reference</label>
+                        <input type="text" id="reference">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Notes</label>
+                        <textarea id="notes" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="allocation-section" id="allocationSection" style="display: none;">
+                    <div class="allocation-title">
+                        <span>💰</span>
+                        Allocate to Invoices
+                    </div>
+                    <div class="invoice-list" id="invoiceList">
+                        <!-- Invoices will be loaded here -->
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                            <span>Total Amount:</span>
+                            <strong id="totalAmount">R 0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                            <span>Total Allocated:</span>
+                            <strong id="totalAllocated">R 0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; color: #0066cc; border-top: 2px solid #0066cc; padding-top: 8px;">
+                            <span>Unallocated:</span>
+                            <strong id="unallocatedAmount">R 0.00</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReceiptModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveReceipt()">Save Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let receipts = [
+            {
+                id: 1,
+                number: 'RCP-2024-001',
+                customer: 'Tech Solutions Ltd',
+                customerId: 3,
+                date: '2024-01-10',
+                amount: 25000.00,
+                allocated: 25000.00,
+                method: 'EFT',
+                status: 'Allocated',
+                reference: 'INV-2024-003'
+            },
+            {
+                id: 2,
+                number: 'RCP-2024-002',
+                customer: 'ABC Corporation',
+                customerId: 1,
+                date: '2024-01-18',
+                amount: 5000.00,
+                allocated: 5000.00,
+                method: 'Cheque',
+                status: 'Allocated',
+                reference: 'Partial payment'
+            }
+        ];
+
+        let customerInvoices = {
+            1: [
+                { id: 1, number: 'INV-2024-001', date: '2024-01-15', balance: 15750.00 },
+                { id: 4, number: 'INV-2023-045', date: '2023-12-15', balance: 7500.00 }
+            ],
+            2: [
+                { id: 2, number: 'INV-2024-002', date: '2024-01-20', balance: 8420.50 }
+            ],
+            3: []
+        };
+
+        // Load receipts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReceipts();
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('receiptDate').value = today;
+            
+            const nextNumber = (receipts.length + 1).toString().padStart(3, '0');
+            document.getElementById('receiptNumber').value = `RCP-2024-${nextNumber}`;
+        });
+
+        function loadReceipts() {
+            const tbody = document.getElementById('receiptTableBody');
+            tbody.innerHTML = '';
+
+            receipts.forEach(receipt => {
+                const unallocated = receipt.amount - receipt.allocated;
+                const statusClass = receipt.status.toLowerCase().replace(' ', '-');
+                
+                const row = `
+                    <tr>
+                        <td><span class="receipt-number" onclick="viewReceipt(${receipt.id})">${receipt.number}</span></td>
+                        <td>${receipt.customer}</td>
+                        <td>${new Date(receipt.date).toLocaleDateString()}</td>
+                        <td>R ${receipt.amount.toFixed(2)}</td>
+                        <td>R ${receipt.allocated.toFixed(2)}</td>
+                        <td>R ${unallocated.toFixed(2)}</td>
+                        <td>${receipt.method}</td>
+                        <td><span class="badge badge-${statusClass}">${receipt.status}</span></td>
+                        <td>
+                            <div class="actions">
+                                <button class="action-btn" onclick="viewReceipt(${receipt.id})">View</button>
+                                <button class="action-btn" onclick="allocateReceipt(${receipt.id})">Allocate</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function filterReceipts(search) {
+            const tbody = document.getElementById('receiptTableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search.toLowerCase()) ? '' : 'none';
+            }
+        }
+
+        function openNewReceipt() {
+            document.getElementById('receiptModal').classList.add('active');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.remove('active');
+            document.getElementById('allocationSection').style.display = 'none';
+            document.getElementById('invoiceList').innerHTML = '';
+        }
+
+        function loadCustomerInvoices() {
+            const customerId = parseInt(document.getElementById('customerId').value);
+            if (!customerId) {
+                document.getElementById('allocationSection').style.display = 'none';
+                return;
+            }
+
+            const invoices = customerInvoices[customerId] || [];
+            const invoiceList = document.getElementById('invoiceList');
+            invoiceList.innerHTML = '';
+
+            if (invoices.length > 0) {
+                document.getElementById('allocationSection').style.display = 'block';
+                
+                invoices.forEach(invoice => {
+                    const item = document.createElement('div');
+                    item.className = 'invoice-item';
+                    item.innerHTML = `
+                        <input type="checkbox" onchange="toggleInvoice(${invoice.id}, this.checked)">
+                        <div class="invoice-info">
+                            <div class="invoice-num">${invoice.number}</div>
+                            <div class="invoice-date">Due: ${new Date(invoice.date).toLocaleDateString()} • Balance: R ${invoice.balance.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <input type="number" class="allocation-input" id="alloc-${invoice.id}" 
+                                   step="0.01" placeholder="0.00" disabled
+                                   oninput="updateAllocations()">
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="allocateFull(${invoice.id}, ${invoice.balance})" 
+                                    id="btn-${invoice.id}" disabled>Full Amount</button>
+                        </div>
+                    `;
+                    invoiceList.appendChild(item);
+                });
+
+                // Show AI suggestion
+                showAISuggestion(customerId, invoices);
+            } else {
+                document.getElementById('allocationSection').style.display = 'none';
+            }
+
+            updateUnallocated();
+        }
+
+        function showAISuggestion(customerId, invoices) {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            if (amount > 0 && invoices.length > 0) {
+                const suggestion = document.getElementById('aiSuggestion');
+                const suggestionText = document.getElementById('aiSuggestionText');
+                
+                // Simple AI logic: suggest oldest invoice first
+                const oldestInvoice = invoices.sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+                suggestionText.innerHTML = `I recommend allocating to ${oldestInvoice.number} (R ${oldestInvoice.balance.toFixed(2)}) as it's the oldest outstanding invoice.`;
+                suggestion.style.display = 'flex';
+            }
+        }
+
+        function applyAISuggestion() {
+            const customerId = parseInt(document.getElementById('customerId').value);
+            const invoices = customerInvoices[customerId] || [];
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            
+            if (invoices.length > 0) {
+                const oldestInvoice = invoices.sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+                const checkbox = document.querySelector(`input[onchange*="toggleInvoice(${oldestInvoice.id}"]`);
+                checkbox.checked = true;
+                toggleInvoice(oldestInvoice.id, true);
+                
+                const allocAmount = Math.min(amount, oldestInvoice.balance);
+                document.getElementById(`alloc-${oldestInvoice.id}`).value = allocAmount.toFixed(2);
+                updateAllocations();
+            }
+        }
+
+        function toggleInvoice(id, checked) {
+            document.getElementById(`alloc-${id}`).disabled = !checked;
+            document.getElementById(`btn-${id}`).disabled = !checked;
+            if (!checked) {
+                document.getElementById(`alloc-${id}`).value = '';
+                updateAllocations();
+            }
+        }
+
+        function allocateFull(id, balance) {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const currentAllocated = calculateTotalAllocated();
+            const available = amount - currentAllocated;
+            const allocAmount = Math.min(available, balance);
+            
+            document.getElementById(`alloc-${id}`).value = allocAmount.toFixed(2);
+            updateAllocations();
+        }
+
+        function calculateTotalAllocated() {
+            let total = 0;
+            const inputs = document.querySelectorAll('.allocation-input');
+            inputs.forEach(input => {
+                if (!input.disabled && input.value) {
+                    total += parseFloat(input.value) || 0;
+                }
+            });
+            return total;
+        }
+
+        function updateAllocations() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const allocated = calculateTotalAllocated();
+            const unallocated = amount - allocated;
+            
+            document.getElementById('totalAmount').textContent = `R ${amount.toFixed(2)}`;
+            document.getElementById('totalAllocated').textContent = `R ${allocated.toFixed(2)}`;
+            document.getElementById('unallocatedAmount').textContent = `R ${unallocated.toFixed(2)}`;
+        }
+
+        function updateUnallocated() {
+            updateAllocations();
+        }
+
+        function saveReceipt() {
+            const customerId = document.getElementById('customerId').value;
+            const receiptNumber = document.getElementById('receiptNumber').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            
+            if (!customerId || !receiptNumber || !amount) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const allocated = calculateTotalAllocated();
+            const customerName = document.getElementById('customerId').selectedOptions[0].text;
+            
+            const receipt = {
+                id: receipts.length + 1,
+                number: receiptNumber,
+                customer: customerName,
+                customerId: parseInt(customerId),
+                date: document.getElementById('receiptDate').value,
+                amount: amount,
+                allocated: allocated,
+                method: document.getElementById('paymentMethod').value,
+                status: allocated >= amount ? 'Allocated' : 'Unallocated',
+                reference: document.getElementById('reference').value
+            };
+            
+            receipts.push(receipt);
+            loadReceipts();
+            closeReceiptModal();
+            
+            alert('Receipt saved successfully!');
+        }
+
+        function viewReceipt(id) {
+            alert('View receipt: ' + id);
+        }
+
+        function allocateReceipt(id) {
+            alert('Allocate receipt: ' + id);
+        }
+    </script>
+</body>
+</html>

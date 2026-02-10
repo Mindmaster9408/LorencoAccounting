@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Historical Data Import - Payroll System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
+        }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
+        }
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .page-header h1 { color: #667eea; font-size: 2rem; }
+        .company-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+        /* TOP TABS */
+        .top-tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 2px solid #eee; }
+        .top-tab {
+            padding: 15px 30px; background: none; border: none; cursor: pointer;
+            font-size: 1rem; font-weight: 600; color: #999; position: relative; transition: all 0.2s;
+        }
+        .top-tab:hover { color: #667eea; }
+        .top-tab.active { color: #667eea; }
+        .top-tab.active::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+            height: 3px; background: #667eea; border-radius: 3px 3px 0 0;
+        }
+        .tab-view { display: none; }
+        .tab-view.active { display: block; }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-info { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* IMPORT ZONES */
+        .import-zone {
+            border: 3px dashed #ccc; border-radius: 15px; padding: 40px;
+            text-align: center; cursor: pointer; transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .import-zone:hover { border-color: #667eea; background: #f8f9ff; }
+        .import-zone.dragover { border-color: #667eea; background: #f0f4ff; }
+        .import-zone-icon { font-size: 3rem; margin-bottom: 10px; }
+        .import-zone-title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .import-zone-sub { color: #999; font-size: 0.9rem; }
+
+        /* WARNING BANNER */
+        .warning-banner {
+            background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px;
+            padding: 15px 20px; margin-bottom: 20px; color: #856404; font-size: 0.9rem;
+        }
+        .warning-banner strong { display: block; margin-bottom: 4px; }
+
+        /* PROGRESS BAR */
+        .progress-container { margin-bottom: 20px; display: none; }
+        .progress-bar-bg {
+            background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden; position: relative;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(135deg, #667eea, #764ba2); height: 100%;
+            border-radius: 8px; transition: width 0.3s; width: 0%;
+        }
+        .progress-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 12px; font-weight: 600; color: #333;
+        }
+
+        /* CONFIDENCE INDICATORS */
+        .confidence-high { background: #d4edda; color: #155724; }
+        .confidence-medium { background: #fff3cd; color: #856404; }
+        .confidence-low { background: #f8d7da; color: #721c24; }
+        .confidence-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+
+        /* DATA TABLES */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .data-table th { background: #f8f9fa; font-weight: 600; color: #333; position: sticky; top: 0; z-index: 1; }
+        .data-table tr:hover { background: #f8f9fa; }
+        .data-table .amount { text-align: right; font-weight: 600; }
+        .data-table .total-row { background: #f0f4ff; font-weight: 700; border-top: 2px solid #667eea; }
+
+        /* GRID INPUTS */
+        .grid-input {
+            width: 100%; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px;
+            font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+            text-align: right; transition: all 0.2s;
+        }
+        .grid-input:focus { outline: none; border-color: #667eea; background: #f0f4ff; }
+        .grid-input:hover { border-color: #b0b0b0; }
+        .grid-input.has-value { background: #f8fff8; }
+
+        /* EMPLOYEE GROUP HEADER */
+        .emp-group-header {
+            background: linear-gradient(135deg, #5a67d8, #6b7fda); color: white;
+            font-weight: 700; font-size: 0.95rem;
+        }
+        .emp-group-header td { padding: 10px 12px !important; border-bottom: none !important; }
+
+        /* EDITABLE PDF TABLE */
+        .pdf-input {
+            width: 100%; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 4px;
+            font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+            text-align: right;
+        }
+        .pdf-input:focus { outline: none; border-color: #667eea; background: #f0f4ff; }
+
+        /* FORM CONTROLS */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; align-items: end; }
+
+        /* MULTI-SELECT */
+        .multi-select {
+            border: 2px solid #e0e0e0; border-radius: 6px; max-height: 200px; overflow-y: auto;
+            padding: 8px; background: white;
+        }
+        .multi-select-item {
+            display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+            border-radius: 4px; cursor: pointer; transition: background 0.2s;
+        }
+        .multi-select-item:hover { background: #f0f4ff; }
+        .multi-select-item input[type="checkbox"] { cursor: pointer; }
+        .multi-select-item label { cursor: pointer; font-size: 13px; color: #333; }
+
+        /* INFO TABLE */
+        .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+        .info-table th, .info-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .info-table th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .info-table .required-yes { color: #dc3545; font-weight: 600; }
+
+        /* SUMMARY CARDS */
+        .summary-cards { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .summary-card {
+            padding: 15px 20px; border-radius: 10px; flex: 1; min-width: 140px; text-align: center;
+        }
+        .summary-card-label { font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-card-value { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
+
+        /* SUCCESS / ERROR */
+        .success-msg { padding: 15px; border-radius: 10px; margin-bottom: 15px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: none; }
+        .error-msg { padding: 15px; border-radius: 10px; margin-bottom: 15px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: none; }
+
+        /* IMPORT LOG */
+        .import-log { margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; }
+        .import-log h3 { color: #667eea; margin-bottom: 15px; font-size: 1.1rem; }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; }
+        .empty-text { font-size: 1rem; margin-bottom: 5px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar { width: 250px; }
+            .main-content { padding: 25px; }
+            .page-header h1 { font-size: 1.5rem; }
+            .top-tab { padding: 12px 20px; font-size: 0.9rem; }
+        }
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .main-content { padding: 20px; }
+            .page-header { flex-direction: column; gap: 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .top-tabs { overflow-x: auto; }
+            .top-tab { padding: 10px 15px; font-size: 0.85rem; white-space: nowrap; }
+            .summary-cards { flex-direction: column; }
+            .import-zone { padding: 25px; }
+            .grid-table-container { overflow-x: auto; }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">&#128202; Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">&#128101; Employees</a>
+                <a href="payruns.html" class="sidebar-link">&#128181; Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">&#128203; Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">&#128202; Reports</a>
+                <a href="historical-import.html" class="sidebar-link active">&#128197; Historical Import</a>
+                <a href="company-details.html" class="sidebar-link">&#127970; Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">&#8592; Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">&#128682; Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>&#128197; Historical Data Import</h1>
+                    <span class="company-badge" id="company-name-badge"></span>
+                </div>
+            </div>
+
+            <div class="top-tabs">
+                <button class="top-tab active" onclick="switchTab('csv')">&#128196; CSV/Excel Upload</button>
+                <button class="top-tab" onclick="switchTab('pdf')">&#128196; PDF Payslip Upload</button>
+                <button class="top-tab" onclick="switchTab('manual')">&#128221; Manual Entry Grid</button>
+            </div>
+
+            <!-- ==================== TAB 1: CSV/EXCEL UPLOAD ==================== -->
+            <div id="csv-view" class="tab-view active">
+                <div id="csvDropZone" class="import-zone">
+                    <div class="import-zone-icon">&#128193;</div>
+                    <p class="import-zone-title">Drag and drop your CSV or Excel file here</p>
+                    <p class="import-zone-sub">or</p>
+                    <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('csvFileInput').click()" style="margin-top:10px;">Browse Files</button>
+                </div>
+
+                <button class="btn btn-secondary btn-sm" onclick="downloadHistoricalTemplate()" style="margin-bottom:20px;">Download Template</button>
+
+                <div style="background:#f8f9fa; border-radius:10px; padding:20px;">
+                    <h4 style="margin-bottom:10px; color:#333;">Expected Columns</h4>
+                    <table class="info-table">
+                        <thead>
+                            <tr><th>Column</th><th>Description</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>employee_number</td><td>Must match existing employee</td><td class="required-yes">Yes</td></tr>
+                            <tr><td>period</td><td>YYYY-MM format (e.g., 2024-06)</td><td class="required-yes">Yes</td></tr>
+                            <tr><td>basic_salary</td><td>Monthly basic salary (Rands)</td><td class="required-yes">Yes</td></tr>
+                            <tr><td>gross</td><td>Gross pay (if different from calculated)</td><td>No</td></tr>
+                            <tr><td>paye</td><td>PAYE tax withheld (historical value)</td><td>No</td></tr>
+                            <tr><td>uif</td><td>UIF contribution (historical value)</td><td>No</td></tr>
+                            <tr><td>net</td><td>Net pay (historical value)</td><td>No</td></tr>
+                            <tr><td>allowance_*</td><td>Columns starting with "allowance_" (e.g., allowance_travel)</td><td>No</td></tr>
+                            <tr><td>deduction_*</td><td>Columns starting with "deduction_" (e.g., deduction_medical)</td><td>No</td></tr>
+                            <tr><td>overtime_hours</td><td>Hours of overtime worked</td><td>No</td></tr>
+                            <tr><td>overtime_rate</td><td>Overtime multiplier (default 1.5)</td><td>No</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- CSV Preview Area -->
+                <div id="csvPreviewArea" style="display:none; margin-top:20px;">
+                    <div id="csvPreviewSummary"></div>
+                    <div style="overflow-x:auto; max-height:450px; overflow-y:auto;">
+                        <table id="csvPreviewTable" class="data-table"></table>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px; justify-content:flex-end;">
+                        <button class="btn btn-secondary" onclick="resetCsvUpload()">Cancel</button>
+                        <button class="btn btn-success" id="csvConfirmBtn" onclick="confirmCsvImport()">Confirm Import</button>
+                    </div>
+                </div>
+
+                <!-- Import Log -->
+                <div class="import-log">
+                    <h3>&#128203; Import History</h3>
+                    <div id="importLogArea"></div>
+                </div>
+            </div>
+
+            <!-- ==================== TAB 2: PDF PAYSLIP UPLOAD ==================== -->
+            <div id="pdf-view" class="tab-view">
+                <div class="warning-banner">
+                    <strong>&#9888; PDF Extraction Notice</strong>
+                    PDF extraction is best-effort. Values should be verified before importing. Scanned/image PDFs cannot be read.
+                </div>
+
+                <div id="pdfDropZone" class="import-zone">
+                    <div class="import-zone-icon">&#128196;</div>
+                    <p class="import-zone-title">Drag and drop one or more PDF payslips here</p>
+                    <p class="import-zone-sub">or</p>
+                    <input type="file" id="pdfFileInput" accept=".pdf" multiple style="display:none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('pdfFileInput').click()" style="margin-top:10px;">Browse PDF Files</button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="pdfProgressContainer" class="progress-container">
+                    <div style="margin-bottom:8px; font-size:0.9rem; color:#555;" id="pdfProgressLabel">Processing PDFs...</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="pdfProgressBar"></div>
+                        <div class="progress-text" id="pdfProgressText">0%</div>
+                    </div>
+                </div>
+
+                <!-- PDF Results Area -->
+                <div id="pdfResultsArea" style="display:none;">
+                    <div id="pdfResultsSummary"></div>
+                    <div style="overflow-x:auto; max-height:500px; overflow-y:auto;">
+                        <table id="pdfResultsTable" class="data-table"></table>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px; justify-content:flex-end;">
+                        <button class="btn btn-secondary" onclick="resetPdfUpload()">Cancel</button>
+                        <button class="btn btn-success" onclick="confirmPdfImport()">Confirm Import</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== TAB 3: MANUAL ENTRY GRID ==================== -->
+            <div id="manual-view" class="tab-view">
+                <div class="form-grid" style="margin-bottom:20px;">
+                    <div class="form-group">
+                        <label>From Year</label>
+                        <select id="manualYearFrom"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>From Month</label>
+                        <select id="manualMonthFrom">
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>To Year</label>
+                        <select id="manualYearTo"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>To Month</label>
+                        <select id="manualMonthTo">
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Employees</label>
+                    <div style="display:flex; gap:10px; margin-bottom:8px;">
+                        <button class="btn btn-sm btn-secondary" onclick="selectAllEmployees(true)" style="padding:4px 10px; font-size:12px;">Select All</button>
+                        <button class="btn btn-sm btn-secondary" onclick="selectAllEmployees(false)" style="padding:4px 10px; font-size:12px;">Deselect All</button>
+                    </div>
+                    <div class="multi-select" id="employeeMultiSelect"></div>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <button class="btn btn-primary" onclick="generateManualGrid()">Generate Grid</button>
+                </div>
+
+                <div id="manualGridContainer" class="grid-table-container" style="display:none;">
+                    <div id="manualGridSummary" style="margin-bottom:15px;"></div>
+                    <div style="overflow-x:auto; max-height:600px; overflow-y:auto;">
+                        <table id="manualGridTable" class="data-table"></table>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px; justify-content:flex-end;">
+                        <button class="btn btn-secondary" onclick="clearManualGrid()">Clear All</button>
+                        <button class="btn btn-success" onclick="saveManualGrid()">Save Historical Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/bulk-import-utils.js"></script>
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/payroll-engine.js"></script>
+    <script>
+        // ========== GLOBALS ==========
+        var currentCompanyId = null;
+        var employees = [];
+        var csvParsedData = null;
+        var pdfExtractedRows = [];
+
+        // ========== PDF.JS WORKER ==========
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        // ========== INIT ==========
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            var session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            var company = AUTH.getCompanyById(currentCompanyId);
+            document.getElementById('company-name-badge').textContent = company ? company.name : 'Unknown Company';
+            loadCompaniesCarousel();
+            loadEmployees();
+            setupDragDropZones();
+            populateManualEntryControls();
+            loadImportLog();
+        });
+
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            var session = AUTH.getSession();
+            var companies = AUTH.getCompaniesForUser(session);
+            var carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(function(company) {
+                    var div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = function() { switchToCompany(company.id); };
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(companyId) {
+            var session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            window.location.reload();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AUTH.logout();
+            }
+        }
+
+        // ========== DATA LOADING ==========
+        function loadEmployees() {
+            var stored = localStorage.getItem('employees_' + currentCompanyId);
+            employees = stored ? JSON.parse(stored) : [];
+        }
+
+        function findEmployeeByNumber(empNum) {
+            if (!empNum) return null;
+            var num = String(empNum).trim().toUpperCase();
+            for (var i = 0; i < employees.length; i++) {
+                if (String(employees[i].employee_number).trim().toUpperCase() === num) {
+                    return employees[i];
+                }
+            }
+            return null;
+        }
+
+        // ========== TAB SWITCHING ==========
+        function switchTab(tab) {
+            var tabs = document.querySelectorAll('.top-tab');
+            var views = document.querySelectorAll('.tab-view');
+            for (var i = 0; i < tabs.length; i++) { tabs[i].classList.remove('active'); }
+            for (var i = 0; i < views.length; i++) { views[i].classList.remove('active'); }
+            if (tab === 'csv') { tabs[0].classList.add('active'); document.getElementById('csv-view').classList.add('active'); }
+            else if (tab === 'pdf') { tabs[1].classList.add('active'); document.getElementById('pdf-view').classList.add('active'); }
+            else if (tab === 'manual') { tabs[2].classList.add('active'); document.getElementById('manual-view').classList.add('active'); }
+        }
+
+        // ========== HELPERS ==========
+        function formatMoney(amount) {
+            return 'R ' + (amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatPeriod(period) {
+            var parts = period.split('-');
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months[parseInt(parts[1]) - 1] + ' ' + parts[0];
+        }
+
+        function formatPeriodLong(period) {
+            var parts = period.split('-');
+            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[parseInt(parts[1]) - 1] + ' ' + parts[0];
+        }
+
+        // ========== DRAG-DROP SETUP ==========
+        function setupDragDropZones() {
+            if (typeof BulkImportUtils !== 'undefined') {
+                BulkImportUtils.setupDragDrop('csvDropZone', 'csvFileInput', handleCsvFile);
+                BulkImportUtils.setupMultiDragDrop('pdfDropZone', 'pdfFileInput', handlePdfFiles);
+            }
+        }
+
+
+        // ================================================================
+        //  TAB 1: CSV/EXCEL UPLOAD
+        // ================================================================
+
+        var HISTORICAL_FIELD_ALIASES = {
+            'employee_number': ['employee_number', 'emp_number', 'EmpNo', 'emp_no', 'empno', 'Employee Number', 'EmployeeNumber', 'emp_id', 'staff_number', 'StaffNo'],
+            'period': ['period', 'Period', 'pay_period', 'PayPeriod', 'month', 'Month', 'pay_month', 'date'],
+            'basic_salary': ['basic_salary', 'BasicSalary', 'basic', 'Basic', 'basic_pay', 'base_salary', 'Basic Salary'],
+            'gross': ['gross', 'Gross', 'gross_pay', 'GrossPay', 'Gross Pay', 'total_earnings', 'TotalEarnings'],
+            'paye': ['paye', 'PAYE', 'income_tax', 'IncomeTax', 'tax', 'Tax', 'Income Tax'],
+            'uif': ['uif', 'UIF', 'uif_employee', 'UIF Employee'],
+            'net': ['net', 'Net', 'net_pay', 'NetPay', 'nett', 'Nett', 'Net Pay', 'take_home', 'TakeHome'],
+            'overtime_hours': ['overtime_hours', 'OvertimeHours', 'ot_hours', 'OT Hours', 'overtime', 'OT_Hours'],
+            'overtime_rate': ['overtime_rate', 'OvertimeRate', 'ot_rate', 'OT Rate', 'OT_Rate']
+        };
+
+        function handleCsvFile(file) {
+            if (typeof XLSX === 'undefined') {
+                alert('File parser not loaded. Please refresh the page and try again.');
+                return;
+            }
+            BulkImportUtils.parseFile(file, function(data, error) {
+                if (error) { alert(error); return; }
+                processCsvData(data);
+            });
+        }
+
+        function processCsvData(jsonData) {
+            var headers = Object.keys(jsonData[0]);
+            var mapping = BulkImportUtils.autoMapColumns(headers, HISTORICAL_FIELD_ALIASES);
+
+            var empNumberCol = mapping.employee_number;
+            var periodCol = mapping.period;
+            var basicCol = mapping.basic_salary;
+            var grossCol = mapping.gross;
+            var payeCol = mapping.paye;
+            var uifCol = mapping.uif;
+            var netCol = mapping.net;
+            var otHoursCol = mapping.overtime_hours;
+            var otRateCol = mapping.overtime_rate;
+
+            if (!empNumberCol) { alert('Could not find an employee_number column. Please check your file.'); return; }
+            if (!periodCol) { alert('Could not find a period column. Please check your file.'); return; }
+            if (!basicCol) { alert('Could not find a basic_salary column. Please check your file.'); return; }
+
+            // Detect allowance and deduction columns
+            var allowanceCols = headers.filter(function(h) { return h.toLowerCase().indexOf('allowance') === 0; });
+            var deductionCols = headers.filter(function(h) { return h.toLowerCase().indexOf('deduction') === 0; });
+
+            var preview = [];
+            var errorCount = 0;
+            var periodsFound = {};
+            var matchedEmps = {};
+
+            jsonData.forEach(function(row, idx) {
+                var empNum = String(row[empNumberCol] || '').trim();
+                var rawPeriod = String(row[periodCol] || '').trim();
+                var period = BulkImportUtils.normalizePeriod(rawPeriod);
+                var basic = BulkImportUtils.parseMoney(row[basicCol]) || 0;
+                var emp = findEmployeeByNumber(empNum);
+
+                var rowErrors = [];
+                if (!emp) rowErrors.push('Employee not found');
+                if (!period) rowErrors.push('Invalid period: ' + rawPeriod);
+                if (basic <= 0) rowErrors.push('Invalid basic salary');
+
+                // Deduplication check
+                var isDuplicate = false;
+                if (emp && period) {
+                    isDuplicate = PayrollEngine.hasHistoricalRecord(currentCompanyId, emp.id, period);
+                    if (isDuplicate) rowErrors.push('Duplicate: record already exists');
+                }
+
+                // Conflict detection: compare imported basic with current employee salary
+                if (emp && basic > 0) {
+                    var currentPayroll = JSON.parse(localStorage.getItem('emp_payroll_' + currentCompanyId + '_' + emp.id) || '{}');
+                    if (currentPayroll.basic_salary && Math.abs(currentPayroll.basic_salary - basic) > 1) {
+                        // Not an error, just a warning flag
+                    }
+                }
+
+                if (period) periodsFound[period] = true;
+                if (emp) matchedEmps[emp.id] = emp;
+
+                // Parse allowances and deductions
+                var allowances = [];
+                var deductions = [];
+                allowanceCols.forEach(function(col) {
+                    var amt = BulkImportUtils.parseMoney(row[col]);
+                    if (amt && amt > 0) {
+                        var name = col.replace(/^allowance_?/i, '').replace(/_/g, ' ').trim() || 'Allowance';
+                        allowances.push({ description: name, amount: amt });
+                    }
+                });
+                deductionCols.forEach(function(col) {
+                    var amt = BulkImportUtils.parseMoney(row[col]);
+                    if (amt && amt > 0) {
+                        var name = col.replace(/^deduction_?/i, '').replace(/_/g, ' ').trim() || 'Deduction';
+                        deductions.push({ description: name, amount: amt });
+                    }
+                });
+
+                // Parse optional fields
+                var gross = grossCol ? BulkImportUtils.parseMoney(row[grossCol]) : null;
+                var paye = payeCol ? BulkImportUtils.parseMoney(row[payeCol]) : null;
+                var uif = uifCol ? BulkImportUtils.parseMoney(row[uifCol]) : null;
+                var net = netCol ? BulkImportUtils.parseMoney(row[netCol]) : null;
+                var otHours = otHoursCol ? parseFloat(row[otHoursCol]) || 0 : 0;
+                var otRate = otRateCol ? parseFloat(row[otRateCol]) || 1.5 : 1.5;
+
+                // If PAYE/UIF/net are not provided, calculate them
+                var calculated = false;
+                if (basic > 0 && (paye === null || uif === null || net === null)) {
+                    var regularInputs = [];
+                    allowances.forEach(function(a) { regularInputs.push({ type: 'allowance', description: a.description, amount: a.amount }); });
+                    deductions.forEach(function(d) { regularInputs.push({ type: 'deduction', description: d.description, amount: d.amount }); });
+                    var overtime = otHours > 0 ? [{ hours: otHours, rate_multiplier: otRate }] : [];
+                    var calc = PayrollEngine.calculateFromData({ basic_salary: basic, regular_inputs: regularInputs }, [], overtime, [], []);
+                    if (gross === null) gross = calc.gross;
+                    if (paye === null) paye = calc.paye;
+                    if (uif === null) uif = calc.uif;
+                    if (net === null) net = calc.net;
+                    calculated = true;
+                }
+
+                if (gross === null) gross = basic;
+                if (paye === null) paye = 0;
+                if (uif === null) uif = 0;
+                if (net === null) net = gross - paye - uif;
+
+                // Validate gross >= basic
+                if (gross > 0 && basic > 0 && gross < basic) {
+                    rowErrors.push('Gross (' + gross + ') < Basic (' + basic + ')');
+                }
+
+                if (rowErrors.length > 0) errorCount++;
+
+                preview.push({
+                    _row: idx + 1,
+                    employee_number: empNum,
+                    employee_name: emp ? (emp.first_name + ' ' + emp.last_name) : 'NOT FOUND',
+                    period: period || rawPeriod,
+                    basic: basic,
+                    gross: gross,
+                    paye: paye,
+                    uif: uif,
+                    net: net,
+                    sdl: gross > 0 ? PayrollEngine.calculateSDL(gross) : 0,
+                    allowances: allowances,
+                    deductions: deductions,
+                    overtime_hours: otHours,
+                    overtime_rate: otRate,
+                    calculated: calculated,
+                    _errors: rowErrors,
+                    _empId: emp ? emp.id : null
+                });
+            });
+
+            csvParsedData = preview;
+
+            // Render summary
+            var uniquePeriods = Object.keys(periodsFound).sort();
+            var matchedCount = Object.keys(matchedEmps).length;
+            var validCount = preview.filter(function(r) { return r._errors.length === 0; }).length;
+
+            var summaryHtml = '<h3 style="color:#667eea; margin-bottom:15px;">Import Preview</h3>';
+            summaryHtml += '<div class="summary-cards">';
+            summaryHtml += '<div class="summary-card" style="background:#d4edda; color:#155724;"><div class="summary-card-label">Valid Rows</div><div class="summary-card-value">' + validCount + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:' + (errorCount > 0 ? '#f8d7da' : '#e2e3e5') + '; color:' + (errorCount > 0 ? '#721c24' : '#383d41') + ';"><div class="summary-card-label">Errors</div><div class="summary-card-value">' + errorCount + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#e3f2fd; color:#1565c0;"><div class="summary-card-label">Periods Found</div><div class="summary-card-value">' + uniquePeriods.length + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#f3e5f5; color:#6a1b9a;"><div class="summary-card-label">Employees Matched</div><div class="summary-card-value">' + matchedCount + '</div></div>';
+            summaryHtml += '</div>';
+
+            if (uniquePeriods.length > 0) {
+                summaryHtml += '<p style="color:#666; font-size:0.9rem; margin-bottom:15px;">Periods: ' + uniquePeriods.map(function(p) { return formatPeriod(p); }).join(', ') + '</p>';
+            }
+
+            document.getElementById('csvPreviewSummary').innerHTML = summaryHtml;
+
+            // Render table
+            var tableHtml = '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;">';
+            tableHtml += '<th style="padding:10px 8px;">Row</th><th style="padding:10px 8px;">Emp #</th><th style="padding:10px 8px;">Name</th>';
+            tableHtml += '<th style="padding:10px 8px;">Period</th><th style="padding:10px 8px; text-align:right;">Basic</th>';
+            tableHtml += '<th style="padding:10px 8px; text-align:right;">Gross</th><th style="padding:10px 8px; text-align:right;">PAYE</th>';
+            tableHtml += '<th style="padding:10px 8px; text-align:right;">UIF</th><th style="padding:10px 8px; text-align:right;">Net</th>';
+            tableHtml += '<th style="padding:10px 8px;">Status</th></tr></thead><tbody>';
+
+            preview.forEach(function(row) {
+                var bg = row._errors.length > 0 ? '#f8d7da' : '';
+                tableHtml += '<tr style="background:' + bg + '; border-bottom:1px solid #eee;">';
+                tableHtml += '<td style="padding:8px;">' + row._row + '</td>';
+                tableHtml += '<td style="padding:8px;">' + row.employee_number + '</td>';
+                tableHtml += '<td style="padding:8px;">' + row.employee_name + '</td>';
+                tableHtml += '<td style="padding:8px;">' + (row.period ? formatPeriod(row.period) : row.period) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.basic) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.gross) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.paye) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.uif) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right; font-weight:600;">' + formatMoney(row.net) + '</td>';
+                if (row._errors.length > 0) {
+                    tableHtml += '<td style="padding:8px; color:#dc3545; font-weight:600;">' + row._errors.join(', ') + '</td>';
+                } else {
+                    tableHtml += '<td style="padding:8px; color:#28a745; font-weight:600;">' + (row.calculated ? 'Calculated' : 'Historical') + '</td>';
+                }
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody>';
+            document.getElementById('csvPreviewTable').innerHTML = tableHtml;
+
+            if (validCount === 0) {
+                document.getElementById('csvConfirmBtn').disabled = true;
+                document.getElementById('csvConfirmBtn').style.opacity = '0.5';
+            } else {
+                document.getElementById('csvConfirmBtn').disabled = false;
+                document.getElementById('csvConfirmBtn').style.opacity = '1';
+            }
+
+            document.getElementById('csvDropZone').style.display = 'none';
+            document.getElementById('csvPreviewArea').style.display = 'block';
+        }
+
+        function confirmCsvImport() {
+            if (!csvParsedData) return;
+            var validRows = csvParsedData.filter(function(r) { return r._errors.length === 0; });
+            if (validRows.length === 0) return;
+
+            // Transaction rollback: collect all keys we'll write
+            var keysWritten = [];
+            var importedCount = 0;
+            var periodsCreated = {};
+            var periodStats = {};
+            var importTimestamp = new Date().toISOString();
+
+            try {
+                validRows.forEach(function(row) {
+                    var histKey = 'emp_historical_' + currentCompanyId + '_' + row._empId + '_' + row.period;
+                    var histData = {
+                        basic: row.basic,
+                        gross: row.gross,
+                        paye: row.paye,
+                        uif: row.uif,
+                        sdl: row.sdl,
+                        net: row.net,
+                        allowances: row.allowances,
+                        deductions: row.deductions,
+                        overtime_hours: row.overtime_hours,
+                        overtime_rate: row.overtime_rate,
+                        source: 'csv_import',
+                        imported_date: importTimestamp
+                    };
+                    localStorage.setItem(histKey, JSON.stringify(histData));
+                    keysWritten.push(histKey);
+
+                    // Accumulate stats per period
+                    if (!periodStats[row.period]) {
+                        periodStats[row.period] = { count: 0, gross: 0, paye: 0, uif: 0, net: 0 };
+                    }
+                    periodStats[row.period].count++;
+                    periodStats[row.period].gross += row.gross || 0;
+                    periodStats[row.period].paye += row.paye || 0;
+                    periodStats[row.period].uif += row.uif || 0;
+                    periodStats[row.period].net += row.net || 0;
+
+                    periodsCreated[row.period] = true;
+                    importedCount++;
+                });
+
+                // Create pay run entries with proper stats
+                createHistoricalPayruns(periodsCreated, periodStats);
+                logHistoricalImport('CSV/Excel Import', importedCount, Object.keys(periodsCreated));
+
+            } catch (err) {
+                // Rollback: remove all keys written in this batch
+                keysWritten.forEach(function(key) { localStorage.removeItem(key); });
+                alert('Import failed and was rolled back: ' + err.message);
+                return;
+            }
+
+            resetCsvUpload();
+            loadImportLog();
+            alert('Successfully imported ' + importedCount + ' historical record(s) across ' + Object.keys(periodsCreated).length + ' period(s).');
+        }
+
+        function resetCsvUpload() {
+            csvParsedData = null;
+            document.getElementById('csvDropZone').style.display = 'block';
+            document.getElementById('csvPreviewArea').style.display = 'none';
+            document.getElementById('csvFileInput').value = '';
+        }
+
+        function downloadHistoricalTemplate() {
+            BulkImportUtils.downloadCSVTemplate(
+                'historical_import_template.csv',
+                ['employee_number', 'period', 'basic_salary', 'gross', 'paye', 'uif', 'net', 'allowance_travel', 'allowance_housing', 'deduction_medical', 'deduction_pension', 'overtime_hours', 'overtime_rate'],
+                [
+                    ['EMP001', '2024-01', '25000', '30500', '4250', '177.12', '22572.88', '3500', '2000', '1800', '1500', '8', '1.5'],
+                    ['EMP001', '2024-02', '25000', '28000', '3750', '177.12', '21072.88', '3000', '0', '1800', '1500', '0', '1.5'],
+                    ['EMP002', '2024-01', '18000', '20000', '2100', '177.12', '15722.88', '2000', '0', '1200', '900', '4', '1.5']
+                ]
+            );
+        }
+
+
+        // ================================================================
+        //  TAB 2: PDF PAYSLIP UPLOAD
+        // ================================================================
+
+        function handlePdfFiles(files) {
+            if (typeof pdfjsLib === 'undefined') {
+                alert('PDF parser not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            var pdfFiles = [];
+            for (var i = 0; i < files.length; i++) {
+                if (files[i].type === 'application/pdf' || files[i].name.toLowerCase().endsWith('.pdf')) {
+                    pdfFiles.push(files[i]);
+                }
+            }
+            if (pdfFiles.length === 0) {
+                alert('No PDF files detected. Please upload .pdf files.');
+                return;
+            }
+
+            pdfExtractedRows = [];
+            document.getElementById('pdfProgressContainer').style.display = 'block';
+            document.getElementById('pdfResultsArea').style.display = 'none';
+
+            var processed = 0;
+            var total = pdfFiles.length;
+
+            function processNext(index) {
+                if (index >= total) {
+                    finishPdfProcessing();
+                    return;
+                }
+                updatePdfProgress(index, total, pdfFiles[index].name);
+                extractFromPdf(pdfFiles[index], function(results) {
+                    results.forEach(function(r) {
+                        r._filename = pdfFiles[index].name;
+                        pdfExtractedRows.push(r);
+                    });
+                    processed++;
+                    processNext(index + 1);
+                });
+            }
+
+            processNext(0);
+        }
+
+        function updatePdfProgress(current, total, filename) {
+            var pct = Math.round(((current) / total) * 100);
+            document.getElementById('pdfProgressBar').style.width = pct + '%';
+            document.getElementById('pdfProgressText').textContent = pct + '%';
+            document.getElementById('pdfProgressLabel').textContent = 'Processing: ' + filename + ' (' + (current + 1) + '/' + total + ')';
+        }
+
+        function extractFromPdf(file, callback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var typedArray = new Uint8Array(e.target.result);
+                pdfjsLib.getDocument(typedArray).promise.then(function(pdfDoc) {
+                    var numPages = pdfDoc.numPages;
+                    var textChunks = [];
+                    var pagesProcessed = 0;
+
+                    function extractPage(pageNum) {
+                        pdfDoc.getPage(pageNum).then(function(page) {
+                            page.getTextContent().then(function(content) {
+                                var pageText = content.items.map(function(item) { return item.str; }).join(' ');
+                                textChunks.push(pageText);
+                                pagesProcessed++;
+                                if (pagesProcessed < numPages) {
+                                    extractPage(pageNum + 1);
+                                } else {
+                                    var fullText = textChunks.join('\n');
+                                    var extracted = parsePayslipText(fullText);
+                                    callback(extracted);
+                                }
+                            });
+                        });
+                    }
+
+                    if (numPages > 0) {
+                        extractPage(1);
+                    } else {
+                        callback([]);
+                    }
+                }).catch(function(err) {
+                    console.error('PDF parse error:', err);
+                    callback([{ _error: 'Failed to parse PDF: ' + err.message, _valuesFound: 0 }]);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parsePayslipText(text) {
+            var results = [];
+            var valuesFound = 0;
+
+            // Employee number
+            var empMatch = text.match(/Emp(?:loyee)?\s*(?:No|Number|#|Num)[:\s]*([A-Z0-9]+)/i);
+            var empNumber = empMatch ? empMatch[1] : '';
+            if (empNumber) valuesFound++;
+
+            // Period
+            var periodMatch = text.match(/(?:Pay\s*)?Period[:\s]*((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
+            var period = '';
+            if (periodMatch) {
+                period = BulkImportUtils.normalizePeriod(periodMatch[1]) || '';
+                if (period) valuesFound++;
+            }
+            if (!period) {
+                var periodMatch2 = text.match(/(\d{4}[\-\/]\d{2})/);
+                if (periodMatch2) {
+                    period = BulkImportUtils.normalizePeriod(periodMatch2[1]) || '';
+                    if (period) valuesFound++;
+                }
+            }
+
+            // Amount extraction function
+            function extractAmount(labels) {
+                for (var i = 0; i < labels.length; i++) {
+                    var pattern = new RegExp(labels[i] + '[:\\s]*R?\\s*([\\d\\s,]+\\.\\d{2})', 'i');
+                    var match = text.match(pattern);
+                    if (match) {
+                        var val = parseFloat(match[1].replace(/[\s,]/g, ''));
+                        if (!isNaN(val)) {
+                            valuesFound++;
+                            return val;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            var gross = extractAmount(['Gross\\s*Pay', 'Gross\\s*Salary', 'Gross\\s*Earnings', 'Gross\\s*Remuneration', 'Gross', 'Total\\s*Earnings']);
+            var basic = extractAmount(['Basic\\s*Salary', 'Basic\\s*Pay', 'Basic']);
+            var paye = extractAmount(['PAYE', 'Income\\s*Tax', 'Pay\\s*As\\s*You\\s*Earn']);
+            var uif = extractAmount(['UIF\\s*Employee', 'UIF\\s*Contribution', 'UIF']);
+            var net = extractAmount(['Net\\s*Pay', 'Nett\\s*Pay', 'Net\\s*Salary', 'Nett\\s*Salary', 'Take\\s*Home', 'Net', 'Nett']);
+
+            results.push({
+                employee_number: empNumber,
+                period: period,
+                basic: basic,
+                gross: gross,
+                paye: paye,
+                uif: uif,
+                net: net,
+                _valuesFound: valuesFound,
+                _error: null
+            });
+
+            return results;
+        }
+
+        function finishPdfProcessing() {
+            document.getElementById('pdfProgressBar').style.width = '100%';
+            document.getElementById('pdfProgressText').textContent = '100%';
+            document.getElementById('pdfProgressLabel').textContent = 'Processing complete.';
+
+            setTimeout(function() {
+                document.getElementById('pdfProgressContainer').style.display = 'none';
+                renderPdfResults();
+            }, 500);
+        }
+
+        function renderPdfResults() {
+            if (pdfExtractedRows.length === 0) {
+                alert('No data could be extracted from the uploaded PDFs.');
+                return;
+            }
+
+            // Summary
+            var highConf = 0, medConf = 0, lowConf = 0;
+            pdfExtractedRows.forEach(function(r) {
+                if (r._valuesFound >= 3) highConf++;
+                else if (r._valuesFound >= 1) medConf++;
+                else lowConf++;
+            });
+
+            var summaryHtml = '<div class="summary-cards">';
+            summaryHtml += '<div class="summary-card" style="background:#d4edda; color:#155724;"><div class="summary-card-label">High Confidence</div><div class="summary-card-value">' + highConf + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#fff3cd; color:#856404;"><div class="summary-card-label">Medium Confidence</div><div class="summary-card-value">' + medConf + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#f8d7da; color:#721c24;"><div class="summary-card-label">Low Confidence</div><div class="summary-card-value">' + lowConf + '</div></div>';
+            summaryHtml += '</div>';
+            document.getElementById('pdfResultsSummary').innerHTML = summaryHtml;
+
+            // Build employee options
+            var empOptions = '<option value="">-- Select --</option>';
+            employees.forEach(function(emp) {
+                empOptions += '<option value="' + emp.id + '">' + emp.employee_number + ' - ' + emp.first_name + ' ' + emp.last_name + '</option>';
+            });
+
+            // Render editable table
+            var tableHtml = '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;">';
+            tableHtml += '<th style="padding:10px 8px;">File</th><th style="padding:10px 8px;">Confidence</th>';
+            tableHtml += '<th style="padding:10px 8px;">Employee</th><th style="padding:10px 8px;">Period</th>';
+            tableHtml += '<th style="padding:10px 8px;">Basic</th><th style="padding:10px 8px;">Gross</th>';
+            tableHtml += '<th style="padding:10px 8px;">PAYE</th><th style="padding:10px 8px;">UIF</th>';
+            tableHtml += '<th style="padding:10px 8px;">Net</th></tr></thead><tbody>';
+
+            pdfExtractedRows.forEach(function(row, idx) {
+                var confClass = row._valuesFound >= 3 ? 'confidence-high' : (row._valuesFound >= 1 ? 'confidence-medium' : 'confidence-low');
+                var confLabel = row._valuesFound >= 3 ? 'High' : (row._valuesFound >= 1 ? 'Medium' : 'Low');
+
+                // Try to auto-match employee
+                var matchedEmpId = '';
+                if (row.employee_number) {
+                    var matchedEmp = findEmployeeByNumber(row.employee_number);
+                    if (matchedEmp) matchedEmpId = matchedEmp.id;
+                }
+
+                tableHtml += '<tr style="border-bottom:1px solid #eee;">';
+                tableHtml += '<td style="padding:8px; font-size:12px;" title="' + (row._filename || '') + '">' + (row._filename || 'PDF').substring(0, 20) + '</td>';
+                tableHtml += '<td style="padding:8px;"><span class="confidence-badge ' + confClass + '">' + confLabel + ' (' + row._valuesFound + ')</span></td>';
+                tableHtml += '<td style="padding:8px;"><select id="pdf_emp_' + idx + '" style="width:100%; padding:5px; border:1px solid #e0e0e0; border-radius:4px; font-size:12px;">' + empOptions.replace('value="' + matchedEmpId + '"', 'value="' + matchedEmpId + '" selected') + '</select></td>';
+                tableHtml += '<td style="padding:8px;"><input type="text" class="pdf-input" id="pdf_period_' + idx + '" value="' + (row.period || '') + '" placeholder="YYYY-MM" style="width:90px;"></td>';
+                tableHtml += '<td style="padding:8px;"><input type="number" class="pdf-input" id="pdf_basic_' + idx + '" value="' + (row.basic !== null ? row.basic : '') + '" step="0.01"></td>';
+                tableHtml += '<td style="padding:8px;"><input type="number" class="pdf-input" id="pdf_gross_' + idx + '" value="' + (row.gross !== null ? row.gross : '') + '" step="0.01"></td>';
+                tableHtml += '<td style="padding:8px;"><input type="number" class="pdf-input" id="pdf_paye_' + idx + '" value="' + (row.paye !== null ? row.paye : '') + '" step="0.01"></td>';
+                tableHtml += '<td style="padding:8px;"><input type="number" class="pdf-input" id="pdf_uif_' + idx + '" value="' + (row.uif !== null ? row.uif : '') + '" step="0.01"></td>';
+                tableHtml += '<td style="padding:8px;"><input type="number" class="pdf-input" id="pdf_net_' + idx + '" value="' + (row.net !== null ? row.net : '') + '" step="0.01"></td>';
+                tableHtml += '</tr>';
+            });
+
+            tableHtml += '</tbody>';
+            document.getElementById('pdfResultsTable').innerHTML = tableHtml;
+            document.getElementById('pdfResultsArea').style.display = 'block';
+        }
+
+        function confirmPdfImport() {
+            var importedCount = 0;
+            var errors = [];
+            var periodsCreated = {};
+            var periodStats = {};
+            var keysWritten = [];
+            var importTimestamp = new Date().toISOString();
+
+            try {
+                pdfExtractedRows.forEach(function(row, idx) {
+                    var empId = document.getElementById('pdf_emp_' + idx).value;
+                    var period = BulkImportUtils.normalizePeriod(document.getElementById('pdf_period_' + idx).value);
+                    var basic = parseFloat(document.getElementById('pdf_basic_' + idx).value) || 0;
+                    var gross = parseFloat(document.getElementById('pdf_gross_' + idx).value) || 0;
+                    var paye = parseFloat(document.getElementById('pdf_paye_' + idx).value) || 0;
+                    var uif = parseFloat(document.getElementById('pdf_uif_' + idx).value) || 0;
+                    var net = parseFloat(document.getElementById('pdf_net_' + idx).value) || 0;
+
+                    if (!empId) { errors.push('Row ' + (idx + 1) + ': No employee selected'); return; }
+                    if (!period) { errors.push('Row ' + (idx + 1) + ': Invalid period'); return; }
+                    if (basic <= 0 && gross <= 0) { errors.push('Row ' + (idx + 1) + ': No salary data'); return; }
+                    if (basic <= 0) basic = gross;
+                    if (gross <= 0) gross = basic;
+                    if (gross > 0 && basic > 0 && gross < basic) { errors.push('Row ' + (idx + 1) + ': Gross < Basic'); return; }
+
+                    // Deduplication check
+                    if (PayrollEngine.hasHistoricalRecord(currentCompanyId, empId, period)) {
+                        errors.push('Row ' + (idx + 1) + ': Duplicate record (skipped)');
+                        return;
+                    }
+
+                    var histKey = 'emp_historical_' + currentCompanyId + '_' + empId + '_' + period;
+                    var histData = {
+                        basic: basic,
+                        gross: gross,
+                        paye: paye,
+                        uif: uif,
+                        sdl: PayrollEngine.calculateSDL(gross),
+                        net: net,
+                        allowances: [],
+                        deductions: [],
+                        source: 'pdf_import',
+                        imported_date: importTimestamp
+                    };
+                    localStorage.setItem(histKey, JSON.stringify(histData));
+                    keysWritten.push(histKey);
+
+                    if (!periodStats[period]) {
+                        periodStats[period] = { count: 0, gross: 0, paye: 0, uif: 0, net: 0 };
+                    }
+                    periodStats[period].count++;
+                    periodStats[period].gross += gross;
+                    periodStats[period].paye += paye;
+                    periodStats[period].uif += uif;
+                    periodStats[period].net += net;
+
+                    periodsCreated[period] = true;
+                    importedCount++;
+                });
+
+                if (importedCount > 0) {
+                    createHistoricalPayruns(periodsCreated, periodStats);
+                    logHistoricalImport('PDF Payslip Import', importedCount, Object.keys(periodsCreated));
+                }
+            } catch (err) {
+                keysWritten.forEach(function(key) { localStorage.removeItem(key); });
+                alert('Import failed and was rolled back: ' + err.message);
+                return;
+            }
+
+            resetPdfUpload();
+            loadImportLog();
+
+            var msg = 'Successfully imported ' + importedCount + ' historical record(s).';
+            if (errors.length > 0) {
+                msg += '\n\nSkipped ' + errors.length + ' row(s):\n' + errors.slice(0, 5).join('\n');
+                if (errors.length > 5) msg += '\n... and ' + (errors.length - 5) + ' more';
+            }
+            alert(msg);
+        }
+
+        function resetPdfUpload() {
+            pdfExtractedRows = [];
+            document.getElementById('pdfProgressContainer').style.display = 'none';
+            document.getElementById('pdfResultsArea').style.display = 'none';
+            document.getElementById('pdfDropZone').style.display = 'block';
+            document.getElementById('pdfFileInput').value = '';
+        }
+
+
+        // ================================================================
+        //  TAB 3: MANUAL ENTRY GRID
+        // ================================================================
+
+        function populateManualEntryControls() {
+            var currentYear = new Date().getFullYear();
+            var fromSelect = document.getElementById('manualYearFrom');
+            var toSelect = document.getElementById('manualYearTo');
+
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+
+            for (var y = currentYear - 7; y <= currentYear; y++) {
+                fromSelect.innerHTML += '<option value="' + y + '"' + (y === currentYear - 1 ? ' selected' : '') + '>' + y + '</option>';
+                toSelect.innerHTML += '<option value="' + y + '"' + (y === currentYear ? ' selected' : '') + '>' + y + '</option>';
+            }
+
+            // Set default months
+            document.getElementById('manualMonthFrom').value = '01';
+            document.getElementById('manualMonthTo').value = String(new Date().getMonth() + 1).padStart(2, '0');
+
+            // Populate employee multi-select
+            var container = document.getElementById('employeeMultiSelect');
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="color:#999; padding:10px; text-align:center;">No employees found. Add employees first.</p>';
+                return;
+            }
+            var html = '';
+            employees.forEach(function(emp) {
+                html += '<div class="multi-select-item">';
+                html += '<input type="checkbox" id="emp_check_' + emp.id + '" value="' + emp.id + '" checked>';
+                html += '<label for="emp_check_' + emp.id + '">' + emp.employee_number + ' - ' + emp.first_name + ' ' + emp.last_name + '</label>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function selectAllEmployees(selected) {
+            var checkboxes = document.querySelectorAll('#employeeMultiSelect input[type="checkbox"]');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = selected;
+            }
+        }
+
+        function generateManualGrid() {
+            var yearFrom = parseInt(document.getElementById('manualYearFrom').value);
+            var monthFrom = parseInt(document.getElementById('manualMonthFrom').value);
+            var yearTo = parseInt(document.getElementById('manualYearTo').value);
+            var monthTo = parseInt(document.getElementById('manualMonthTo').value);
+
+            // Get selected employees
+            var selectedEmps = [];
+            var checkboxes = document.querySelectorAll('#employeeMultiSelect input[type="checkbox"]:checked');
+            for (var i = 0; i < checkboxes.length; i++) {
+                var emp = employees.find(function(e) { return e.id === checkboxes[i].value; });
+                if (emp) selectedEmps.push(emp);
+            }
+
+            if (selectedEmps.length === 0) {
+                alert('Please select at least one employee.');
+                return;
+            }
+
+            // Build period list
+            var periods = [];
+            var y = yearFrom, m = monthFrom;
+            while (y < yearTo || (y === yearTo && m <= monthTo)) {
+                periods.push(y + '-' + String(m).padStart(2, '0'));
+                m++;
+                if (m > 12) { m = 1; y++; }
+            }
+
+            if (periods.length === 0) {
+                alert('Invalid date range. "From" must be before or equal to "To".');
+                return;
+            }
+
+            if (periods.length * selectedEmps.length > 500) {
+                if (!confirm('This will generate ' + (periods.length * selectedEmps.length) + ' rows. Continue?')) return;
+            }
+
+            // Summary
+            var summaryHtml = '<div class="summary-cards">';
+            summaryHtml += '<div class="summary-card" style="background:#e3f2fd; color:#1565c0;"><div class="summary-card-label">Employees</div><div class="summary-card-value">' + selectedEmps.length + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#f3e5f5; color:#6a1b9a;"><div class="summary-card-label">Periods</div><div class="summary-card-value">' + periods.length + '</div></div>';
+            summaryHtml += '<div class="summary-card" style="background:#e8f5e9; color:#2e7d32;"><div class="summary-card-label">Total Rows</div><div class="summary-card-value">' + (periods.length * selectedEmps.length) + '</div></div>';
+            summaryHtml += '</div>';
+            document.getElementById('manualGridSummary').innerHTML = summaryHtml;
+
+            // Build table
+            var tableHtml = '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;">';
+            tableHtml += '<th style="padding:10px 8px; min-width:140px;">Employee</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:100px;">Period</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:120px;">Basic</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:120px;">Gross</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:120px;">PAYE</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:120px;">UIF</th>';
+            tableHtml += '<th style="padding:10px 8px; min-width:120px;">Net</th>';
+            tableHtml += '</tr></thead><tbody>';
+
+            var rowIndex = 0;
+            var colorPalette = ['#5a67d8', '#e53e3e', '#38a169', '#d69e2e', '#9f7aea', '#38b2ac', '#ed8936', '#667eea'];
+
+            selectedEmps.forEach(function(emp, empIdx) {
+                var empColor = colorPalette[empIdx % colorPalette.length];
+                tableHtml += '<tr class="emp-group-header" style="background:' + empColor + ';">';
+                tableHtml += '<td colspan="7">' + emp.employee_number + ' - ' + emp.first_name + ' ' + emp.last_name + '</td></tr>';
+
+                periods.forEach(function(period) {
+                    // Check for existing historical data
+                    var histKey = 'emp_historical_' + currentCompanyId + '_' + emp.id + '_' + period;
+                    var existing = null;
+                    try { existing = JSON.parse(localStorage.getItem(histKey)); } catch(e) {}
+
+                    var basic = existing ? (existing.basic || '') : '';
+                    var gross = existing ? (existing.gross || '') : '';
+                    var paye = existing ? (existing.paye || '') : '';
+                    var uif = existing ? (existing.uif || '') : '';
+                    var net = existing ? (existing.net || '') : '';
+
+                    var rid = 'grid_' + emp.id + '_' + period.replace('-', '_');
+                    tableHtml += '<tr style="border-bottom:1px solid #eee;" data-emp-id="' + emp.id + '" data-period="' + period + '">';
+                    tableHtml += '<td style="padding:8px; color:#666; font-size:12px;">' + emp.employee_number + '</td>';
+                    tableHtml += '<td style="padding:8px; font-weight:600; font-size:12px;">' + formatPeriod(period) + '</td>';
+                    tableHtml += '<td style="padding:4px;"><input type="number" class="grid-input' + (basic ? ' has-value' : '') + '" id="' + rid + '_basic" value="' + basic + '" step="0.01" data-field="basic" data-emp="' + emp.id + '" data-period="' + period + '" onblur="onGridBasicBlur(this)"></td>';
+                    tableHtml += '<td style="padding:4px;"><input type="number" class="grid-input' + (gross ? ' has-value' : '') + '" id="' + rid + '_gross" value="' + gross + '" step="0.01" data-field="gross"></td>';
+                    tableHtml += '<td style="padding:4px;"><input type="number" class="grid-input' + (paye ? ' has-value' : '') + '" id="' + rid + '_paye" value="' + paye + '" step="0.01" data-field="paye"></td>';
+                    tableHtml += '<td style="padding:4px;"><input type="number" class="grid-input' + (uif ? ' has-value' : '') + '" id="' + rid + '_uif" value="' + uif + '" step="0.01" data-field="uif"></td>';
+                    tableHtml += '<td style="padding:4px;"><input type="number" class="grid-input' + (net ? ' has-value' : '') + '" id="' + rid + '_net" value="' + net + '" step="0.01" data-field="net"></td>';
+                    tableHtml += '</tr>';
+                    rowIndex++;
+                });
+            });
+
+            tableHtml += '</tbody>';
+            document.getElementById('manualGridTable').innerHTML = tableHtml;
+            document.getElementById('manualGridContainer').style.display = 'block';
+
+            // Setup keyboard navigation and paste handling
+            setupGridKeyboard();
+            setupGridPaste();
+        }
+
+        function onGridBasicBlur(input) {
+            var basic = parseFloat(input.value) || 0;
+            if (basic <= 0) return;
+
+            var empId = input.getAttribute('data-emp');
+            var period = input.getAttribute('data-period');
+            var rid = 'grid_' + empId + '_' + period.replace('-', '_');
+
+            var grossEl = document.getElementById(rid + '_gross');
+            var payeEl = document.getElementById(rid + '_paye');
+            var uifEl = document.getElementById(rid + '_uif');
+            var netEl = document.getElementById(rid + '_net');
+
+            // Only auto-calculate if the other fields are empty
+            if (!grossEl.value && !payeEl.value && !uifEl.value && !netEl.value) {
+                var calc = PayrollEngine.calculateFromData({ basic_salary: basic, regular_inputs: [] }, [], [], [], []);
+                grossEl.value = calc.gross.toFixed(2);
+                payeEl.value = calc.paye.toFixed(2);
+                uifEl.value = calc.uif.toFixed(2);
+                netEl.value = calc.net.toFixed(2);
+
+                grossEl.classList.add('has-value');
+                payeEl.classList.add('has-value');
+                uifEl.classList.add('has-value');
+                netEl.classList.add('has-value');
+            }
+
+            input.classList.toggle('has-value', !!input.value);
+        }
+
+        function setupGridKeyboard() {
+            var table = document.getElementById('manualGridTable');
+            if (!table) return;
+            table.addEventListener('keydown', function(e) {
+                if (e.target.tagName !== 'INPUT') return;
+
+                var inputs = table.querySelectorAll('input.grid-input');
+                var currentIndex = -1;
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i] === e.target) { currentIndex = i; break; }
+                }
+                if (currentIndex === -1) return;
+
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault();
+                    var next = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+                    if (next >= 0 && next < inputs.length) {
+                        inputs[next].focus();
+                        inputs[next].select();
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    var nextDown = currentIndex + 5; // 5 columns per row
+                    if (nextDown < inputs.length) {
+                        inputs[nextDown].focus();
+                        inputs[nextDown].select();
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    var nextUp = currentIndex - 5;
+                    if (nextUp >= 0) {
+                        inputs[nextUp].focus();
+                        inputs[nextUp].select();
+                    }
+                }
+            });
+        }
+
+        function setupGridPaste() {
+            var table = document.getElementById('manualGridTable');
+            if (!table) return;
+            table.addEventListener('paste', function(e) {
+                if (e.target.tagName !== 'INPUT') return;
+                var clipboardData = e.clipboardData || window.clipboardData;
+                var pastedText = clipboardData.getData('text');
+
+                // Check if it looks like multi-cell data (has tabs or newlines)
+                if (pastedText.indexOf('\t') === -1 && pastedText.indexOf('\n') === -1) return;
+
+                e.preventDefault();
+
+                var inputs = table.querySelectorAll('input.grid-input');
+                var startIndex = -1;
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i] === e.target) { startIndex = i; break; }
+                }
+                if (startIndex === -1) return;
+
+                var rows = pastedText.split(/[\r\n]+/).filter(function(r) { return r.trim(); });
+                var colsPerRow = 5; // basic, gross, paye, uif, net
+                var inputIndex = startIndex;
+
+                rows.forEach(function(rowText) {
+                    var cells = rowText.split('\t');
+                    cells.forEach(function(cellValue) {
+                        if (inputIndex < inputs.length) {
+                            var val = parseFloat(cellValue.replace(/[R\s,]/g, ''));
+                            if (!isNaN(val)) {
+                                inputs[inputIndex].value = val.toFixed(2);
+                                inputs[inputIndex].classList.add('has-value');
+                            }
+                            inputIndex++;
+                        }
+                    });
+                    // If paste row had fewer cells than columns, skip to next row
+                    var remainder = cells.length % colsPerRow;
+                    if (remainder !== 0) {
+                        inputIndex += (colsPerRow - remainder);
+                    }
+                });
+            });
+        }
+
+        function clearManualGrid() {
+            if (!confirm('Clear all entered values? This cannot be undone.')) return;
+            var inputs = document.querySelectorAll('#manualGridTable input.grid-input');
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].value = '';
+                inputs[i].classList.remove('has-value');
+            }
+        }
+
+        function saveManualGrid() {
+            var rows = document.querySelectorAll('#manualGridTable tbody tr[data-emp-id]');
+            var savedCount = 0;
+            var skippedDuplicates = 0;
+            var periodsCreated = {};
+            var periodStats = {};
+            var keysWritten = [];
+            var importTimestamp = new Date().toISOString();
+
+            try {
+                for (var i = 0; i < rows.length; i++) {
+                    var tr = rows[i];
+                    var empId = tr.getAttribute('data-emp-id');
+                    var period = tr.getAttribute('data-period');
+                    var rid = 'grid_' + empId + '_' + period.replace('-', '_');
+
+                    var basic = parseFloat(document.getElementById(rid + '_basic').value) || 0;
+                    var gross = parseFloat(document.getElementById(rid + '_gross').value) || 0;
+                    var paye = parseFloat(document.getElementById(rid + '_paye').value) || 0;
+                    var uif = parseFloat(document.getElementById(rid + '_uif').value) || 0;
+                    var net = parseFloat(document.getElementById(rid + '_net').value) || 0;
+
+                    // Only save rows that have data
+                    if (basic <= 0 && gross <= 0) continue;
+                    if (basic <= 0) basic = gross;
+                    if (gross <= 0) gross = basic;
+
+                    // Validate gross >= basic
+                    if (gross > 0 && basic > 0 && gross < basic) {
+                        alert('Row for period ' + period + ': Gross (R' + gross + ') cannot be less than Basic (R' + basic + '). Please correct and try again.');
+                        keysWritten.forEach(function(key) { localStorage.removeItem(key); });
+                        return;
+                    }
+
+                    // Deduplication: skip if record exists (unless grid pre-populated it)
+                    if (PayrollEngine.hasHistoricalRecord(currentCompanyId, empId, period)) {
+                        skippedDuplicates++;
+                        continue;
+                    }
+
+                    var histKey = 'emp_historical_' + currentCompanyId + '_' + empId + '_' + period;
+                    var histData = {
+                        basic: basic,
+                        gross: gross,
+                        paye: paye,
+                        uif: uif,
+                        sdl: PayrollEngine.calculateSDL(gross),
+                        net: net,
+                        allowances: [],
+                        deductions: [],
+                        source: 'manual_entry',
+                        imported_date: importTimestamp
+                    };
+                    localStorage.setItem(histKey, JSON.stringify(histData));
+                    keysWritten.push(histKey);
+
+                    if (!periodStats[period]) {
+                        periodStats[period] = { count: 0, gross: 0, paye: 0, uif: 0, net: 0 };
+                    }
+                    periodStats[period].count++;
+                    periodStats[period].gross += gross;
+                    periodStats[period].paye += paye;
+                    periodStats[period].uif += uif;
+                    periodStats[period].net += net;
+
+                    periodsCreated[period] = true;
+                    savedCount++;
+                }
+
+                if (savedCount === 0) {
+                    var msg = 'No new data to save.';
+                    if (skippedDuplicates > 0) msg += ' ' + skippedDuplicates + ' duplicate record(s) were skipped.';
+                    alert(msg);
+                    return;
+                }
+
+                createHistoricalPayruns(periodsCreated, periodStats);
+                logHistoricalImport('Manual Entry', savedCount, Object.keys(periodsCreated));
+
+            } catch (err) {
+                keysWritten.forEach(function(key) { localStorage.removeItem(key); });
+                alert('Save failed and was rolled back: ' + err.message);
+                return;
+            }
+
+            loadImportLog();
+
+            var resultMsg = 'Successfully saved ' + savedCount + ' historical record(s) across ' + Object.keys(periodsCreated).length + ' period(s).';
+            if (skippedDuplicates > 0) resultMsg += '\n' + skippedDuplicates + ' duplicate(s) were skipped.';
+            alert(resultMsg);
+        }
+
+
+        // ================================================================
+        //  SHARED: PAY RUN CREATION & IMPORT LOGGING
+        // ================================================================
+
+        function createHistoricalPayruns(periodsObj, periodStats) {
+            var payrunsKey = 'payruns_' + currentCompanyId;
+            var payruns = [];
+            try { payruns = JSON.parse(localStorage.getItem(payrunsKey) || '[]'); } catch(e) { payruns = []; }
+
+            var periods = Object.keys(periodsObj);
+            periods.forEach(function(period) {
+                var stats = (periodStats && periodStats[period]) || { count: 0, gross: 0, paye: 0, uif: 0, net: 0 };
+                // Check if a pay run already exists for this period
+                var existing = null;
+                for (var i = 0; i < payruns.length; i++) {
+                    if (payruns[i].period === period) { existing = payruns[i]; break; }
+                }
+                if (existing) {
+                    // Update existing pay run stats (add to existing totals)
+                    existing.employee_count = (existing.employee_count || 0) + stats.count;
+                    existing.total_gross = (existing.total_gross || 0) + stats.gross;
+                    existing.total_paye = (existing.total_paye || 0) + stats.paye;
+                    existing.total_uif = (existing.total_uif || 0) + stats.uif;
+                    existing.total_net = (existing.total_net || 0) + stats.net;
+                } else {
+                    payruns.push({
+                        id: 'pr-' + Math.random().toString(36).substr(2, 9),
+                        period: period,
+                        frequency: 'Monthly',
+                        period_label: formatPeriodLong(period),
+                        status: 'paid',
+                        source: 'historical_import',
+                        created_date: new Date().toISOString(),
+                        finalized_date: new Date().toISOString(),
+                        paid_date: new Date().toISOString(),
+                        employee_count: stats.count,
+                        total_gross: stats.gross,
+                        total_paye: stats.paye,
+                        total_uif: stats.uif,
+                        total_net: stats.net
+                    });
+                }
+            });
+
+            localStorage.setItem(payrunsKey, JSON.stringify(payruns));
+        }
+
+        function logHistoricalImport(source, count, periods) {
+            var logKey = 'historical_import_log_' + currentCompanyId;
+            var log = [];
+            try { log = JSON.parse(localStorage.getItem(logKey) || '[]'); } catch(e) { log = []; }
+
+            var session = AUTH.getSession();
+            log.push({
+                id: 'himp-' + Math.random().toString(36).substr(2, 9),
+                timestamp: new Date().toISOString(),
+                user: session ? (session.name || session.email) : 'Unknown',
+                source: source,
+                records_imported: count,
+                periods: periods,
+                company_id: currentCompanyId
+            });
+
+            localStorage.setItem(logKey, JSON.stringify(log));
+
+            // Also log to audit trail
+            if (typeof BulkImportUtils !== 'undefined') {
+                BulkImportUtils.logAudit(currentCompanyId, 'HISTORICAL_IMPORT', source + ': Imported ' + count + ' records for periods ' + periods.join(', '));
+            }
+        }
+
+        function loadImportLog() {
+            var logKey = 'historical_import_log_' + currentCompanyId;
+            var log = [];
+            try { log = JSON.parse(localStorage.getItem(logKey) || '[]'); } catch(e) { log = []; }
+
+            var container = document.getElementById('importLogArea');
+            if (log.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div><div class="empty-text">No imports yet</div></div>';
+                return;
+            }
+
+            // Sort newest first
+            log.sort(function(a, b) { return b.timestamp.localeCompare(a.timestamp); });
+
+            var html = '<table class="data-table"><thead><tr><th>Date</th><th>Source</th><th>Records</th><th>Periods</th><th>User</th><th>Actions</th></tr></thead><tbody>';
+            log.forEach(function(entry) {
+                var date = new Date(entry.timestamp);
+                var formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                var periodList = (entry.periods || []).map(function(p) { return formatPeriod(p); }).join(', ');
+                var rowStyle = entry.undone ? 'opacity:0.5; text-decoration:line-through;' : '';
+                html += '<tr style="' + rowStyle + '">';
+                html += '<td style="padding:8px; font-size:12px;">' + formattedDate + '</td>';
+                html += '<td style="padding:8px;">' + entry.source + '</td>';
+                html += '<td style="padding:8px; font-weight:600;">' + entry.records_imported + '</td>';
+                html += '<td style="padding:8px; font-size:12px;">' + periodList + '</td>';
+                html += '<td style="padding:8px; font-size:12px;">' + (entry.user || '-') + '</td>';
+                if (entry.undone) {
+                    html += '<td style="padding:8px; font-size:12px; color:#999;">Undone</td>';
+                } else {
+                    html += '<td style="padding:8px;"><button class="btn btn-danger btn-sm" onclick="undoImport(\'' + entry.id + '\')">Undo</button></td>';
+                }
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function undoImport(importLogId) {
+            if (!confirm('Are you sure you want to undo this import? This will delete all historical records from this import batch.')) return;
+            var deletedCount = PayrollEngine.undoImportBatch(currentCompanyId, importLogId);
+            loadImportLog();
+            alert('Undo complete. ' + deletedCount + ' historical record(s) were deleted.');
+        }
+
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

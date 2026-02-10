@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lorenco Paytime - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            max-width: 1200px;
+            width: 100%;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .info-section {
+            flex: 1;
+            color: white;
+            display: none;
+        }
+
+        .info-section.show {
+            display: block;
+        }
+
+        .info-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .info-section p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            margin-top: 30px;
+        }
+
+        .feature-list li {
+            list-style: none;
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .auth-section {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #999;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="email"],
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #c33;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #3c3;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .demo-info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .demo-info p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .demo-info strong {
+            color: #667eea;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin: 15px 0;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .switch-tab {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .switch-tab a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .switch-tab a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+
+        .step-dot.active {
+            background: #667eea;
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: #ddd;
+        }
+
+        .step-line.active {
+            background: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .info-section {
+                display: none;
+            }
+
+            .auth-section {
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .tab-btn {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <div class="container">
+        <div class="info-section show">
+            <h2>Welcome to Lorenco Paytime</h2>
+            <p>Comprehensive payroll management for businesses of all sizes</p>
+            
+            <ul class="feature-list">
+                <li>Multi-company management</li>
+                <li>Employee records and payroll</li>
+                <li>Automated pay runs</li>
+                <li>Advanced reporting</li>
+                <li>Secure data management</li>
+                <li>Role-based access control</li>
+            </ul>
+        </div>
+
+        <div class="auth-section">
+            <h1>Lorenco Paytime</h1>
+            <p class="subtitle">Employee & Payroll Management</p>
+
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- LOGIN TAB -->
+            <div id="login-tab" class="tab-content active">
+                <div id="login-error" class="error-message"></div>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="demo-info">
+                        <p><strong>Demo Login:</strong></p>
+                        <p>Email: demo@example.com</p>
+                        <p>Password: demo123</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="login-email" 
+                            placeholder="Enter your email" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            placeholder="Enter your password" 
+                            required
+                        >
+                    </div>
+
+                    <div class="forgot-password">
+                        <a href="#" onclick="showForgotPassword(event)">Forgot Password?</a>
+                    </div>
+
+                    <div class="loading" id="login-loading">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <button type="submit" class="btn" id="login-btn">Login</button>
+                </form>
+
+                <div class="switch-tab">
+                    Don't have an account? <a onclick="switchTab('register')">Register here</a>
+                </div>
+            </div>
+
+            <!-- REGISTER TAB -->
+            <div id="register-tab" class="tab-content">
+                <div id="register-error" class="error-message"></div>
+                <div id="register-success" class="success-message"></div>
+
+                <!-- STEP 1: Company Details -->
+                <div id="register-step-1" class="register-step">
+                    <h3 style="color: #667eea; margin-bottom: 20px; font-size: 1.1rem;">Step 1: Company Details</h3>
+                    <form onsubmit="handleRegisterStep1(event)">
+                        <div class="form-group">
+                            <label for="register-company-name">Company Name</label>
+                            <input 
+                                type="text" 
+                                id="register-company-name" 
+                                placeholder="Enter your company name" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-company-email">Company Email</label>
+                            <input 
+                                type="email" 
+                                id="register-company-email" 
+                                placeholder="Enter company email" 
+                                required
+                            >
+                        </div>
+
+                        <div class="loading" id="register-step1-loading">
+                            <div class="spinner"></div>
+                        </div>
+
+                        <button type="submit" class="btn" id="register-step1-btn">Next: User Details</button>
+                    </form>
+                </div>
+
+                <!-- STEP 2: User Details -->
+                <div id="register-step-2" class="register-step" style="display: none;">
+                    <h3 style="color: #667eea; margin-bottom: 20px; font-size: 1.1rem;">Step 2: Your Account Details</h3>
+                    <form onsubmit="handleRegisterStep2(event)">
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input 
+                                type="text" 
+                                id="register-name" 
+                                placeholder="Enter your full name" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input 
+                                type="email" 
+                                id="register-email" 
+                                placeholder="Enter your email" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input 
+                                type="password" 
+                                id="register-password" 
+                                placeholder="Create a strong password" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-confirm-password">Confirm Password</label>
+                            <input 
+                                type="password" 
+                                id="register-confirm-password" 
+                                placeholder="Confirm your password" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-role">Account Type</label>
+                            <select id="register-role" required>
+                                <option value="">-- Select Account Type --</option>
+                                <option value="business_owner">Business Owner</option>
+                                <option value="accountant">Accountant</option>
+                            </select>
+                        </div>
+
+                        <div class="loading" id="register-step2-loading">
+                            <div class="spinner"></div>
+                        </div>
+
+                        <button type="button" class="btn" id="register-back-btn" style="background: #999; margin-bottom: 10px;" onclick="goBackToStep1()">Back</button>
+                        <button type="submit" class="btn" id="register-btn">Create Account</button>
+                    </form>
+                </div>
+
+                <div class="switch-tab">
+                    Already have an account? <a onclick="switchTab('login')">Login here</a>
+                </div>
+            </div>
+
+            <!-- FORGOT PASSWORD TAB -->
+            <div id="forgot-tab" class="tab-content">
+                <div id="forgot-error" class="error-message"></div>
+                <div id="forgot-success" class="success-message"></div>
+
+                <!-- STEP 1: Enter Email -->
+                <div id="forgot-step-1">
+                    <a class="back-link" onclick="switchTab('login')">&larr; Back to Login</a>
+                    <h3 style="color: #667eea; margin-bottom: 10px; font-size: 1.1rem;">Forgot Password</h3>
+                    <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Enter your email address and we'll check if your account exists.</p>
+
+                    <div class="step-indicator">
+                        <div class="step-dot active"></div>
+                        <div class="step-line"></div>
+                        <div class="step-dot"></div>
+                    </div>
+
+                    <form onsubmit="handleForgotStep1(event)">
+                        <div class="form-group">
+                            <label for="forgot-email">Email Address</label>
+                            <input
+                                type="email"
+                                id="forgot-email"
+                                placeholder="Enter your registered email"
+                                required
+                            >
+                        </div>
+
+                        <div class="loading" id="forgot-step1-loading">
+                            <div class="spinner"></div>
+                        </div>
+
+                        <button type="submit" class="btn" id="forgot-step1-btn">Find My Account</button>
+                    </form>
+                </div>
+
+                <!-- STEP 2: Set New Password -->
+                <div id="forgot-step-2" style="display: none;">
+                    <a class="back-link" onclick="forgotGoBackToStep1()">&larr; Back</a>
+                    <h3 style="color: #667eea; margin-bottom: 10px; font-size: 1.1rem;">Set New Password</h3>
+                    <p style="color: #888; font-size: 0.9rem; margin-bottom: 5px;">Account found for:</p>
+                    <p id="forgot-found-email" style="color: #667eea; font-weight: 600; font-size: 0.95rem; margin-bottom: 20px;"></p>
+
+                    <div class="step-indicator">
+                        <div class="step-dot active"></div>
+                        <div class="step-line active"></div>
+                        <div class="step-dot active"></div>
+                    </div>
+
+                    <form onsubmit="handleForgotStep2(event)">
+                        <div class="form-group">
+                            <label for="forgot-new-password">New Password</label>
+                            <input
+                                type="password"
+                                id="forgot-new-password"
+                                placeholder="Enter new password"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="forgot-confirm-password">Confirm New Password</label>
+                            <input
+                                type="password"
+                                id="forgot-confirm-password"
+                                placeholder="Confirm new password"
+                                required
+                            >
+                        </div>
+
+                        <div class="loading" id="forgot-step2-loading">
+                            <div class="spinner"></div>
+                        </div>
+
+                        <button type="submit" class="btn" id="forgot-step2-btn">Reset Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if already logged in
+        window.addEventListener('load', function() {
+            // ── SSO Pickup from Ecosystem Dashboard ──
+            const ssoSource = localStorage.getItem('sso_source');
+            if (ssoSource === 'ecosystem') {
+                const ssoToken = localStorage.getItem('token');
+                const ssoUser = localStorage.getItem('user');
+                const ssoCompany = localStorage.getItem('company');
+                if (ssoToken && ssoUser) {
+                    try {
+                        const user = JSON.parse(ssoUser);
+                        const company = ssoCompany ? JSON.parse(ssoCompany) : null;
+                        // Build session for AUTH module
+                        const session = {
+                            user_id: user.id,
+                            username: user.username || user.email,
+                            full_name: user.fullName,
+                            email: user.email,
+                            role: company ? company.role : (user.role || 'admin'),
+                            company_id: company ? company.id : null,
+                            company_name: company ? company.company_name : null,
+                            is_super_admin: user.isSuperAdmin || false,
+                        };
+                        AUTH.setSession(session);
+                        localStorage.removeItem('sso_source');
+                        console.log('[SSO] Ecosystem bypass — user:', user.fullName, 'company:', session.company_name);
+
+                        // Redirect based on role
+                        if (session.role === 'super_admin' || session.is_super_admin) {
+                            window.location.href = 'super-admin-dashboard.html';
+                        } else if (session.company_id) {
+                            window.location.href = 'company-dashboard.html';
+                        } else {
+                            window.location.href = 'company-selection.html';
+                        }
+                        return;
+                    } catch (e) {
+                        console.warn('[SSO] Failed to parse ecosystem data:', e);
+                        localStorage.removeItem('sso_source');
+                    }
+                }
+            }
+
+            if (AUTH.isAuthenticated()) {
+                const session = AUTH.getSession();
+                if (session.role === 'super_admin' || session.is_super_admin) {
+                    window.location.href = 'super-admin-dashboard.html';
+                } else if (session.company_id) {
+                    window.location.href = 'company-dashboard.html';
+                } else {
+                    window.location.href = 'company-selection.html';
+                }
+            }
+        });
+
+        function switchTab(tab) {
+            // Hide all tabs (including forgot)
+            document.getElementById('login-tab').classList.remove('active');
+            document.getElementById('register-tab').classList.remove('active');
+            document.getElementById('forgot-tab').classList.remove('active');
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Fallback: activate correct button
+                const buttons = document.querySelectorAll('.tab-btn');
+                if (tab === 'login') buttons[0].classList.add('active');
+                if (tab === 'register') buttons[1].classList.add('active');
+            }
+
+            // Clear error messages
+            document.getElementById('login-error').classList.remove('show');
+            document.getElementById('register-error').classList.remove('show');
+            document.getElementById('register-success').classList.remove('show');
+        }
+
+        // Store company details during registration
+        let registrationCompanyData = null;
+
+        function handleRegisterStep1(event) {
+            event.preventDefault();
+
+            const companyName = document.getElementById('register-company-name').value;
+            const companyEmail = document.getElementById('register-company-email').value;
+            const errorDiv = document.getElementById('register-error');
+            const successDiv = document.getElementById('register-success');
+
+            // Validation
+            if (!companyName.trim()) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (!companyEmail.trim()) {
+                errorDiv.textContent = 'Please enter a company email';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // Store company data
+            registrationCompanyData = {
+                name: companyName,
+                email: companyEmail
+            };
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            // Move to step 2
+            document.getElementById('register-step-1').style.display = 'none';
+            document.getElementById('register-step-2').style.display = 'block';
+        }
+
+        function goBackToStep1() {
+            document.getElementById('register-step-1').style.display = 'block';
+            document.getElementById('register-step-2').style.display = 'none';
+            document.getElementById('register-error').classList.remove('show');
+            document.getElementById('register-success').classList.remove('show');
+        }
+
+        async function handleRegisterStep2(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const role = document.getElementById('register-role').value;
+            const errorDiv = document.getElementById('register-error');
+            const successDiv = document.getElementById('register-success');
+
+            // Validation
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            if (password.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters long';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            if (!role) {
+                errorDiv.textContent = 'Please select an account type';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('register-step2-loading').style.display = 'block';
+            document.getElementById('register-btn').disabled = true;
+
+            try {
+                const result = await AUTH.register({
+                    email: email,
+                    password: password,
+                    name: name,
+                    full_name: name,
+                    role: role,
+                    company: registrationCompanyData
+                });
+
+                if (result.success) {
+                    errorDiv.classList.remove('show');
+                    successDiv.textContent = 'Account and company created successfully! Redirecting...';
+                    successDiv.classList.add('show');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'company-dashboard.html';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = result.message;
+                    errorDiv.classList.add('show');
+                    successDiv.classList.remove('show');
+                    document.getElementById('register-step2-loading').style.display = 'none';
+                    document.getElementById('register-btn').disabled = false;
+                }
+            } catch(e) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.classList.add('show');
+                document.getElementById('register-step2-loading').style.display = 'none';
+                document.getElementById('register-btn').disabled = false;
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            // Show loading
+            document.getElementById('login-loading').style.display = 'block';
+            document.getElementById('login-btn').disabled = true;
+
+            try {
+                const result = await AUTH.login(email, password);
+
+                if (result.success) {
+                    errorDiv.classList.remove('show');
+                    window.location.href = result.redirect;
+                } else {
+                    errorDiv.textContent = result.message;
+                    errorDiv.classList.add('show');
+                    document.getElementById('login-loading').style.display = 'none';
+                    document.getElementById('login-btn').disabled = false;
+                }
+            } catch(e) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.classList.add('show');
+                document.getElementById('login-loading').style.display = 'none';
+                document.getElementById('login-btn').disabled = false;
+            }
+        }
+
+        // ===== FORGOT PASSWORD FUNCTIONS =====
+        let forgotEmail = '';
+
+        function showForgotPassword(e) {
+            e.preventDefault();
+            // Hide login and register tabs
+            document.getElementById('login-tab').classList.remove('active');
+            document.getElementById('register-tab').classList.remove('active');
+            document.getElementById('forgot-tab').classList.add('active');
+
+            // Remove active from tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Reset forgot password state
+            document.getElementById('forgot-step-1').style.display = 'block';
+            document.getElementById('forgot-step-2').style.display = 'none';
+            document.getElementById('forgot-error').classList.remove('show');
+            document.getElementById('forgot-success').classList.remove('show');
+            document.getElementById('forgot-email').value = '';
+        }
+
+        function handleForgotStep1(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('forgot-email').value.trim();
+            const errorDiv = document.getElementById('forgot-error');
+            const successDiv = document.getElementById('forgot-success');
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            // Show loading
+            document.getElementById('forgot-step1-loading').style.display = 'block';
+            document.getElementById('forgot-step1-btn').disabled = true;
+
+            // For now, go straight to step 2 (server validates on reset)
+            forgotEmail = email;
+            document.getElementById('forgot-step1-loading').style.display = 'none';
+            document.getElementById('forgot-step1-btn').disabled = false;
+            document.getElementById('forgot-found-email').textContent = email;
+            document.getElementById('forgot-step-1').style.display = 'none';
+            document.getElementById('forgot-step-2').style.display = 'block';
+            errorDiv.classList.remove('show');
+        }
+
+        function handleForgotStep2(event) {
+            event.preventDefault();
+
+            const newPassword = document.getElementById('forgot-new-password').value;
+            const confirmPassword = document.getElementById('forgot-confirm-password').value;
+            const errorDiv = document.getElementById('forgot-error');
+            const successDiv = document.getElementById('forgot-success');
+
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            if (newPassword.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters long.';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match.';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('forgot-step2-loading').style.display = 'block';
+            document.getElementById('forgot-step2-btn').disabled = true;
+
+            // Password reset not yet implemented on backend
+            document.getElementById('forgot-step2-loading').style.display = 'none';
+            document.getElementById('forgot-step2-btn').disabled = false;
+            successDiv.textContent = 'Password reset request sent. Please contact your administrator.';
+            successDiv.classList.add('show');
+            errorDiv.classList.remove('show');
+            setTimeout(() => { switchTabDirect('login'); }, 2000);
+        }
+
+        function forgotGoBackToStep1() {
+            document.getElementById('forgot-step-1').style.display = 'block';
+            document.getElementById('forgot-step-2').style.display = 'none';
+            document.getElementById('forgot-error').classList.remove('show');
+            document.getElementById('forgot-success').classList.remove('show');
+            document.getElementById('forgot-new-password').value = '';
+            document.getElementById('forgot-confirm-password').value = '';
+        }
+
+        // Switch tab without relying on event.target (used programmatically)
+        function switchTabDirect(tab) {
+            document.getElementById('login-tab').classList.remove('active');
+            document.getElementById('register-tab').classList.remove('active');
+            document.getElementById('forgot-tab').classList.remove('active');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            // Re-activate the correct tab button
+            const buttons = document.querySelectorAll('.tab-btn');
+            if (tab === 'login') buttons[0].classList.add('active');
+            if (tab === 'register') buttons[1].classList.add('active');
+
+            // Clear messages
+            document.getElementById('login-error').classList.remove('show');
+            document.getElementById('register-error').classList.remove('show');
+            document.getElementById('register-success').classList.remove('show');
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const role = document.getElementById('register-role').value;
+            const errorDiv = document.getElementById('register-error');
+            const successDiv = document.getElementById('register-success');
+
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            if (password.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters long';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            if (!role) {
+                errorDiv.textContent = 'Please select an account type';
+                errorDiv.classList.add('show');
+                successDiv.classList.remove('show');
+                return;
+            }
+
+            document.getElementById('register-loading').style.display = 'block';
+            document.getElementById('register-btn').disabled = true;
+
+            try {
+                const result = await AUTH.register({
+                    email: email,
+                    password: password,
+                    name: name,
+                    full_name: name,
+                    role: role
+                });
+
+                if (result.success) {
+                    errorDiv.classList.remove('show');
+                    successDiv.textContent = 'Account created successfully! Redirecting to company selection...';
+                    successDiv.classList.add('show');
+                    setTimeout(() => { window.location.href = 'company-selection.html'; }, 1500);
+                } else {
+                    errorDiv.textContent = result.message;
+                    errorDiv.classList.add('show');
+                    successDiv.classList.remove('show');
+                    document.getElementById('register-loading').style.display = 'none';
+                    document.getElementById('register-btn').disabled = false;
+                }
+            } catch(e) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.classList.add('show');
+                document.getElementById('register-loading').style.display = 'none';
+                document.getElementById('register-btn').disabled = false;
+            }
+        }
+    </script>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

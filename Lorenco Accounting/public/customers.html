@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers - Lorenco Accounting</title>
+  <script src="js/navigation.js"></script>
+  <script src="js/ledger.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+
+    .content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page-header h1 { font-size: 24px; color: #333; }
+    .page-header .actions { display: flex; gap: 10px; }
+
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .stat-card .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #333; margin-top: 5px; }
+    .stat-card .sub { font-size: 12px; color: #888; margin-top: 5px; }
+    .stat-card.highlight { background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); }
+    .stat-card.highlight .label, .stat-card.highlight .value, .stat-card.highlight .sub { color: white; }
+
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-header { padding: 15px 20px; border-bottom: 1px solid #e8eaed; display: flex; justify-content: space-between; align-items: center; }
+    .card-header h2 { font-size: 16px; color: #333; }
+    .card-body { padding: 20px; }
+
+    .filters { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .filters input[type="text"] { width: 250px; }
+    .search-box { position: relative; }
+    .search-box input { padding-left: 35px; }
+    .search-box::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e8eaed; }
+    th { background: #f8f9fa; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:hover { background: #f8f9fa; }
+
+    .customer-name { font-weight: 600; color: #0066cc; cursor: pointer; }
+    .customer-name:hover { text-decoration: underline; }
+    .customer-code { font-size: 11px; color: #888; }
+
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    .status-overdue { background: #fff3cd; color: #856404; }
+
+    .amount { font-family: 'Courier New', monospace; font-weight: 600; }
+    .amount-positive { color: #28a745; }
+    .amount-negative { color: #dc3545; }
+
+    .action-btns { display: flex; gap: 5px; }
+    .action-btn { padding: 5px 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+    .action-btn:hover { background: #f0f0f0; border-color: #ccc; }
+    .action-btn.primary { border-color: #0066cc; color: #0066cc; }
+    .action-btn.primary:hover { background: #e6f3ff; }
+
+    .tabs { display: flex; border-bottom: 2px solid #e8eaed; margin-bottom: 20px; }
+    .tab { padding: 12px 20px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+    .tab:hover { color: #0066cc; }
+    .tab.active { color: #0066cc; border-bottom-color: #0066cc; font-weight: 600; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; }
+    .pagination-info { font-size: 13px; color: #666; }
+    .pagination-btns { display: flex; gap: 5px; }
+    .pagination-btns button { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; }
+    .pagination-btns button:hover { background: #f0f0f0; }
+    .pagination-btns button.active { background: #0066cc; color: white; border-color: #0066cc; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; border-radius: 12px; width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px; border-bottom: 1px solid #e8eaed; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 18px; color: #333; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 15px 20px; border-top: 1px solid #e8eaed; display: flex; justify-content: flex-end; gap: 10px; }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #333; font-size: 13px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    .method-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .method-cash { background: #d4edda; color: #155724; }
+    .method-card { background: #cce5ff; color: #004085; }
+    .method-account { background: #fff3cd; color: #856404; }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-settled { background: #d4edda; color: #155724; }
+
+    .pos-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+    .pos-stat { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ccc; }
+    .pos-stat.cash { border-left-color: #28a745; }
+    .pos-stat.card { border-left-color: #007bff; }
+    .pos-stat.account { border-left-color: #ffc107; }
+    .pos-stat.total { border-left-color: #6f42c1; }
+    .pos-stat .pos-stat-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pos-stat .pos-stat-value { font-size: 22px; font-weight: 700; color: #333; margin-top: 4px; font-family: 'Courier New', monospace; }
+    .pos-stat .pos-stat-count { font-size: 11px; color: #888; margin-top: 2px; }
+
+    .recon-link { display: inline-block; margin-top: 10px; padding: 8px 16px; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; }
+    .recon-link:hover { opacity: 0.9; }
+
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .pos-stats { grid-template-columns: repeat(2, 1fr); }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="page-header">
+      <h1>Customers</h1>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="exportCustomers()">Export</button>
+        <button class="btn btn-primary" onclick="openNewCustomerModal()">+ New Customer</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card highlight">
+        <div class="label">Total Customers</div>
+        <div class="value" id="totalCustomers">0</div>
+        <div class="sub">Active accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Outstanding</div>
+        <div class="value" id="totalOutstanding">R 0.00</div>
+        <div class="sub">Accounts receivable</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Overdue</div>
+        <div class="value" id="totalOverdue">R 0.00</div>
+        <div class="sub" id="overdueCount">0 invoices</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">This Month</div>
+        <div class="value" id="monthRevenue">R 0.00</div>
+        <div class="sub">Revenue from customers</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('customers')">Customer List</div>
+      <div class="tab" onclick="switchTab('invoices')">Invoices</div>
+      <div class="tab" onclick="switchTab('quotes')">Quotes</div>
+      <div class="tab" onclick="switchTab('receipts')">Receipts</div>
+      <div class="tab" onclick="switchTab('pos')">POS Sales</div>
+      <div class="tab" onclick="switchTab('aging')">Aging Report</div>
+    </div>
+
+    <!-- Customer List Tab -->
+    <div id="tab-customers" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2>Customer List</h2>
+          <div class="filters">
+            <div class="search-box">
+              <input type="text" id="searchCustomer" placeholder="Search customers..." onkeyup="filterCustomers()">
+            </div>
+            <select id="statusFilter" onchange="filterCustomers()">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table id="customerTable">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customerTableBody">
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="pagination-info">Showing 1-10 of <span id="customerCount">0</span> customers</div>
+            <div class="pagination-btns">
+              <button>Previous</button>
+              <button class="active">1</button>
+              <button>2</button>
+              <button>3</button>
+              <button>Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoices Tab -->
+    <div id="tab-invoices" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Invoices</h2>
+          <button class="btn btn-primary" onclick="openNewInvoiceModal()">+ New Invoice</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quotes Tab -->
+    <div id="tab-quotes" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Quotes</h2>
+          <button class="btn btn-primary" onclick="openNewQuoteModal()">+ New Quote</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Quote #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Valid Until</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="quoteTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receipts Tab -->
+    <div id="tab-receipts" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Customer Receipts</h2>
+          <button class="btn btn-primary" onclick="openNewReceiptModal()">+ Record Receipt</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Invoice</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="receiptTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- POS Sales Tab -->
+    <div id="tab-pos" class="tab-content">
+      <div class="pos-stats">
+        <div class="pos-stat cash">
+          <div class="pos-stat-label">Cash Sales</div>
+          <div class="pos-stat-value" id="posCashTotal">R 0.00</div>
+          <div class="pos-stat-count" id="posCashCount">0 transactions</div>
+        </div>
+        <div class="pos-stat card">
+          <div class="pos-stat-label">Card Sales</div>
+          <div class="pos-stat-value" id="posCardTotal">R 0.00</div>
+          <div class="pos-stat-count" id="posCardCount">0 transactions</div>
+        </div>
+        <div class="pos-stat account">
+          <div class="pos-stat-label">Account Sales</div>
+          <div class="pos-stat-value" id="posAccountTotal">R 0.00</div>
+          <div class="pos-stat-count" id="posAccountCount">0 transactions</div>
+        </div>
+        <div class="pos-stat total">
+          <div class="pos-stat-label">Unsettled Total</div>
+          <div class="pos-stat-value" id="posUnsettledTotal">R 0.00</div>
+          <div class="pos-stat-count"><a href="cash-reconciliation.html" class="recon-link">Open Cash Reconciliation</a></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>POS Sales (Checkout Charlie)</h2>
+          <div class="filters">
+            <input type="date" id="posFromDate" onchange="filterPOSSales()">
+            <input type="date" id="posToDate" onchange="filterPOSSales()">
+            <select id="posMethodFilter" onchange="filterPOSSales()">
+              <option value="">All Methods</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="account">Account</option>
+            </select>
+            <select id="posStatusFilter" onchange="filterPOSSales()">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="settled">Settled</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Date / Time</th>
+                <th>Customer</th>
+                <th>Description</th>
+                <th>Method</th>
+                <th>Excl VAT</th>
+                <th>VAT</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="posTableBody">
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="pagination-info">Showing <span id="posCount">0</span> POS sales</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aging Report Tab -->
+    <div id="tab-aging" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Customer Aging Report</h2>
+          <button class="btn btn-secondary" onclick="exportAging()">Export PDF</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Current</th>
+                <th>30 Days</th>
+                <th>60 Days</th>
+                <th>90 Days</th>
+                <th>90+ Days</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="agingTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Customer Modal -->
+  <div id="customerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="customerModalTitle">New Customer</h3>
+        <button class="modal-close" onclick="closeModal('customerModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="customerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Customer Code</label>
+              <input type="text" id="customerCode" placeholder="Auto-generated" readonly>
+            </div>
+            <div class="form-group">
+              <label>Customer Type</label>
+              <select id="customerType">
+                <option value="company">Company</option>
+                <option value="individual">Individual</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Customer Name *</label>
+            <input type="text" id="customerName" required placeholder="Company or individual name">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Contact Person</label>
+              <input type="text" id="contactPerson" placeholder="Primary contact">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="customerEmail" placeholder="email@example.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="customerPhone" placeholder="+27 XX XXX XXXX">
+            </div>
+            <div class="form-group">
+              <label>VAT Number</label>
+              <input type="text" id="customerVat" placeholder="VAT number if applicable">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea id="customerAddress" rows="2" placeholder="Street address"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="customerCity">
+            </div>
+            <div class="form-group">
+              <label>Postal Code</label>
+              <input type="text" id="customerPostal">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Payment Terms</label>
+              <select id="paymentTerms">
+                <option value="0">Due on Receipt</option>
+                <option value="7">Net 7 Days</option>
+                <option value="14">Net 14 Days</option>
+                <option value="30" selected>Net 30 Days</option>
+                <option value="60">Net 60 Days</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Credit Limit</label>
+              <input type="number" id="creditLimit" placeholder="0.00" step="0.01">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('customerModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCustomer()">Save Customer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let customers = [];
+    let invoices = [];
+    let quotes = [];
+    let receipts = [];
+
+    function init() {
+      loadDemoData();
+      loadPOSDemoData();
+      renderAll();
+    }
+
+    function loadDemoData() {
+      customers = [
+        { id: 1, code: 'CUST001', name: 'ABC Corporation', type: 'company', contact: 'John Smith', email: 'john@abccorp.co.za', phone: '+27 11 123 4567', vat: '4560123456', address: '123 Main Street', city: 'Johannesburg', postal: '2001', terms: 30, creditLimit: 100000, balance: 45250.00, status: 'active' },
+        { id: 2, code: 'CUST002', name: 'XYZ Trading', type: 'company', contact: 'Sarah Johnson', email: 'sarah@xyztrading.co.za', phone: '+27 21 987 6543', vat: '4560789012', address: '456 Commerce Road', city: 'Cape Town', postal: '8001', terms: 30, creditLimit: 75000, balance: 12800.00, status: 'active' },
+        { id: 3, code: 'CUST003', name: 'Metro Services', type: 'company', contact: 'Michael Brown', email: 'michael@metroservices.co.za', phone: '+27 31 456 7890', vat: '4561234567', address: '789 Service Lane', city: 'Durban', postal: '4001', terms: 14, creditLimit: 50000, balance: 8500.00, status: 'active' },
+        { id: 4, code: 'CUST004', name: 'Jane Doe', type: 'individual', contact: 'Jane Doe', email: 'jane.doe@email.com', phone: '+27 82 555 1234', vat: '', address: '12 Residential Ave', city: 'Pretoria', postal: '0001', terms: 7, creditLimit: 10000, balance: 2150.00, status: 'active' },
+        { id: 5, code: 'CUST005', name: 'Tech Solutions Ltd', type: 'company', contact: 'David Wilson', email: 'david@techsolutions.co.za', phone: '+27 11 222 3333', vat: '4569876543', address: '100 Tech Park', city: 'Sandton', postal: '2196', terms: 30, creditLimit: 150000, balance: 67500.00, status: 'active' },
+        { id: 6, code: 'CUST006', name: 'Old Client Inc', type: 'company', contact: 'Bob Old', email: 'bob@oldclient.co.za', phone: '+27 11 111 1111', vat: '4561111111', address: '1 Old Street', city: 'Johannesburg', postal: '2000', terms: 30, creditLimit: 25000, balance: 0, status: 'inactive' }
+      ];
+
+      invoices = [
+        { id: 1, number: 'INV-2026-001', customerId: 1, customerName: 'ABC Corporation', date: '2026-01-15', dueDate: '2026-02-14', amount: 25000.00, paid: 0, status: 'unpaid' },
+        { id: 2, number: 'INV-2026-002', customerId: 1, customerName: 'ABC Corporation', date: '2026-01-10', dueDate: '2026-02-09', amount: 20250.00, paid: 0, status: 'unpaid' },
+        { id: 3, number: 'INV-2026-003', customerId: 2, customerName: 'XYZ Trading', date: '2026-01-12', dueDate: '2026-02-11', amount: 12800.00, paid: 0, status: 'unpaid' },
+        { id: 4, number: 'INV-2025-098', customerId: 3, customerName: 'Metro Services', date: '2025-12-15', dueDate: '2025-12-29', amount: 8500.00, paid: 0, status: 'overdue' },
+        { id: 5, number: 'INV-2026-004', customerId: 5, customerName: 'Tech Solutions Ltd', date: '2026-01-18', dueDate: '2026-02-17', amount: 67500.00, paid: 0, status: 'unpaid' },
+        { id: 6, number: 'INV-2025-095', customerId: 4, customerName: 'Jane Doe', date: '2025-12-20', dueDate: '2025-12-27', amount: 5000.00, paid: 2850.00, status: 'partial' }
+      ];
+
+      quotes = [
+        { id: 1, number: 'QUO-2026-001', customerId: 1, customerName: 'ABC Corporation', date: '2026-01-20', validUntil: '2026-02-20', amount: 35000.00, status: 'pending' },
+        { id: 2, number: 'QUO-2026-002', customerId: 2, customerName: 'XYZ Trading', date: '2026-01-18', validUntil: '2026-02-18', amount: 18500.00, status: 'accepted' },
+        { id: 3, number: 'QUO-2026-003', customerId: 5, customerName: 'Tech Solutions Ltd', date: '2026-01-15', validUntil: '2026-02-15', amount: 125000.00, status: 'pending' }
+      ];
+
+      receipts = [
+        { id: 1, number: 'REC-2026-001', customerId: 4, customerName: 'Jane Doe', date: '2026-01-10', invoiceNumber: 'INV-2025-095', amount: 2850.00, method: 'EFT' },
+        { id: 2, number: 'REC-2026-002', customerId: 2, customerName: 'XYZ Trading', date: '2026-01-05', invoiceNumber: 'INV-2025-090', amount: 15000.00, method: 'EFT' },
+        { id: 3, number: 'REC-2026-003', customerId: 1, customerName: 'ABC Corporation', date: '2026-01-03', invoiceNumber: 'INV-2025-088', amount: 32000.00, method: 'Cheque' }
+      ];
+    }
+
+    function renderAll() {
+      renderStats();
+      renderCustomers();
+      renderInvoices();
+      renderQuotes();
+      renderReceipts();
+      renderPOSSales();
+      renderAging();
+    }
+
+    function renderStats() {
+      const activeCustomers = customers.filter(c => c.status === 'active').length;
+      const totalOutstanding = customers.reduce((sum, c) => sum + c.balance, 0);
+      const overdueInvoices = invoices.filter(i => i.status === 'overdue');
+      const overdueAmount = overdueInvoices.reduce((sum, i) => sum + (i.amount - i.paid), 0);
+      const monthRevenue = receipts.reduce((sum, r) => sum + r.amount, 0);
+
+      document.getElementById('totalCustomers').textContent = activeCustomers;
+      document.getElementById('totalOutstanding').textContent = formatCurrency(totalOutstanding);
+      document.getElementById('totalOverdue').textContent = formatCurrency(overdueAmount);
+      document.getElementById('overdueCount').textContent = `${overdueInvoices.length} invoices`;
+      document.getElementById('monthRevenue').textContent = formatCurrency(monthRevenue);
+    }
+
+    function renderCustomers() {
+      const tbody = document.getElementById('customerTableBody');
+      tbody.innerHTML = customers.map(c => `
+        <tr>
+          <td>
+            <div class="customer-name" onclick="viewCustomer(${c.id})">${c.name}</div>
+            <div class="customer-code">${c.code}</div>
+          </td>
+          <td>${c.contact}</td>
+          <td>${c.email}</td>
+          <td>${c.phone}</td>
+          <td class="amount ${c.balance > 0 ? 'amount-positive' : ''}">${formatCurrency(c.balance)}</td>
+          <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn primary" onclick="newInvoiceFor(${c.id})">Invoice</button>
+              <button class="action-btn" onclick="editCustomer(${c.id})">Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('customerCount').textContent = customers.length;
+    }
+
+    function renderInvoices() {
+      const tbody = document.getElementById('invoiceTableBody');
+      tbody.innerHTML = invoices.map(i => `
+        <tr>
+          <td><strong>${i.number}</strong></td>
+          <td>${i.customerName}</td>
+          <td>${formatDate(i.date)}</td>
+          <td>${formatDate(i.dueDate)}</td>
+          <td class="amount">${formatCurrency(i.amount)}</td>
+          <td class="amount">${formatCurrency(i.paid)}</td>
+          <td class="amount ${(i.amount - i.paid) > 0 ? 'amount-positive' : ''}">${formatCurrency(i.amount - i.paid)}</td>
+          <td><span class="status-badge status-${i.status === 'overdue' ? 'overdue' : (i.status === 'paid' ? 'active' : 'inactive')}">${i.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewInvoice(${i.id})">View</button>
+              <button class="action-btn primary" onclick="recordPayment(${i.id})">Pay</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderQuotes() {
+      const tbody = document.getElementById('quoteTableBody');
+      tbody.innerHTML = quotes.map(q => `
+        <tr>
+          <td><strong>${q.number}</strong></td>
+          <td>${q.customerName}</td>
+          <td>${formatDate(q.date)}</td>
+          <td>${formatDate(q.validUntil)}</td>
+          <td class="amount">${formatCurrency(q.amount)}</td>
+          <td><span class="status-badge status-${q.status === 'accepted' ? 'active' : 'inactive'}">${q.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewQuote(${q.id})">View</button>
+              <button class="action-btn primary" onclick="convertToInvoice(${q.id})">Convert</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderReceipts() {
+      const tbody = document.getElementById('receiptTableBody');
+      tbody.innerHTML = receipts.map(r => `
+        <tr>
+          <td><strong>${r.number}</strong></td>
+          <td>${r.customerName}</td>
+          <td>${formatDate(r.date)}</td>
+          <td>${r.invoiceNumber}</td>
+          <td class="amount amount-positive">${formatCurrency(r.amount)}</td>
+          <td>${r.method}</td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn" onclick="viewReceipt(${r.id})">View</button>
+              <button class="action-btn" onclick="printReceipt(${r.id})">Print</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderAging() {
+      const tbody = document.getElementById('agingTableBody');
+      const agingData = customers.filter(c => c.balance > 0).map(c => {
+        // Simplified aging calculation
+        return {
+          name: c.name,
+          current: c.balance * 0.4,
+          days30: c.balance * 0.3,
+          days60: c.balance * 0.15,
+          days90: c.balance * 0.1,
+          days90plus: c.balance * 0.05,
+          total: c.balance
+        };
+      });
+
+      tbody.innerHTML = agingData.map(a => `
+        <tr>
+          <td><strong>${a.name}</strong></td>
+          <td class="amount">${formatCurrency(a.current)}</td>
+          <td class="amount">${formatCurrency(a.days30)}</td>
+          <td class="amount">${formatCurrency(a.days60)}</td>
+          <td class="amount">${formatCurrency(a.days90)}</td>
+          <td class="amount amount-negative">${formatCurrency(a.days90plus)}</td>
+          <td class="amount"><strong>${formatCurrency(a.total)}</strong></td>
+        </tr>
+      `).join('');
+
+      // Add totals row
+      const totals = agingData.reduce((acc, a) => ({
+        current: acc.current + a.current,
+        days30: acc.days30 + a.days30,
+        days60: acc.days60 + a.days60,
+        days90: acc.days90 + a.days90,
+        days90plus: acc.days90plus + a.days90plus,
+        total: acc.total + a.total
+      }), { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0, total: 0 });
+
+      tbody.innerHTML += `
+        <tr style="background: #f8f9fa; font-weight: 600;">
+          <td>TOTAL</td>
+          <td class="amount">${formatCurrency(totals.current)}</td>
+          <td class="amount">${formatCurrency(totals.days30)}</td>
+          <td class="amount">${formatCurrency(totals.days60)}</td>
+          <td class="amount">${formatCurrency(totals.days90)}</td>
+          <td class="amount amount-negative">${formatCurrency(totals.days90plus)}</td>
+          <td class="amount">${formatCurrency(totals.total)}</td>
+        </tr>
+      `;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    function filterCustomers() {
+      const search = document.getElementById('searchCustomer').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+
+      const filtered = customers.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search);
+        const matchesStatus = !status || c.status === status;
+        return matchesSearch && matchesStatus;
+      });
+
+      const tbody = document.getElementById('customerTableBody');
+      tbody.innerHTML = filtered.map(c => `
+        <tr>
+          <td>
+            <div class="customer-name" onclick="viewCustomer(${c.id})">${c.name}</div>
+            <div class="customer-code">${c.code}</div>
+          </td>
+          <td>${c.contact}</td>
+          <td>${c.email}</td>
+          <td>${c.phone}</td>
+          <td class="amount ${c.balance > 0 ? 'amount-positive' : ''}">${formatCurrency(c.balance)}</td>
+          <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn primary" onclick="newInvoiceFor(${c.id})">Invoice</button>
+              <button class="action-btn" onclick="editCustomer(${c.id})">Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openNewCustomerModal() {
+      document.getElementById('customerModalTitle').textContent = 'New Customer';
+      document.getElementById('customerForm').reset();
+      document.getElementById('customerCode').value = 'CUST' + String(customers.length + 1).padStart(3, '0');
+      document.getElementById('customerModal').classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    function saveCustomer() {
+      const name = document.getElementById('customerName').value;
+      if (!name) {
+        alert('Please enter customer name');
+        return;
+      }
+
+      const newCustomer = {
+        id: customers.length + 1,
+        code: document.getElementById('customerCode').value,
+        name: name,
+        type: document.getElementById('customerType').value,
+        contact: document.getElementById('contactPerson').value,
+        email: document.getElementById('customerEmail').value,
+        phone: document.getElementById('customerPhone').value,
+        vat: document.getElementById('customerVat').value,
+        address: document.getElementById('customerAddress').value,
+        city: document.getElementById('customerCity').value,
+        postal: document.getElementById('customerPostal').value,
+        terms: parseInt(document.getElementById('paymentTerms').value),
+        creditLimit: parseFloat(document.getElementById('creditLimit').value) || 0,
+        balance: 0,
+        status: 'active'
+      };
+
+      customers.push(newCustomer);
+      closeModal('customerModal');
+      renderAll();
+      alert('Customer saved successfully!');
+    }
+
+    function viewCustomer(id) {
+      const customer = customers.find(c => c.id === id);
+      alert(`Customer Details:\n\n${customer.name}\n${customer.email}\nBalance: ${formatCurrency(customer.balance)}`);
+    }
+
+    function editCustomer(id) {
+      const customer = customers.find(c => c.id === id);
+      document.getElementById('customerModalTitle').textContent = 'Edit Customer';
+      document.getElementById('customerCode').value = customer.code;
+      document.getElementById('customerName').value = customer.name;
+      document.getElementById('customerType').value = customer.type;
+      document.getElementById('contactPerson').value = customer.contact;
+      document.getElementById('customerEmail').value = customer.email;
+      document.getElementById('customerPhone').value = customer.phone;
+      document.getElementById('customerVat').value = customer.vat;
+      document.getElementById('customerAddress').value = customer.address;
+      document.getElementById('customerCity').value = customer.city;
+      document.getElementById('customerPostal').value = customer.postal;
+      document.getElementById('paymentTerms').value = customer.terms;
+      document.getElementById('creditLimit').value = customer.creditLimit;
+      document.getElementById('customerModal').classList.add('show');
+    }
+
+    function newInvoiceFor(customerId) {
+      alert('Opening invoice form for customer ID: ' + customerId);
+    }
+
+    function openNewInvoiceModal() {
+      alert('New Invoice modal - Coming soon');
+    }
+
+    function openNewQuoteModal() {
+      alert('New Quote modal - Coming soon');
+    }
+
+    function openNewReceiptModal() {
+      alert('New Receipt modal - Coming soon');
+    }
+
+    // ==========================================
+    // POS SALES FUNCTIONS
+    // ==========================================
+
+    function loadPOSDemoData() {
+      // Only load demo POS data if none exists
+      const existing = LedgerSystem.getPOSSales();
+      if (existing.length > 0) return;
+
+      // Ensure Checkout Charlie customer is initialized
+      LedgerSystem.getCustomers();
+
+      const demoSales = [
+        { date: '2026-01-22', time: '09:15:30', paymentMethod: 'cash', description: 'Breakfast combo x2', total: 195.00 },
+        { date: '2026-01-22', time: '10:42:15', paymentMethod: 'card', description: 'Coffee & pastries', total: 85.50 },
+        { date: '2026-01-22', time: '11:30:00', paymentMethod: 'card', description: 'Lunch special x3', total: 345.00 },
+        { date: '2026-01-22', time: '12:15:45', paymentMethod: 'cash', description: 'Sandwich & drink', total: 78.00 },
+        { date: '2026-01-22', time: '14:20:10', paymentMethod: 'card', description: 'Afternoon snack box', total: 125.00 },
+        { date: '2026-01-22', time: '16:00:00', paymentMethod: 'account', description: 'Catering order - ABC Corp', total: 2500.00, customerId: 'CUST-DEMO-ABC' },
+        { date: '2026-01-21', time: '08:30:00', paymentMethod: 'cash', description: 'Morning rush x5', total: 425.00 },
+        { date: '2026-01-21', time: '10:00:00', paymentMethod: 'card', description: 'Card batch morning', total: 890.00 },
+        { date: '2026-01-21', time: '12:30:00', paymentMethod: 'cash', description: 'Lunch cash sales', total: 650.00 },
+        { date: '2026-01-21', time: '13:45:00', paymentMethod: 'card', description: 'Card batch afternoon', total: 1250.00 },
+        { date: '2026-01-21', time: '15:00:00', paymentMethod: 'card', description: 'Late afternoon cards', total: 380.00 },
+        { date: '2026-01-20', time: '09:00:00', paymentMethod: 'cash', description: 'Monday cash sales', total: 520.00 },
+        { date: '2026-01-20', time: '11:00:00', paymentMethod: 'card', description: 'Monday card sales', total: 1100.00 },
+        { date: '2026-01-20', time: '14:00:00', paymentMethod: 'cash', description: 'Afternoon cash', total: 310.00 },
+        { date: '2026-01-20', time: '16:30:00', paymentMethod: 'account', description: 'Monthly order - Tech Solutions', total: 4500.00, customerId: 'CUST-DEMO-TECH' }
+      ];
+
+      // Add demo customers to LedgerSystem if needed
+      const existingCustomers = LedgerSystem.getCustomers();
+      if (!existingCustomers.find(c => c.id === 'CUST-DEMO-ABC')) {
+        const custs = LedgerSystem.getCustomers();
+        custs.push({ id: 'CUST-DEMO-ABC', code: 'ABC001', name: 'ABC Corporation', type: 'company', isSystemCustomer: false, contact: 'John Smith', email: 'john@abccorp.co.za', phone: '+27 11 123 4567', vat: '4560123456', terms: 30, creditLimit: 100000, status: 'active', createdAt: new Date().toISOString() });
+        custs.push({ id: 'CUST-DEMO-TECH', code: 'TEC001', name: 'Tech Solutions Ltd', type: 'company', isSystemCustomer: false, contact: 'David Wilson', email: 'david@techsolutions.co.za', phone: '+27 11 222 3333', vat: '4569876543', terms: 30, creditLimit: 150000, status: 'active', createdAt: new Date().toISOString() });
+        localStorage.setItem('lorenco_customers', JSON.stringify(custs));
+      }
+
+      demoSales.forEach(sale => {
+        try {
+          LedgerSystem.postPOSSale(sale);
+        } catch (e) {
+          console.warn('Demo POS sale error:', e.message);
+        }
+      });
+    }
+
+    function renderPOSSales(filteredSales) {
+      const sales = filteredSales || LedgerSystem.getPOSSales();
+
+      // Sort by date desc then time desc
+      sales.sort((a, b) => {
+        if (b.date !== a.date) return b.date.localeCompare(a.date);
+        return (b.time || '').localeCompare(a.time || '');
+      });
+
+      // Render stats
+      const cashSales = sales.filter(s => s.paymentMethod === 'cash');
+      const cardSales = sales.filter(s => s.paymentMethod === 'card');
+      const accountSales = sales.filter(s => s.paymentMethod === 'account');
+      const unsettled = sales.filter(s => s.status === 'pending');
+
+      document.getElementById('posCashTotal').textContent = formatCurrency(cashSales.reduce((s, t) => s + t.total, 0));
+      document.getElementById('posCashCount').textContent = cashSales.length + ' transactions';
+      document.getElementById('posCardTotal').textContent = formatCurrency(cardSales.reduce((s, t) => s + t.total, 0));
+      document.getElementById('posCardCount').textContent = cardSales.length + ' transactions';
+      document.getElementById('posAccountTotal').textContent = formatCurrency(accountSales.reduce((s, t) => s + t.total, 0));
+      document.getElementById('posAccountCount').textContent = accountSales.length + ' transactions';
+      document.getElementById('posUnsettledTotal').textContent = formatCurrency(unsettled.reduce((s, t) => s + t.total, 0));
+
+      // Render table
+      const tbody = document.getElementById('posTableBody');
+      if (sales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #888;">No POS sales found. Transactions from Checkout Charlie will appear here.</td></tr>';
+        document.getElementById('posCount').textContent = '0';
+        return;
+      }
+
+      tbody.innerHTML = sales.map(s => `
+        <tr>
+          <td><strong>${s.id}</strong><div style="font-size:11px;color:#888">${s.journalRef}</div></td>
+          <td>${formatDate(s.date)}<div style="font-size:11px;color:#888">${s.time || ''}</div></td>
+          <td>${s.customerName}</td>
+          <td>${s.description}</td>
+          <td><span class="method-badge method-${s.paymentMethod}">${s.paymentMethod}</span></td>
+          <td class="amount">${formatCurrency(s.subtotal)}</td>
+          <td class="amount">${formatCurrency(s.vatAmount)}</td>
+          <td class="amount"><strong>${formatCurrency(s.total)}</strong></td>
+          <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('posCount').textContent = sales.length;
+    }
+
+    function filterPOSSales() {
+      const fromDate = document.getElementById('posFromDate').value;
+      const toDate = document.getElementById('posToDate').value;
+      const method = document.getElementById('posMethodFilter').value;
+      const status = document.getElementById('posStatusFilter').value;
+
+      const filters = {};
+      if (fromDate) filters.fromDate = fromDate;
+      if (toDate) filters.toDate = toDate;
+      if (method) filters.paymentMethod = method;
+      if (status) filters.status = status;
+
+      const sales = LedgerSystem.getPOSSales(filters);
+      renderPOSSales(sales);
+    }
+
+    function viewInvoice(id) { alert('View Invoice ' + id); }
+    function recordPayment(id) { alert('Record payment for Invoice ' + id); }
+    function viewQuote(id) { alert('View Quote ' + id); }
+    function convertToInvoice(id) { alert('Convert Quote ' + id + ' to Invoice'); }
+    function viewReceipt(id) { alert('View Receipt ' + id); }
+    function printReceipt(id) { alert('Print Receipt ' + id); }
+    function exportCustomers() { alert('Exporting customers...'); }
+    function exportAging() { alert('Exporting aging report...'); }
+
+    function formatCurrency(amount) {
+      return 'R ' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

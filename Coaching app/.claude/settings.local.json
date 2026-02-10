@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(ipconfig:*)",
+      "Bash(dir /b:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(del assessment-*.txt)",
+      "Bash(if not exist images mkdir images)",
+      "Bash(del temp-mlnp-code.txt temp-mlnp-helpers.txt temp-mlnp-styles.txt)",
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

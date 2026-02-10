@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenco Accounting — General Ledger &amp; Financial Reports</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #e0e7ff;
+            --accent: #10b981;
+            --accent-light: #d1fae5;
+            --bg: #f5f3ff;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* ─── Login ────────────────────────────────────────────── */
+        #loginScreen {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #10b981 100%);
+            padding: 20px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 50px 40px;
+            box-shadow: var(--shadow-lg); max-width: 440px; width: 100%; text-align: center;
+        }
+        .login-card .logo { font-size: 3rem; margin-bottom: 8px; }
+        .login-card h1 { color: var(--primary-dark); font-size: 1.8rem; margin-bottom: 4px; }
+        .login-card .subtitle { color: var(--text-muted); margin-bottom: 30px; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 1rem; transition: border-color 0.2s; background: white;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border: none; border-radius: 10px; font-size: 0.95rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; width: 100%; padding: 14px; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.4); }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; width: auto; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); width: auto; }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-accent { background: var(--accent); color: white; width: auto; }
+        .btn-accent:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); color: white; width: auto; }
+        .btn-danger:hover { opacity: 0.9; }
+        .btn-warning { background: var(--warning); color: white; width: auto; }
+        .btn-info { background: var(--info); color: white; width: auto; }
+        .login-hint { margin-top: 20px; padding: 12px; background: var(--primary-light); border-radius: 8px; font-size: 0.85rem; color: var(--primary-dark); }
+        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 8px; display: none; }
+
+        /* ─── Main App ────────────────────────────────────────── */
+        #app { display: none; }
+        .topbar {
+            background: white; border-bottom: 1px solid var(--border); padding: 12px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-logo { font-size: 1.6rem; }
+        .topbar-title { font-weight: 700; color: var(--primary-dark); font-size: 1.1rem; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .user-info { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* ─── Nav Tabs ────────────────────────────────────────── */
+        .nav-tabs {
+            display: flex; gap: 4px; padding: 12px 24px; background: white;
+            border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 10px 18px; border: none; background: transparent; color: var(--text-muted);
+            font-weight: 600; font-size: 0.9rem; cursor: pointer; border-radius: 8px;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-tab:hover { background: var(--primary-light); color: var(--primary); }
+        .nav-tab.active { background: var(--primary); color: white; }
+
+        /* ─── Content ─────────────────────────────────────────── */
+        .content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ─── Cards ───────────────────────────────────────────── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+        .stat-card.green { border-left-color: var(--success); }
+        .stat-card.red { border-left-color: var(--danger); }
+        .stat-card.blue { border-left-color: var(--info); }
+        .stat-card.orange { border-left-color: var(--warning); }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; margin-top: 4px; }
+
+        .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        .card-header h3 { font-size: 1.1rem; }
+        .card-body { padding: 20px; }
+
+        /* ─── Tables ──────────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        thead th {
+            text-align: left; padding: 12px 16px; background: var(--bg); color: var(--text-muted);
+            font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border); white-space: nowrap;
+        }
+        tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        tbody tr:hover { background: #f8fafc; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .amount { font-family: 'Consolas', 'Courier New', monospace; font-weight: 600; }
+        .amount.positive { color: var(--success); }
+        .amount.negative { color: var(--danger); }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-posted { background: var(--accent-light); color: #065f46; }
+        .badge-draft { background: #fef3c7; color: #92400e; }
+        .badge-closed { background: #f3f4f6; color: #6b7280; }
+        .badge-open { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-asset { background: #dbeafe; color: #1e40af; }
+        .badge-liability { background: #fce7f3; color: #9d174d; }
+        .badge-equity { background: #ede9fe; color: #5b21b6; }
+        .badge-income { background: #d1fae5; color: #065f46; }
+        .badge-expense { background: #fee2e2; color: #991b1b; }
+        .badge-reconciled { background: var(--accent-light); color: #065f46; }
+        .badge-unreconciled { background: #fee2e2; color: #991b1b; }
+
+        .total-row { font-weight: 700; background: var(--bg) !important; }
+        .total-row td { border-top: 2px solid var(--primary); }
+        .section-header td { font-weight: 700; background: #f1f5f9; padding: 10px 16px; font-size: 0.95rem; color: var(--primary-dark); }
+
+        /* ─── Modal ───────────────────────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 16px; max-width: 700px; width: 100%;
+            max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-header h3 { font-size: 1.2rem; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 12px; justify-content: flex-end; }
+
+        /* ─── Journal Lines Editor ────────────────────────────── */
+        .line-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .line-row select, .line-row input { font-size: 0.9rem; }
+        .line-row .line-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; }
+
+        /* ─── Filter Bar ──────────────────────────────────────── */
+        .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .filter-bar input, .filter-bar select {
+            padding: 8px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.9rem;
+        }
+        .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--primary); }
+
+        /* ─── Responsive ──────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .content { padding: 16px; }
+            .nav-tabs { padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="logo">📊</div>
+        <h1>Lorenco Accounting</h1>
+        <p class="subtitle">General Ledger &amp; Financial Reports</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="admin@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="admin123" required>
+            </div>
+            <div class="error-msg" id="loginError"></div>
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+        <div class="login-hint">
+            <strong>Test:</strong> admin@test.com / admin123
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="app">
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <span class="topbar-logo">📊</span>
+            <span class="topbar-title">Lorenco Accounting</span>
+        </div>
+        <div class="topbar-right">
+            <span class="user-info" id="userInfo"></span>
+            <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="nav-tab" onclick="switchTab('accounts')">Chart of Accounts</button>
+        <button class="nav-tab" onclick="switchTab('journals')">Journal Entries</button>
+        <button class="nav-tab" onclick="switchTab('bank')">Bank &amp; Transactions</button>
+        <button class="nav-tab" onclick="switchTab('trialbalance')">Trial Balance</button>
+        <button class="nav-tab" onclick="switchTab('incomestatement')">Income Statement</button>
+        <button class="nav-tab" onclick="switchTab('balancesheet')">Balance Sheet</button>
+        <button class="nav-tab" onclick="switchTab('generalledger')">General Ledger</button>
+    </div>
+
+    <div class="content">
+
+        <!-- ═══ DASHBOARD ═══ -->
+        <div id="tab-dashboard" class="tab-panel active">
+            <h2 style="margin-bottom:16px;">Financial Overview</h2>
+            <div class="stats-grid" id="dashStats"></div>
+            <div class="card">
+                <div class="card-header"><h3>Recent Journal Entries</h3></div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Number</th><th>Date</th><th>Description</th><th>Reference</th><th>Status</th>
+                    </tr></thead><tbody id="dashRecentJournals"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CHART OF ACCOUNTS ═══ -->
+        <div id="tab-accounts" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Chart of Accounts</h3>
+                    <div class="filter-bar">
+                        <input type="text" id="accountSearch" placeholder="Search accounts..." oninput="loadAccounts()">
+                        <select id="accountTypeFilter" onchange="loadAccounts()">
+                            <option value="">All Types</option>
+                            <option value="Asset">Asset</option>
+                            <option value="Liability">Liability</option>
+                            <option value="Equity">Equity</option>
+                            <option value="Income">Income</option>
+                            <option value="Expense">Expense</option>
+                        </select>
+                        <button class="btn btn-accent btn-sm" onclick="openAccountModal()">+ New Account</button>
+                    </div>
+                </div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Code</th><th>Account Name</th><th>Type</th><th>Sub Type</th>
+                        <th class="text-right">Opening</th><th class="text-right">Current Balance</th><th>Actions</th>
+                    </tr></thead><tbody id="accountsTable"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ JOURNAL ENTRIES ═══ -->
+        <div id="tab-journals" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Journal Entries</h3>
+                    <div class="filter-bar">
+                        <input type="text" id="journalSearch" placeholder="Search journals..." oninput="loadJournals()">
+                        <select id="journalStatusFilter" onchange="loadJournals()">
+                            <option value="">All</option>
+                            <option value="posted">Posted</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                        <button class="btn btn-accent btn-sm" onclick="openJournalModal()">+ New Journal</button>
+                    </div>
+                </div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Number</th><th>Date</th><th>Description</th><th>Reference</th>
+                        <th class="text-right">Debit</th><th class="text-right">Credit</th><th>Status</th><th>Actions</th>
+                    </tr></thead><tbody id="journalsTable"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ BANK & TRANSACTIONS ═══ -->
+        <div id="tab-bank" class="tab-panel">
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-header"><h3>Bank Accounts</h3></div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Bank</th><th>Account Name</th><th>Account No</th><th>Type</th>
+                        <th class="text-right">Last Reconciled</th><th class="text-right">Unreconciled</th>
+                    </tr></thead><tbody id="bankAccountsTable"></tbody></table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Bank Transactions</h3>
+                    <div class="filter-bar">
+                        <input type="text" id="bankSearch" placeholder="Search..." oninput="loadBankTransactions()">
+                        <select id="bankReconFilter" onchange="loadBankTransactions()">
+                            <option value="">All</option>
+                            <option value="false">Unreconciled</option>
+                            <option value="true">Reconciled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Date</th><th>Description</th><th>Reference</th>
+                        <th class="text-right">Amount</th><th class="text-right">Balance</th>
+                        <th>Allocated To</th><th>Reconciled</th><th>Actions</th>
+                    </tr></thead><tbody id="bankTxnTable"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TRIAL BALANCE ═══ -->
+        <div id="tab-trialbalance" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Trial Balance</h3>
+                    <span id="tbDate" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                </div>
+                <div class="card-body table-wrap">
+                    <table><thead><tr>
+                        <th>Code</th><th>Account</th><th>Type</th>
+                        <th class="text-right">Debit</th><th class="text-right">Credit</th>
+                    </tr></thead><tbody id="trialBalanceTable"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ INCOME STATEMENT ═══ -->
+        <div id="tab-incomestatement" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Income Statement (Profit &amp; Loss)</h3>
+                    <span style="color:var(--text-muted);font-size:0.9rem;">Year to Date</span>
+                </div>
+                <div class="card-body table-wrap" id="incomeStatementBody"></div>
+            </div>
+        </div>
+
+        <!-- ═══ BALANCE SHEET ═══ -->
+        <div id="tab-balancesheet" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Balance Sheet</h3>
+                    <span id="bsDate" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                </div>
+                <div class="card-body table-wrap" id="balanceSheetBody"></div>
+            </div>
+        </div>
+
+        <!-- ═══ GENERAL LEDGER ═══ -->
+        <div id="tab-generalledger" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3>General Ledger</h3>
+                    <div class="filter-bar">
+                        <select id="glAccountSelect" onchange="loadGeneralLedger()">
+                            <option value="">Select an account...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="glContent" style="color:var(--text-muted);text-align:center;padding:40px;">
+                        Select an account to view its ledger entries.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end .content -->
+</div><!-- end #app -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- New Account Modal -->
+<div class="modal-overlay" id="accountModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>New Account</h3>
+            <button class="modal-close" onclick="closeModal('accountModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Account Number</label>
+                <input type="text" id="newAcctNumber" placeholder="e.g. 5950">
+            </div>
+            <div class="form-group">
+                <label>Account Name</label>
+                <input type="text" id="newAcctName" placeholder="e.g. Advertising Expense">
+            </div>
+            <div class="form-group">
+                <label>Account Type</label>
+                <select id="newAcctType">
+                    <option value="Asset">Asset</option>
+                    <option value="Liability">Liability</option>
+                    <option value="Equity">Equity</option>
+                    <option value="Income">Income</option>
+                    <option value="Expense" selected>Expense</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sub Type</label>
+                <input type="text" id="newAcctSubType" placeholder="e.g. Operating Expense">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="newAcctDesc" placeholder="Short description">
+            </div>
+            <div class="form-group">
+                <label>Opening Balance (R)</label>
+                <input type="number" id="newAcctBalance" value="0" step="0.01">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="closeModal('accountModal')">Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="createAccount()">Create Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- New Journal Modal -->
+<div class="modal-overlay" id="journalModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>New Journal Entry</h3>
+            <button class="modal-close" onclick="closeModal('journalModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="newJnlDate">
+                </div>
+                <div class="form-group">
+                    <label>Reference</label>
+                    <input type="text" id="newJnlRef" placeholder="e.g. INV-1234">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="newJnlDesc" placeholder="Journal description">
+            </div>
+            <div class="form-group">
+                <label>Lines</label>
+                <div id="journalLinesEditor"></div>
+                <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addJournalLine()">+ Add Line</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;">
+                <span>Total Debit: <strong id="jnlTotalDebit">R 0.00</strong></span>
+                <span>Total Credit: <strong id="jnlTotalCredit">R 0.00</strong></span>
+                <span id="jnlBalanceStatus" style="font-weight:700;"></span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="closeModal('journalModal')">Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="createJournal()">Create Draft</button>
+        </div>
+    </div>
+</div>
+
+<!-- Allocate Modal -->
+<div class="modal-overlay" id="allocateModal">
+    <div class="modal" style="max-width:450px;">
+        <div class="modal-header">
+            <h3>Allocate Transaction</h3>
+            <button class="modal-close" onclick="closeModal('allocateModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="allocateDesc" style="margin-bottom:12px;color:var(--text-muted);"></p>
+            <div class="form-group">
+                <label>Allocate to Account</label>
+                <select id="allocateAccountSelect" style="width:100%;"></select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" onclick="closeModal('allocateModal')">Cancel</button>
+            <button class="btn btn-accent btn-sm" onclick="submitAllocation()">Allocate</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let token = null;
+let user = null;
+const API = window.location.origin + '/api';
+let accountsCache = [];
+
+// ─── API Helper ──────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(API + path, { ...opts, headers });
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API error');
+    return data;
+}
+
+function R(n) { return 'R ' + Number(n || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+// ── SSO Pickup from Ecosystem Dashboard ──
+window.addEventListener('load', function() {
+    const ssoSource = localStorage.getItem('sso_source');
+    if (ssoSource === 'ecosystem') {
+        const ssoToken = localStorage.getItem('token');
+        const ssoUser = localStorage.getItem('user');
+        const ssoCompany = localStorage.getItem('company');
+        if (ssoToken && ssoUser) {
+            try {
+                token = ssoToken;
+                user = JSON.parse(ssoUser);
+                const company = ssoCompany ? JSON.parse(ssoCompany) : null;
+                const companyName = company ? (company.company_name || company.trading_name || '') : '';
+                localStorage.removeItem('sso_source');
+                console.log('[SSO] Ecosystem bypass — user:', user.fullName || user.email, 'company:', companyName);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                document.getElementById('userInfo').textContent = (user.fullName || user.email) + (companyName ? ' — ' + companyName : '');
+                loadDashboard();
+            } catch (e) {
+                console.warn('[SSO] Failed to parse ecosystem data:', e);
+                localStorage.removeItem('sso_source');
+            }
+        }
+    }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    try {
+        const data = await api('/auth/login', { method: 'POST', body: JSON.stringify({
+            username: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value,
+        })});
+        token = data.token;
+        user = data.user;
+        let companyName = '';
+
+        // Super admin — no companies in login response, fetch + select
+        if (data.isSuperAdmin) {
+            try {
+                const cData = await api('/auth/companies');
+                if (cData.companies && cData.companies.length > 0) {
+                    const primary = cData.companies.find(c => c.is_primary) || cData.companies[0];
+                    const selData = await api('/auth/select-company', { method: 'POST', body: JSON.stringify({ companyId: primary.id }) });
+                    token = selData.token;
+                    companyName = primary.company_name || primary.trading_name || '';
+                }
+            } catch (e) { console.warn('Super admin company selection failed:', e); }
+        }
+        // Regular user with companies list — auto-select primary or first
+        else if (data.companies && data.companies.length > 0 && !data.selectedCompany) {
+            try {
+                const primary = data.companies.find(c => c.is_primary) || data.companies[0];
+                const selData = await api('/auth/select-company', { method: 'POST', body: JSON.stringify({ companyId: primary.id }) });
+                token = selData.token;
+                companyName = primary.company_name || '';
+            } catch (e) { console.warn('Company selection failed:', e); }
+        }
+        // Regular user — company already selected
+        else if (data.selectedCompany) {
+            companyName = data.selectedCompany.company_name || '';
+        }
+
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('userInfo').textContent = (user.fullName || user.email) + (companyName ? ' — ' + companyName : '');
+        loadDashboard();
+    } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+    }
+});
+
+function logout() {
+    token = null; user = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+}
+
+// ─── Tab Switching ───────────────────────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+
+    const loaders = {
+        dashboard: loadDashboard,
+        accounts: loadAccounts,
+        journals: loadJournals,
+        bank: () => { loadBankAccounts(); loadBankTransactions(); },
+        trialbalance: loadTrialBalance,
+        incomestatement: loadIncomeStatement,
+        balancesheet: loadBalanceSheet,
+        generalledger: populateGLSelect,
+    };
+    if (loaders[name]) loaders[name]();
+}
+
+// ─── Modal Helpers ───────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+async function loadDashboard() {
+    try {
+        const data = await api('/accounting/dashboard');
+        const s = data.summary;
+        document.getElementById('dashStats').innerHTML = `
+            <div class="stat-card blue"><div class="stat-label">Total Assets</div><div class="stat-value">${R(s.total_assets)}</div></div>
+            <div class="stat-card red"><div class="stat-label">Total Liabilities</div><div class="stat-value">${R(s.total_liabilities)}</div></div>
+            <div class="stat-card"><div class="stat-label">Total Equity</div><div class="stat-value">${R(s.total_equity)}</div></div>
+            <div class="stat-card green"><div class="stat-label">Revenue (YTD)</div><div class="stat-value">${R(s.total_income)}</div></div>
+            <div class="stat-card orange"><div class="stat-label">Expenses (YTD)</div><div class="stat-value">${R(s.total_expenses)}</div></div>
+            <div class="stat-card ${s.net_profit >= 0 ? 'green' : 'red'}"><div class="stat-label">Net Profit</div><div class="stat-value">${R(s.net_profit)}</div></div>
+            <div class="stat-card orange"><div class="stat-label">Unreconciled</div><div class="stat-value">${s.unreconciled_transactions}</div></div>
+            <div class="stat-card"><div class="stat-label">Draft Journals</div><div class="stat-value">${s.draft_journals}</div></div>
+        `;
+        document.getElementById('dashRecentJournals').innerHTML = (data.recent_journals || []).map(j => `
+            <tr>
+                <td><strong>${j.journal_number}</strong></td>
+                <td>${j.date}</td>
+                <td>${j.description}</td>
+                <td>${j.reference || '—'}</td>
+                <td><span class="badge badge-${j.status}">${j.status}</span></td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No journals yet</td></tr>';
+    } catch (err) { console.error('Dashboard error:', err); }
+}
+
+// ─── Chart of Accounts ───────────────────────────────────────────────────────
+async function loadAccounts() {
+    try {
+        const search = document.getElementById('accountSearch').value;
+        const type = document.getElementById('accountTypeFilter').value;
+        let url = '/accounting/accounts?active_only=false';
+        if (search) url += '&search=' + encodeURIComponent(search);
+        if (type) url += '&type=' + encodeURIComponent(type);
+
+        const data = await api(url);
+        accountsCache = data.accounts || [];
+
+        document.getElementById('accountsTable').innerHTML = accountsCache.map(a => `
+            <tr>
+                <td><strong>${a.account_number}</strong></td>
+                <td>${a.account_name}</td>
+                <td><span class="badge badge-${a.account_type.toLowerCase()}">${a.account_type}</span></td>
+                <td>${a.sub_type || '—'}</td>
+                <td class="text-right amount">${R(a.opening_balance)}</td>
+                <td class="text-right amount ${a.current_balance >= 0 ? 'positive' : 'negative'}">${R(a.current_balance)}</td>
+                <td>
+                    <button class="btn btn-outline btn-sm" onclick="viewAccountLedger(${a.id})" title="View GL">📖</button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No accounts found</td></tr>';
+    } catch (err) { console.error('Accounts error:', err); }
+}
+
+function openAccountModal() { openModal('accountModal'); }
+
+async function createAccount() {
+    try {
+        await api('/accounting/accounts', { method: 'POST', body: JSON.stringify({
+            account_number: document.getElementById('newAcctNumber').value,
+            account_name: document.getElementById('newAcctName').value,
+            account_type: document.getElementById('newAcctType').value,
+            sub_type: document.getElementById('newAcctSubType').value,
+            description: document.getElementById('newAcctDesc').value,
+            opening_balance: document.getElementById('newAcctBalance').value,
+        })});
+        closeModal('accountModal');
+        loadAccounts();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+function viewAccountLedger(accountId) {
+    switchTabDirect('generalledger');
+    setTimeout(() => {
+        document.getElementById('glAccountSelect').value = accountId;
+        loadGeneralLedger();
+    }, 200);
+}
+
+function switchTabDirect(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => { if (t.textContent.toLowerCase().replace(/[^a-z]/g,'').includes(name.replace(/[^a-z]/g,''))) t.classList.add('active'); });
+}
+
+// ─── Journal Entries ─────────────────────────────────────────────────────────
+async function loadJournals() {
+    try {
+        const search = document.getElementById('journalSearch').value;
+        const status = document.getElementById('journalStatusFilter').value;
+        let url = '/accounting/journals?';
+        if (search) url += 'search=' + encodeURIComponent(search) + '&';
+        if (status) url += 'status=' + status;
+
+        const data = await api(url);
+        document.getElementById('journalsTable').innerHTML = (data.journals || []).map(j => `
+            <tr>
+                <td><strong>${j.journal_number}</strong></td>
+                <td>${j.date}</td>
+                <td>${j.description}</td>
+                <td>${j.reference || '—'}</td>
+                <td class="text-right amount">${R(j.total_debit)}</td>
+                <td class="text-right amount">${R(j.total_credit)}</td>
+                <td><span class="badge badge-${j.status}">${j.status}</span></td>
+                <td>
+                    ${j.status === 'draft' ? `<button class="btn btn-accent btn-sm" onclick="postJournal(${j.id})">Post</button>` : ''}
+                    ${j.status === 'posted' ? `<button class="btn btn-warning btn-sm" onclick="reverseJournal(${j.id})">Reverse</button>` : ''}
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No journals found</td></tr>';
+    } catch (err) { console.error('Journals error:', err); }
+}
+
+async function postJournal(id) {
+    if (!confirm('Post this journal? Account balances will be updated.')) return;
+    try {
+        await api(`/accounting/journals/${id}/post`, { method: 'POST' });
+        loadJournals();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function reverseJournal(id) {
+    if (!confirm('Create a reversal journal? This will create a new draft journal with opposite entries.')) return;
+    try {
+        await api(`/accounting/journals/${id}/reverse`, { method: 'POST' });
+        loadJournals();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ─── Journal Modal ───────────────────────────────────────────────────────────
+let journalLineCount = 0;
+
+function openJournalModal() {
+    document.getElementById('newJnlDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('newJnlRef').value = '';
+    document.getElementById('newJnlDesc').value = '';
+    document.getElementById('journalLinesEditor').innerHTML = '';
+    journalLineCount = 0;
+    addJournalLine(); addJournalLine(); // Start with 2 lines
+    openModal('journalModal');
+}
+
+async function ensureAccountsCache() {
+    if (accountsCache.length === 0) {
+        const data = await api('/accounting/accounts');
+        accountsCache = data.accounts || [];
+    }
+}
+
+async function addJournalLine() {
+    await ensureAccountsCache();
+    journalLineCount++;
+    const div = document.createElement('div');
+    div.className = 'line-row';
+    div.id = 'jnl-line-' + journalLineCount;
+    const options = accountsCache.map(a => `<option value="${a.id}">${a.account_number} — ${a.account_name}</option>`).join('');
+    div.innerHTML = `
+        <select style="flex:3;" class="jnl-acct">${options}</select>
+        <input type="number" step="0.01" placeholder="Debit" class="jnl-debit" style="flex:1;" oninput="updateJnlTotals()">
+        <input type="number" step="0.01" placeholder="Credit" class="jnl-credit" style="flex:1;" oninput="updateJnlTotals()">
+        <input type="text" placeholder="Description" class="jnl-line-desc" style="flex:2;">
+        <button class="line-remove" onclick="this.parentElement.remove();updateJnlTotals();">&times;</button>
+    `;
+    document.getElementById('journalLinesEditor').appendChild(div);
+}
+
+function updateJnlTotals() {
+    let totalD = 0, totalC = 0;
+    document.querySelectorAll('.jnl-debit').forEach(i => { totalD += parseFloat(i.value) || 0; });
+    document.querySelectorAll('.jnl-credit').forEach(i => { totalC += parseFloat(i.value) || 0; });
+    document.getElementById('jnlTotalDebit').textContent = R(totalD);
+    document.getElementById('jnlTotalCredit').textContent = R(totalC);
+    const balanced = Math.abs(totalD - totalC) < 0.01;
+    const el = document.getElementById('jnlBalanceStatus');
+    el.textContent = balanced ? '✓ Balanced' : '✗ Unbalanced';
+    el.style.color = balanced ? 'var(--success)' : 'var(--danger)';
+}
+
+async function createJournal() {
+    const lines = [];
+    document.querySelectorAll('.line-row').forEach(row => {
+        const acct = row.querySelector('.jnl-acct').value;
+        const debit = parseFloat(row.querySelector('.jnl-debit').value) || 0;
+        const credit = parseFloat(row.querySelector('.jnl-credit').value) || 0;
+        const desc = row.querySelector('.jnl-line-desc').value;
+        if (acct && (debit > 0 || credit > 0)) {
+            lines.push({ account_id: acct, debit, credit, description: desc });
+        }
+    });
+
+    if (lines.length < 2) return alert('At least 2 journal lines required');
+
+    try {
+        await api('/accounting/journals', { method: 'POST', body: JSON.stringify({
+            date: document.getElementById('newJnlDate').value,
+            reference: document.getElementById('newJnlRef').value,
+            description: document.getElementById('newJnlDesc').value,
+            lines,
+        })});
+        closeModal('journalModal');
+        loadJournals();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ─── Bank ────────────────────────────────────────────────────────────────────
+async function loadBankAccounts() {
+    try {
+        const data = await api('/accounting/bank-accounts');
+        document.getElementById('bankAccountsTable').innerHTML = (data.bank_accounts || []).map(b => `
+            <tr>
+                <td><strong>${b.bank_name}</strong></td>
+                <td>${b.account_name}</td>
+                <td>${b.account_number}</td>
+                <td>${b.account_type}</td>
+                <td class="text-right">${b.last_reconciled_date || '—'}</td>
+                <td class="text-right"><span class="badge ${b.unreconciled_count > 0 ? 'badge-unreconciled' : 'badge-reconciled'}">${b.unreconciled_count}</span></td>
+            </tr>
+        `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No bank accounts</td></tr>';
+    } catch (err) { console.error('Bank accounts error:', err); }
+}
+
+async function loadBankTransactions() {
+    try {
+        const search = document.getElementById('bankSearch').value;
+        const reconciled = document.getElementById('bankReconFilter').value;
+        let url = '/accounting/bank-transactions?';
+        if (search) url += 'search=' + encodeURIComponent(search) + '&';
+        if (reconciled) url += 'reconciled=' + reconciled;
+
+        const data = await api(url);
+        document.getElementById('bankTxnTable').innerHTML = (data.transactions || []).map(t => `
+            <tr>
+                <td>${t.date}</td>
+                <td>${t.description}</td>
+                <td>${t.reference || '—'}</td>
+                <td class="text-right amount ${t.amount >= 0 ? 'positive' : 'negative'}">${R(t.amount)}</td>
+                <td class="text-right amount">${R(t.balance)}</td>
+                <td>${t.allocated_account_name ? `<span class="badge badge-open">${t.allocated_account_number} — ${t.allocated_account_name}</span>` : '<em style="color:var(--text-muted)">Unallocated</em>'}</td>
+                <td><span class="badge ${t.is_reconciled ? 'badge-reconciled' : 'badge-unreconciled'}">${t.is_reconciled ? 'Yes' : 'No'}</span></td>
+                <td>
+                    ${!t.is_reconciled ? `
+                        <button class="btn btn-outline btn-sm" onclick="openAllocateModal(${t.id}, '${t.description.replace(/'/g,"\\'")}', ${t.amount})">Allocate</button>
+                        <button class="btn btn-accent btn-sm" onclick="reconcileTxn(${t.id})">✓</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No transactions</td></tr>';
+    } catch (err) { console.error('Bank txn error:', err); }
+}
+
+let currentAllocateTxnId = null;
+async function openAllocateModal(txnId, desc, amount) {
+    currentAllocateTxnId = txnId;
+    document.getElementById('allocateDesc').textContent = `${desc} — ${R(amount)}`;
+    await ensureAccountsCache();
+    document.getElementById('allocateAccountSelect').innerHTML = accountsCache.map(a =>
+        `<option value="${a.id}">${a.account_number} — ${a.account_name}</option>`
+    ).join('');
+    openModal('allocateModal');
+}
+
+async function submitAllocation() {
+    try {
+        await api(`/accounting/bank-transactions/${currentAllocateTxnId}/allocate`, { method: 'PATCH', body: JSON.stringify({
+            account_id: document.getElementById('allocateAccountSelect').value,
+        })});
+        closeModal('allocateModal');
+        loadBankTransactions();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function reconcileTxn(id) {
+    try {
+        await api(`/accounting/bank-transactions/${id}/reconcile`, { method: 'PATCH' });
+        loadBankTransactions();
+        loadBankAccounts();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ─── Trial Balance ───────────────────────────────────────────────────────────
+async function loadTrialBalance() {
+    try {
+        const data = await api('/accounting/reports/trial-balance');
+        document.getElementById('tbDate').textContent = `As at ${data.as_at}`;
+        let html = data.rows.map(r => `
+            <tr>
+                <td>${r.account_number}</td>
+                <td>${r.account_name}</td>
+                <td><span class="badge badge-${r.account_type.toLowerCase()}">${r.account_type}</span></td>
+                <td class="text-right amount">${r.debit > 0 ? R(r.debit) : ''}</td>
+                <td class="text-right amount">${r.credit > 0 ? R(r.credit) : ''}</td>
+            </tr>
+        `).join('');
+
+        html += `
+            <tr class="total-row">
+                <td colspan="3"><strong>TOTALS</strong></td>
+                <td class="text-right amount"><strong>${R(data.totals.debit)}</strong></td>
+                <td class="text-right amount"><strong>${R(data.totals.credit)}</strong></td>
+            </tr>
+            <tr><td colspan="5" style="text-align:center;padding:12px;">
+                ${data.totals.balanced
+                    ? '<span style="color:var(--success);font-weight:700;">✓ Trial Balance is BALANCED</span>'
+                    : '<span style="color:var(--danger);font-weight:700;">✗ Trial Balance is UNBALANCED — Difference: ' + R(Math.abs(data.totals.debit - data.totals.credit)) + '</span>'}
+            </td></tr>
+        `;
+        document.getElementById('trialBalanceTable').innerHTML = html;
+    } catch (err) { console.error('Trial balance error:', err); }
+}
+
+// ─── Income Statement ────────────────────────────────────────────────────────
+async function loadIncomeStatement() {
+    try {
+        const data = await api('/accounting/reports/income-statement');
+        let html = '<table><thead><tr><th>Code</th><th>Account</th><th class="text-right">Amount</th></tr></thead><tbody>';
+
+        // Income
+        html += '<tr class="section-header"><td colspan="3">INCOME</td></tr>';
+        data.income.forEach(a => { html += `<tr><td>${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount positive">${R(a.amount)}</td></tr>`; });
+        html += `<tr class="total-row"><td colspan="2"><strong>Total Income</strong></td><td class="text-right amount"><strong>${R(data.total_income)}</strong></td></tr>`;
+
+        // Cost of Sales
+        if (data.cost_of_sales.length > 0) {
+            html += '<tr class="section-header"><td colspan="3">COST OF SALES</td></tr>';
+            data.cost_of_sales.forEach(a => { html += `<tr><td>${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount negative">${R(a.amount)}</td></tr>`; });
+            html += `<tr class="total-row"><td colspan="2"><strong>Gross Profit</strong></td><td class="text-right amount"><strong>${R(data.gross_profit)}</strong></td></tr>`;
+        }
+
+        // Operating Expenses
+        html += '<tr class="section-header"><td colspan="3">OPERATING EXPENSES</td></tr>';
+        data.operating_expenses.forEach(a => { html += `<tr><td>${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount negative">${R(a.amount)}</td></tr>`; });
+
+        // Finance Costs
+        if (data.finance_costs.length > 0) {
+            html += '<tr class="section-header"><td colspan="3">FINANCE COSTS</td></tr>';
+            data.finance_costs.forEach(a => { html += `<tr><td>${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount negative">${R(a.amount)}</td></tr>`; });
+        }
+
+        html += `<tr class="total-row"><td colspan="2"><strong>Total Expenses</strong></td><td class="text-right amount"><strong>${R(data.total_expenses)}</strong></td></tr>`;
+        html += `<tr class="total-row"><td colspan="2"><strong style="font-size:1.1rem;">NET ${data.net_profit >= 0 ? 'PROFIT' : 'LOSS'}</strong></td>
+            <td class="text-right amount ${data.net_profit >= 0 ? 'positive' : 'negative'}" style="font-size:1.1rem;"><strong>${R(data.net_profit)}</strong></td></tr>`;
+
+        html += '</tbody></table>';
+        document.getElementById('incomeStatementBody').innerHTML = html;
+    } catch (err) { console.error('Income statement error:', err); }
+}
+
+// ─── Balance Sheet ───────────────────────────────────────────────────────────
+async function loadBalanceSheet() {
+    try {
+        const data = await api('/accounting/reports/balance-sheet');
+        document.getElementById('bsDate').textContent = `As at ${data.as_at}`;
+        let html = '<table><thead><tr><th>Code</th><th>Account</th><th class="text-right">Amount</th></tr></thead><tbody>';
+
+        // Assets
+        html += '<tr class="section-header"><td colspan="3">ASSETS</td></tr>';
+        if (data.current_assets.length > 0) {
+            html += '<tr><td colspan="3" style="padding-left:24px;font-weight:600;color:var(--info);">Current Assets</td></tr>';
+            data.current_assets.forEach(a => { html += `<tr><td style="padding-left:32px;">${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount">${R(a.amount)}</td></tr>`; });
+        }
+        if (data.non_current_assets.length > 0) {
+            html += '<tr><td colspan="3" style="padding-left:24px;font-weight:600;color:var(--info);">Non-Current Assets</td></tr>';
+            data.non_current_assets.forEach(a => { html += `<tr><td style="padding-left:32px;">${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount">${R(a.amount)}</td></tr>`; });
+        }
+        html += `<tr class="total-row"><td colspan="2"><strong>Total Assets</strong></td><td class="text-right amount"><strong>${R(data.total_assets)}</strong></td></tr>`;
+
+        // Liabilities
+        html += '<tr class="section-header"><td colspan="3">LIABILITIES</td></tr>';
+        if (data.current_liabilities.length > 0) {
+            html += '<tr><td colspan="3" style="padding-left:24px;font-weight:600;color:var(--danger);">Current Liabilities</td></tr>';
+            data.current_liabilities.forEach(a => { html += `<tr><td style="padding-left:32px;">${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount">${R(a.amount)}</td></tr>`; });
+        }
+        if (data.non_current_liabilities.length > 0) {
+            html += '<tr><td colspan="3" style="padding-left:24px;font-weight:600;color:var(--danger);">Non-Current Liabilities</td></tr>';
+            data.non_current_liabilities.forEach(a => { html += `<tr><td style="padding-left:32px;">${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount">${R(a.amount)}</td></tr>`; });
+        }
+        html += `<tr class="total-row"><td colspan="2"><strong>Total Liabilities</strong></td><td class="text-right amount"><strong>${R(data.total_liabilities)}</strong></td></tr>`;
+
+        // Equity
+        html += '<tr class="section-header"><td colspan="3">EQUITY</td></tr>';
+        data.equity.forEach(a => { html += `<tr><td>${a.account_number}</td><td>${a.account_name}</td><td class="text-right amount">${R(a.amount)}</td></tr>`; });
+        html += `<tr><td></td><td><em>Net Profit (YTD)</em></td><td class="text-right amount ${data.net_profit_ytd >= 0 ? 'positive' : 'negative'}">${R(data.net_profit_ytd)}</td></tr>`;
+        html += `<tr class="total-row"><td colspan="2"><strong>Total Equity</strong></td><td class="text-right amount"><strong>${R(data.total_equity)}</strong></td></tr>`;
+
+        // Final
+        html += `<tr class="total-row"><td colspan="2"><strong style="font-size:1.05rem;">TOTAL LIABILITIES + EQUITY</strong></td>
+            <td class="text-right amount" style="font-size:1.05rem;"><strong>${R(data.total_liabilities_and_equity)}</strong></td></tr>`;
+        html += `<tr><td colspan="3" style="text-align:center;padding:12px;">
+            ${data.balanced
+                ? '<span style="color:var(--success);font-weight:700;">✓ Balance Sheet is BALANCED</span>'
+                : '<span style="color:var(--danger);font-weight:700;">✗ Balance Sheet is UNBALANCED — Difference: ' + R(Math.abs(data.total_assets - data.total_liabilities_and_equity)) + '</span>'}
+        </td></tr>`;
+
+        html += '</tbody></table>';
+        document.getElementById('balanceSheetBody').innerHTML = html;
+    } catch (err) { console.error('Balance sheet error:', err); }
+}
+
+// ─── General Ledger ──────────────────────────────────────────────────────────
+async function populateGLSelect() {
+    await ensureAccountsCache();
+    const sel = document.getElementById('glAccountSelect');
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">Select an account...</option>' +
+        accountsCache.map(a => `<option value="${a.id}">${a.account_number} — ${a.account_name}</option>`).join('');
+    if (currentVal) { sel.value = currentVal; loadGeneralLedger(); }
+}
+
+async function loadGeneralLedger() {
+    const accountId = document.getElementById('glAccountSelect').value;
+    const container = document.getElementById('glContent');
+    if (!accountId) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;">Select an account to view its ledger entries.</div>';
+        return;
+    }
+
+    try {
+        const data = await api(`/accounting/reports/general-ledger?account_id=${accountId}`);
+        let html = `
+            <div style="margin-bottom:16px;padding:12px;background:var(--primary-light);border-radius:8px;">
+                <strong>${data.account.account_number} — ${data.account.account_name}</strong> (${data.account.account_type})
+                <span style="float:right;">Opening Balance: <strong>${R(data.opening_balance)}</strong></span>
+            </div>
+            <div class="table-wrap">
+            <table><thead><tr>
+                <th>Date</th><th>Journal</th><th>Description</th><th>Reference</th>
+                <th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th>
+            </tr></thead><tbody>
+        `;
+
+        if (data.entries.length === 0) {
+            html += '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No entries for this account</td></tr>';
+        } else {
+            data.entries.forEach(e => {
+                html += `<tr>
+                    <td>${e.date}</td>
+                    <td><strong>${e.journal_number}</strong> <span class="badge badge-${e.status}">${e.status}</span></td>
+                    <td>${e.line_description || e.journal_description}</td>
+                    <td>${e.reference || '—'}</td>
+                    <td class="text-right amount">${e.debit > 0 ? R(e.debit) : ''}</td>
+                    <td class="text-right amount">${e.credit > 0 ? R(e.credit) : ''}</td>
+                    <td class="text-right amount">${R(e.running_balance)}</td>
+                </tr>`;
+            });
+        }
+
+        html += `<tr class="total-row"><td colspan="6"><strong>Closing Balance</strong></td>
+            <td class="text-right amount"><strong>${R(data.closing_balance)}</strong></td></tr>`;
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    } catch (err) { console.error('GL error:', err); container.innerHTML = '<div style="color:var(--danger);">Error loading ledger: ' + err.message + '</div>'; }
+}
+</script>
+</body>
+</html>

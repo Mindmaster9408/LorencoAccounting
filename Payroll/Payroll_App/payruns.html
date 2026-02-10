@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pay Runs - Lorenco Paytime</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
+        }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
+        }
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h1 { color: #333; font-size: 1.8rem; }
+        .company-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+        /* TOP TABS */
+        .top-tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 2px solid #eee; }
+        .top-tab {
+            padding: 15px 30px; background: none; border: none; cursor: pointer;
+            font-size: 1rem; font-weight: 600; color: #999; position: relative; transition: all 0.2s;
+        }
+        .top-tab:hover { color: #667eea; }
+        .top-tab.active { color: #667eea; }
+        .top-tab.active::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+            height: 3px; background: #667eea; border-radius: 3px 3px 0 0;
+        }
+        .tab-view { display: none; }
+        .tab-view.active { display: block; }
+
+        /* EMPLOYEE CARDS */
+        .employee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .employee-card {
+            background: #f8f9fa; border-radius: 12px; padding: 20px; cursor: pointer;
+            transition: all 0.3s; border: 2px solid transparent;
+        }
+        .employee-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102,126,234,0.15); }
+        .emp-name { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .emp-number { font-size: 0.85rem; color: #667eea; font-weight: 600; margin-bottom: 10px; }
+        .emp-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .emp-detail-label { font-size: 0.75rem; color: #999; text-transform: uppercase; }
+        .emp-detail-value { font-size: 0.85rem; color: #555; font-weight: 500; }
+        .emp-payment-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600; margin-top: 10px;
+        }
+        .badge-eft { background: #e3f2fd; color: #1976d2; }
+        .badge-cash { background: #e8f5e9; color: #388e3c; }
+        .badge-cheque { background: #fff3e0; color: #f57c00; }
+        .badge-finalized { background: #d4edda; color: #155724; }
+        .badge-draft { background: #fff3cd; color: #856404; }
+        .emp-badges { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+
+        /* PAYRUN SECTIONS */
+        .payrun-section { margin-bottom: 30px; }
+        .section-header {
+            background: linear-gradient(135deg, #5a67d8, #6b7fda);
+            color: white; padding: 15px 20px; border-radius: 10px 10px 0 0;
+            font-size: 1.1rem; font-weight: 600;
+        }
+        .payrun-list { background: white; border-radius: 0 0 10px 10px; overflow: hidden; }
+        .payrun-item {
+            border: 1px solid #e0e0e0; border-top: none;
+            transition: all 0.2s;
+        }
+        .payrun-item:first-child { border-top: 1px solid #e0e0e0; }
+        .payrun-header {
+            padding: 20px 25px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            background: #f8f9fa; transition: background 0.2s;
+        }
+        .payrun-header:hover { background: #f0f2f5; }
+        .payrun-title { font-size: 1rem; font-weight: 600; color: #333; }
+        .payrun-subtitle { font-size: 0.85rem; color: #666; margin-top: 3px; }
+        .payrun-right { display: flex; align-items: center; gap: 20px; }
+        .payslips-stats {
+            display: flex; gap: 15px; align-items: center;
+            background: white; padding: 8px 15px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-item { text-align: center; }
+        .stat-label {
+            font-size: 0.7rem; color: #999; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 2px;
+        }
+        .stat-value {
+            font-size: 1.1rem; font-weight: 700; color: #333;
+        }
+        .stat-divider { width: 1px; height: 30px; background: #e0e0e0; }
+        .expand-icon { font-size: 1.2rem; color: #667eea; transition: transform 0.3s; }
+        .payrun-item.expanded .expand-icon { transform: rotate(180deg); }
+        .payrun-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;
+            border-top: 1px solid #e0e0e0;
+        }
+        .payrun-item.expanded .payrun-content { max-height: 1000px; }
+        .payrun-body { padding: 25px; background: white; }
+        .payment-breakdown { margin-bottom: 20px; }
+        .breakdown-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 15px; background: #f8f9fa; border-radius: 6px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .breakdown-header:hover { background: #eef0f2; }
+        .breakdown-title { font-size: 0.9rem; font-weight: 600; color: #555; }
+        .breakdown-total { font-size: 1rem; font-weight: 700; color: #333; }
+        .breakdown-content {
+            margin-top: 10px; padding: 15px; background: #fafbfc;
+            border-radius: 6px; display: none;
+        }
+        .breakdown-content.show { display: block; }
+        .breakdown-table { width: 100%; font-size: 0.85rem; }
+        .breakdown-table td { padding: 8px 0; }
+        .breakdown-table .label { color: #666; }
+        .breakdown-table .value { text-align: right; font-weight: 600; color: #333; }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-link {
+            color: #667eea; font-size: 0.85rem; text-decoration: none;
+            font-weight: 600; padding: 6px 12px; border-radius: 5px;
+            transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .action-link:hover { background: #f0f4ff; }
+        .show-more-btn {
+            padding: 12px; text-align: center; background: #f8f9fa;
+            color: #667eea; font-weight: 600; cursor: pointer;
+            border-bottom: 1px solid #e0e0e0; transition: background 0.2s;
+        }
+        .show-more-btn:hover { background: #f0f2f5; }
+        .historical-group { margin-bottom: 25px; }
+        .historical-group-title {
+            font-size: 1.1rem; font-weight: 700; color: #333;
+            margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0;
+        }
+        .frequency-tag {
+            font-size: 0.75rem; color: #667eea; font-weight: 600;
+            background: #f0f4ff; padding: 3px 8px; border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+        .btn-info { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; }
+        .empty-text { font-size: 1.1rem; margin-bottom: 10px; }
+        .empty-sub { font-size: 0.9rem; color: #bbb; }
+
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;
+        }
+        .modal.show { display: flex; align-items: flex-start; justify-content: center; padding: 50px 20px; }
+        .modal-content { background: white; max-width: 700px; width: 100%; border-radius: 15px; padding: 30px; }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;
+        }
+        .modal-header h3 { color: #667eea; margin: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+
+        /* SUMMARY */
+        .summary-section { margin-bottom: 20px; }
+        .summary-section h4 { color: #667eea; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table th, .summary-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .summary-table th { background: #f8f9fa; font-weight: 600; color: #333; }
+        .summary-totals {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 20px;
+            border-radius: 10px; margin-top: 20px;
+        }
+        .summary-totals h4 { color: #2e7d32; margin-bottom: 15px; }
+        .total-row-item { display: flex; justify-content: space-between; padding: 5px 0; }
+        .total-row-item.net { font-size: 1.2rem; font-weight: 700; color: #1b5e20; border-top: 2px solid #4caf50; padding-top: 10px; margin-top: 10px; }
+
+        /* RETURNS SECTION */
+        .returns-section {
+            margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;
+        }
+        .returns-title {
+            font-size: 0.85rem; font-weight: 700; color: #999; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 12px;
+        }
+        .returns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .return-card {
+            background: #f8f9fa; border-radius: 10px; padding: 18px;
+            border: 1px solid #e0e0e0; transition: all 0.2s;
+        }
+        .return-card:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.1); }
+        .return-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .return-card-title { font-weight: 700; color: #333; font-size: 0.95rem; }
+        .return-status {
+            padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
+        }
+        .return-status-pending { background: #fff3cd; color: #856404; }
+        .return-status-submitted { background: #d4edda; color: #155724; }
+        .return-card-desc { font-size: 0.8rem; color: #888; margin-bottom: 12px; }
+        .return-card-amount { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 12px; }
+        .return-card-actions { display: flex; gap: 8px; }
+        .btn-outline {
+            padding: 6px 14px; border: 2px solid #667eea; border-radius: 6px;
+            background: white; color: #667eea; font-weight: 600; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-outline:hover { background: #667eea; color: white; }
+        .btn-submit-return {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #28a745, #20c997); color: white;
+            font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-submit-return:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(40,167,69,0.3); }
+
+        /* EMP201/UIF PREVIEW TABLE */
+        .preview-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .preview-table th, .preview-table td {
+            padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem;
+        }
+        .preview-table th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .preview-table td.amount { text-align: right; font-weight: 600; }
+        .preview-table tr.total-row { background: #f0f4ff; font-weight: 700; }
+        .preview-table tr.total-row td { border-top: 2px solid #667eea; color: #333; }
+        .preview-header-info {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+        }
+        .preview-info-item { }
+        .preview-info-label { font-size: 0.75rem; color: #999; text-transform: uppercase; }
+        .preview-info-value { font-size: 0.9rem; font-weight: 600; color: #333; }
+
+        .search-bar {
+            width: 100%; padding: 12px 15px; border: 2px solid #eee; border-radius: 8px;
+            font-size: 0.95rem; margin-bottom: 20px; transition: border-color 0.2s;
+        }
+        .search-bar:focus { outline: none; border-color: #667eea; }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link active">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="paye-reconciliation.html" class="sidebar-link">🧾 PAYE Reconciliation</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
+                <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>💵 Pay Runs</h1>
+                    <span class="company-badge" id="company-name-badge"></span>
+                </div>
+            </div>
+
+            <div class="top-tabs">
+                <button class="top-tab active" onclick="switchTopTab('payslips')">📄 Payslips</button>
+                <button class="top-tab" onclick="switchTopTab('payruns')">💰 Payroll Runs</button>
+            </div>
+
+            <!-- PAYSLIPS TAB -->
+            <div id="payslips-view" class="tab-view active">
+                <input type="text" class="search-bar" placeholder="Search employees by name, number, or department..." oninput="filterEmployees(this.value)">
+                <div class="employee-grid" id="employee-grid"></div>
+            </div>
+
+            <!-- PAYROLL RUNS TAB -->
+            <div id="payruns-view" class="tab-view">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+                    <button class="btn btn-primary" data-permission="CREATE_PAYRUN" onclick="openPayrollUploadModal()" style="background:linear-gradient(135deg, #667eea, #764ba2);">Upload Payroll Data</button>
+                </div>
+                <!-- Pending Pay Runs -->
+                <div class="payrun-section">
+                    <div class="section-header">Pending Pay Runs</div>
+                    <div class="payrun-list" id="pending-payruns"></div>
+                </div>
+
+                <!-- Historical Pay Runs -->
+                <div id="historical-payruns"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE PAYRUN MODAL -->
+    <div id="createPayrunModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Create Pay Run</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('createPayrunModal')">Close</button>
+            </div>
+            <form onsubmit="createPayrun(event)">
+                <div class="form-group">
+                    <label>Pay Period</label>
+                    <input type="month" id="payrun-period" required>
+                </div>
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <textarea id="payrun-notes" rows="3" placeholder="Add any notes for this pay run..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Create Pay Run</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SUMMARY MODAL -->
+    <div id="summaryModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Pay Run Summary</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('summaryModal')">Close</button>
+            </div>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <!-- EMP201 PREVIEW MODAL -->
+    <div id="emp201Modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 EMP201 - Monthly Employer Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('emp201Modal')">Close</button>
+            </div>
+            <div id="emp201-content"></div>
+        </div>
+    </div>
+
+    <!-- UIF RETURN PREVIEW MODAL -->
+    <div id="uifModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 UIF Monthly Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('uifModal')">Close</button>
+            </div>
+            <div id="uif-content"></div>
+        </div>
+    </div>
+
+    <!-- EMP501 PREVIEW MODAL -->
+    <div id="emp501Modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>📋 EMP501 - Employer Reconciliation Declaration</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('emp501Modal')">Close</button>
+            </div>
+            <div id="emp501-content"></div>
+        </div>
+    </div>
+
+    <!-- WCF PREVIEW MODAL -->
+    <div id="wcfModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📋 WCF Return - Workmen's Compensation Fund</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('wcfModal')">Close</button>
+            </div>
+            <div id="wcf-content"></div>
+        </div>
+    </div>
+
+    <!-- BANKING FORMAT MODAL -->
+    <div id="bankingModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>🏦 Export Banking File</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('bankingModal')">Close</button>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Select your bank to generate the EFT payment file:</p>
+            <div id="bankingRunId" style="display:none;"></div>
+            <div style="display: grid; gap: 10px;">
+                <button class="btn btn-primary" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('absa')">
+                    <strong>ABSA</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Fixed-width TXT file</span>
+                </button>
+                <button class="btn btn-primary" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('fnb')">
+                    <strong>FNB (First National Bank)</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Fixed-width TXT file</span>
+                </button>
+                <button class="btn btn-primary" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('standard')">
+                    <strong>Standard Bank</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV file</span>
+                </button>
+                <button class="btn btn-primary" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportBankingFormat('nedbank')">
+                    <strong>Nedbank</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV file</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT FORMAT MODAL -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>📊 Export Accounting Journal</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('exportModal')">Close</button>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Choose your accounting software format:</p>
+            <div id="exportRunId" style="display:none;"></div>
+            <div style="display: grid; gap: 10px;">
+                <button class="btn btn-success" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportAccountingFormat('sage')">
+                    <strong>Sage Pastel</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">CSV journal with account codes</span>
+                </button>
+                <button class="btn btn-info" data-permission="EXPORT_DATA" style="width:100%; text-align:left; padding: 15px 20px;" onclick="exportAccountingFormat('xero')">
+                    <strong>Xero</strong><br><span style="font-weight:400; font-size:0.8rem; opacity:0.8;">Manual Journal CSV import</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYROLL UPLOAD MODAL -->
+    <div id="payrollUploadModal" class="modal">
+        <div class="modal-content" style="max-width: 950px;">
+            <div class="modal-header">
+                <h3>Upload Payroll Data</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('payrollUploadModal')">Close</button>
+            </div>
+
+            <!-- Step 1: Period & File Upload -->
+            <div id="payrollUploadStep1">
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="font-weight:600; color:#333;">Pay Period</label>
+                    <input type="month" id="payrollUploadPeriod" required style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; width:100%; max-width:250px;">
+                </div>
+
+                <div id="payrollDropZone" style="border:3px dashed #ccc; border-radius:15px; padding:40px; text-align:center; cursor:pointer; transition:all 0.3s; margin-bottom:20px;">
+                    <div style="font-size:3rem;">📊</div>
+                    <p style="margin:10px 0; font-weight:600; color:#333;">Drag and drop payroll CSV/Excel file here</p>
+                    <p style="color:#999;">or</p>
+                    <input type="file" id="payrollFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('payrollFileInput').click()" style="margin-top:10px; background:linear-gradient(135deg, #667eea, #764ba2);">Browse Files</button>
+                </div>
+
+                <button class="btn btn-sm" onclick="downloadPayrollTemplate()" style="margin-bottom:20px; padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:6px; cursor:pointer;">Download Template</button>
+
+                <div style="background:#f8f9fa; border-radius:10px; padding:20px;">
+                    <h4 style="margin-bottom:10px; color:#333;">Expected Columns</h4>
+                    <table style="font-size:13px; width:100%; border-collapse:collapse;">
+                        <thead><tr style="background:#eee;"><th style="padding:8px; text-align:left;">Column</th><th style="padding:8px; text-align:left;">Description</th><th style="padding:8px; text-align:left;">Required</th></tr></thead>
+                        <tbody>
+                            <tr><td style="padding:6px 8px;">employee_number</td><td style="padding:6px 8px;">Must match existing employee</td><td style="padding:6px 8px; color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td style="padding:6px 8px;">basic_salary</td><td style="padding:6px 8px;">Monthly basic salary (Rands)</td><td style="padding:6px 8px; color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td style="padding:6px 8px;">allowance_travel, allowance_housing, etc.</td><td style="padding:6px 8px;">Columns starting with "allowance_"</td><td style="padding:6px 8px;">No</td></tr>
+                            <tr><td style="padding:6px 8px;">deduction_medical, deduction_pension, etc.</td><td style="padding:6px 8px;">Columns starting with "deduction_"</td><td style="padding:6px 8px;">No</td></tr>
+                            <tr><td style="padding:6px 8px;">overtime_hours</td><td style="padding:6px 8px;">Hours of overtime</td><td style="padding:6px 8px;">No</td></tr>
+                            <tr><td style="padding:6px 8px;">overtime_rate</td><td style="padding:6px 8px;">Multiplier (default 1.5)</td><td style="padding:6px 8px;">No</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 2: Preview with Calculations -->
+            <div id="payrollUploadStep2" style="display:none;">
+                <div id="payrollUploadSummary" style="margin-bottom:15px;"></div>
+                <div style="overflow-x:auto; max-height:450px; overflow-y:auto;">
+                    <table id="payrollPreviewTable" style="width:100%; border-collapse:collapse; font-size:13px;"></table>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px; justify-content:flex-end;">
+                    <button class="btn btn-sm" onclick="resetPayrollUpload()" style="padding:10px 20px; background:#6c757d; color:white; border:none; border-radius:6px; cursor:pointer;">Back</button>
+                    <button class="btn btn-success" id="confirmPayrollBtn" onclick="confirmPayrollUpload()" style="padding:10px 20px;">Confirm & Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="js/bulk-import-utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/payroll-engine.js"></script>
+    <script>
+        let currentCompanyId = null;
+        let employees = [];
+        let payruns = [];
+
+        // ========== INIT ==========
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            const company = AUTH.getCompanyById(currentCompanyId);
+            document.getElementById('company-name-badge').textContent = company ? company.name : 'Unknown Company';
+            loadCompaniesCarousel();
+            loadEmployees();
+            loadPayruns();
+            Permissions.enforceUI();
+        });
+
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const companies = AUTH.getCompaniesForUser(session);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            window.location.reload();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AUTH.logout();
+            }
+        }
+
+        // ========== TOP TABS ==========
+        function switchTopTab(tab) {
+            document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-view').classList.add('active');
+        }
+
+        // ========== PAYSLIPS TAB ==========
+        function loadEmployees() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            employees = stored ? JSON.parse(stored) : [];
+            displayEmployees(employees);
+        }
+
+        function displayEmployees(list) {
+            const grid = document.getElementById('employee-grid');
+            list = list || employees;
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><div class="empty-icon">👥</div><div class="empty-text">No employees found</div><div class="empty-sub">Add employees from the Employee Management page first.</div></div>';
+                return;
+            }
+            // Get current period for status check
+            const now = new Date();
+            const currentPeriod = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            grid.innerHTML = list.map(emp => {
+                const badgeClass = emp.payment_method === 'Cash' ? 'badge-cash' : emp.payment_method === 'Cheque' ? 'badge-cheque' : 'badge-eft';
+                const psStatus = getPayslipStatus(emp.id, currentPeriod);
+                const statusBadge = psStatus.status === 'finalized'
+                    ? '<span class="emp-payment-badge badge-finalized">✓ Finalized</span>'
+                    : '<span class="emp-payment-badge badge-draft">Draft</span>';
+                return '<div class="employee-card" onclick="openEmployeeDetail(\'' + emp.id + '\')">' +
+                    '<div class="emp-name">' + emp.first_name + ' ' + emp.last_name + '</div>' +
+                    '<div class="emp-number">#' + emp.employee_number + '</div>' +
+                    '<div class="emp-details">' +
+                        '<div><div class="emp-detail-label">Position</div><div class="emp-detail-value">' + (emp.position || emp.job_title || '-') + '</div></div>' +
+                        '<div><div class="emp-detail-label">Department</div><div class="emp-detail-value">' + (emp.department || '-') + '</div></div>' +
+                    '</div>' +
+                    '<div class="emp-badges">' +
+                        '<span class="emp-payment-badge ' + badgeClass + '">' + (emp.payment_method || 'EFT') + '</span>' +
+                        statusBadge +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function filterEmployees(query) {
+            if (!query) { displayEmployees(employees); return; }
+            const q = query.toLowerCase();
+            const filtered = employees.filter(e =>
+                (e.first_name + ' ' + e.last_name).toLowerCase().includes(q) ||
+                (e.employee_number || '').toLowerCase().includes(q) ||
+                (e.department || '').toLowerCase().includes(q)
+            );
+            displayEmployees(filtered);
+        }
+
+        function openEmployeeDetail(empId) {
+            window.location.href = 'employee-detail.html?id=' + empId;
+        }
+
+        // ========== PAYROLL RUNS TAB ==========
+        function loadPayruns() {
+            const stored = localStorage.getItem('payruns_' + currentCompanyId);
+            payruns = stored ? JSON.parse(stored) : [];
+            
+            // Auto-generate pending pay runs based on company pay frequencies
+            autoGeneratePendingPayruns();
+            displayPayruns();
+        }
+
+        function autoGeneratePendingPayruns() {
+            const companyData = getCompanyDetails();
+            const frequencies = companyData.pay_frequencies || ['Monthly'];
+            const now = new Date();
+            
+            frequencies.forEach(freq => {
+                const periods = generatePeriodsForFrequency(freq, now);
+                periods.forEach(period => {
+                    if (!payruns.some(p => p.period === period.id && p.frequency === freq)) {
+                        payruns.push({
+                            id: 'pr-' + Math.random().toString(36).substr(2, 9),
+                            period: period.id,
+                            frequency: freq,
+                            period_label: period.label,
+                            status: 'pending',
+                            created_date: new Date().toISOString(),
+                            finalized_date: null,
+                            paid_date: null,
+                            employee_count: 0,
+                            total_gross: 0,
+                            total_paye: 0,
+                            total_uif: 0,
+                            total_net: 0
+                        });
+                    }
+                });
+            });
+            savePayruns();
+        }
+
+        function generatePeriodsForFrequency(frequency, currentDate) {
+            const periods = [];
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0-indexed
+            const day = currentDate.getDate();
+            
+            if (frequency === 'Monthly') {
+                // Current month
+                const endDay = new Date(year, month + 1, 0).getDate();
+                const companyData = getCompanyDetails();
+                const payDay = parseInt(companyData.pay_day) || 25;
+                periods.push({
+                    id: year + '-' + String(month + 1).padStart(2, '0'),
+                    label: 'The month ending ' + payDay + ' ' + getMonthName(month) + ' ' + year
+                });
+                // Next month
+                const nextMonth = month + 1;
+                const nextYear = nextMonth > 11 ? year + 1 : year;
+                const nextMonthIndex = nextMonth > 11 ? 0 : nextMonth;
+                periods.push({
+                    id: nextYear + '-' + String(nextMonthIndex + 1).padStart(2, '0'),
+                    label: 'The month ending ' + payDay + ' ' + getMonthName(nextMonthIndex) + ' ' + nextYear
+                });
+            } else if (frequency === 'Bi-Weekly') {
+                // Calculate bi-weekly periods (simplified)
+                const period1End = new Date(year, month, 14);
+                const period2End = new Date(year, month, 28);
+                if (day <= 14) {
+                    periods.push({
+                        id: year + '-' + String(month + 1).padStart(2, '0') + '-1',
+                        label: 'Bi-weekly ending ' + formatDate(period1End)
+                    });
+                }
+                periods.push({
+                    id: year + '-' + String(month + 1).padStart(2, '0') + '-2',
+                    label: 'Bi-weekly ending ' + formatDate(period2End)
+                });
+            } else if (frequency === 'Weekly') {
+                // Generate 4-5 weekly periods for the month
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                let weekNum = 1;
+                for (let d = 7; d <= lastDay.getDate(); d += 7) {
+                    periods.push({
+                        id: year + '-' + String(month + 1).padStart(2, '0') + '-W' + weekNum,
+                        label: 'Week ending ' + d + ' ' + getMonthName(month) + ' ' + year
+                    });
+                    weekNum++;
+                }
+            }
+            
+            return periods;
+        }
+
+        function getCompanyDetails() {
+            const key = 'company_details_' + currentCompanyId;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { pay_frequencies: ['Monthly'], pay_day: 25 };
+        }
+
+        function displayPayruns() {
+            displayPendingPayruns();
+            displayHistoricalPayruns();
+            Permissions.enforceUI();
+        }
+
+        function displayPendingPayruns() {
+            const container = document.getElementById('pending-payruns');
+            const pending = payruns.filter(p => p.status === 'pending' || p.status === 'draft').sort((a, b) => a.period.localeCompare(b.period));
+            
+            if (pending.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-text">No pending pay runs</div><div class="empty-sub">Set pay frequencies in Company Details to generate pay runs.</div></div>';
+                return;
+            }
+
+            const visible = pending.slice(0, 2);
+            const hidden = pending.slice(2);
+
+            let html = visible.map(run => createPayrunItem(run)).join('');
+            
+            if (hidden.length > 0) {
+                html += '<div class="show-more-btn" onclick="toggleHiddenPayruns()">' +
+                    '<span id="show-more-text">Show ' + hidden.length + ' more</span></div>' +
+                    '<div id="hidden-payruns" style="display: none;">' +
+                    hidden.map(run => createPayrunItem(run)).join('') +
+                    '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function displayHistoricalPayruns() {
+            const container = document.getElementById('historical-payruns');
+            const historical = payruns.filter(p => p.status === 'finalized' || p.status === 'paid')
+                .sort((a, b) => b.period.localeCompare(a.period));
+
+            if (historical.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            // Group by month
+            const groups = {};
+            historical.forEach(run => {
+                const monthKey = getHistoricalGroupKey(run);
+                if (!groups[monthKey]) groups[monthKey] = [];
+                groups[monthKey].push(run);
+            });
+
+            let html = '';
+            Object.keys(groups).forEach(monthKey => {
+                const runs = groups[monthKey];
+                html += '<div class="historical-group">' +
+                    '<div class="historical-group-title">' + monthKey + '</div>' +
+                    '<div class="payrun-list">' +
+                    runs.map(run => createPayrunItem(run)).join('') +
+                    '</div></div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function createPayrunItem(run) {
+            const stats = calculatePayrunStats(run);
+            const isPending = run.status === 'pending' || run.status === 'draft';
+            
+            let html = '<div class="payrun-item" id="payrun-' + run.id + '">' +
+                '<div class="payrun-header" onclick="togglePayrunExpand(\'' + run.id + '\')">' +
+                '<div>' +
+                '<div class="payrun-title">' + (run.period_label || formatPeriod(run.period)) + 
+                '<span class="frequency-tag">' + run.frequency + '</span></div>';
+            
+            if (!isPending) {
+                html += '<div class="payrun-subtitle">Total: ' + formatMoney(stats.total) + '</div>';
+            } else if (stats.finalized === 0 && stats.pending > 0) {
+                html += '<div class="payrun-subtitle" style="color: #856404;">Payslips need to be finalised before creating the pay run.</div>';
+            }
+            
+            html += '</div><div class="payrun-right">';
+            
+            if (isPending) {
+                html += '<div class="payslips-stats">' +
+                    '<div class="stat-item"><div class="stat-label">Total</div><div class="stat-value">' + stats.total + '</div></div>' +
+                    '<div class="stat-divider"></div>' +
+                    '<div class="stat-item"><div class="stat-label">Finalised</div><div class="stat-value">' + stats.finalized + '</div></div>' +
+                    '<div class="stat-divider"></div>' +
+                    '<div class="stat-item"><div class="stat-label">Pending</div><div class="stat-value">' + stats.pending + '</div></div>' +
+                    '</div>';
+            }
+            
+            html += '<div class="expand-icon">▼</div></div></div>' +
+                '<div class="payrun-content"><div class="payrun-body">';
+
+            // Actions and content
+            if (isPending) {
+                html += '<div class="action-buttons">';
+                if (stats.finalized > 0) {
+                    html += '<button class="btn btn-success btn-sm" data-permission="FINALIZE_PAYRUN" onclick="event.stopPropagation(); finalizePayrun(\'' + run.id + '\')">Finalise</button>';
+                }
+                html += '<a href="#" class="action-link" onclick="event.preventDefault(); previewPayrun(\'' + run.id + '\')">📄 Preview</a>' +
+                    '<button class="btn btn-primary btn-sm" data-permission="CREATE_PAYRUN" onclick="event.stopPropagation(); createPayrunFromPending(\'' + run.id + '\')">Create Pay Run</button>' +
+                    '</div>';
+            } else {
+                // Payment breakdown
+                html += createPaymentBreakdown(run, stats);
+
+                // EMP201 & UIF Returns
+                html += createReturnsSection(run);
+
+                // Actions
+                html += '<div class="action-buttons" style="margin-top: 15px;">';
+                if (run.status === 'finalized') {
+                    html += '<a href="#" class="action-link" onclick="event.preventDefault(); viewPayrun(\'' + run.id + '\')">👁 View</a>' +
+                        '<a href="#" class="action-link" onclick="event.preventDefault(); unfinalisePayrun(\'' + run.id + '\')">↩ Unfinalise</a>' +
+                        '<button class="btn btn-success btn-sm" onclick="event.stopPropagation(); markAsPaid(\'' + run.id + '\')">Mark as Paid</button>';
+                } else {
+                    html += '<a href="#" class="action-link" onclick="event.preventDefault(); viewPayrun(\'' + run.id + '\')">👁 View</a>' +
+                        '<a href="#" class="action-link" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all\')">📄 Download All</a>' +
+                        '<a href="#" class="action-link" data-permission="EXPORT_DATA" onclick="event.preventDefault(); sendToXero(\'' + run.id + '\')">📤 Send to Xero</a>';
+                }
+                html += '</div>';
+            }
+
+            html += '</div></div></div>';
+            return html;
+        }
+
+        function createPaymentBreakdown(run, stats) {
+            let html = '<div class="payment-breakdown">';
+            
+            // Payment Info
+            html += '<div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">💳 ' + run.period_label + ' Payment Info</span>' +
+                '<span class="breakdown-total">' + formatMoney(stats.total) + '</span>' +
+                '</div><div class="breakdown-content">';
+            
+            const groups = stats.paymentGroups;
+            html += '<table class="breakdown-table"><tbody>';
+            
+            if (groups.All && groups.All.count > 0) {
+                html += '<tr><td class="label">All Payslips (' + groups.All.count + ')</td>' +
+                    '<td class="value">' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all\')">📄</a> ' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'all-xlsx\')">📊</a>' +
+                    '</td></tr>';
+            }
+            if (groups.EFT && groups.EFT.count > 0) {
+                html += '<tr><td class="label">EFT (' + groups.EFT.count + ')</td>' +
+                    '<td class="value">' + formatMoney(groups.EFT.total) + ' ' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'eft\')">📄</a> ' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'eft-xlsx\')">📊</a> ' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadBanking(\'' + run.id + '\')">🏦</a>' +
+                    '</td></tr>';
+            }
+            if (groups.Cash && groups.Cash.count > 0) {
+                html += '<tr><td class="label">Cash (' + groups.Cash.count + ')</td>' +
+                    '<td class="value">' + formatMoney(groups.Cash.total) + ' ' +
+                    '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'cash\')">📄</a>' +
+                    '</td></tr>';
+            }
+            
+            html += '</tbody></table></div></div>';
+            
+            // Accounting Info
+            html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">📊 Accounting Info</span>' +
+                '<span class="breakdown-total">' +
+                '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); event.stopPropagation(); sendToXero(\'' + run.id + '\')">📤 Export Journal</a>' +
+                '</span></div><div class="breakdown-content"><div style="display: flex; gap: 10px; flex-wrap: wrap;">' +
+                '<button class="btn btn-success btn-sm" data-permission="EXPORT_DATA" onclick="event.stopPropagation(); document.getElementById(\'exportRunId\').textContent=\'' + run.id + '\'; exportAccountingFormat(\'sage\')">Sage Pastel CSV</button>' +
+                '<button class="btn btn-info btn-sm" data-permission="EXPORT_DATA" onclick="event.stopPropagation(); document.getElementById(\'exportRunId\').textContent=\'' + run.id + '\'; exportAccountingFormat(\'xero\')">Xero CSV</button>' +
+                '</div></div></div>';
+            
+            // Beneficiaries
+            html += '<div class="payment-breakdown"><div class="breakdown-header" onclick="toggleBreakdown(this)">' +
+                '<span class="breakdown-title">👥 Beneficiaries</span>' +
+                '<span class="breakdown-total">' +
+                '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'beneficiaries\')">📄</a> ' +
+                '<a href="#" data-permission="EXPORT_DATA" onclick="event.preventDefault(); downloadPDF(\'' + run.id + '\', \'beneficiaries-xlsx\')">📊</a>' +
+                '</span></div></div>';
+            
+            return html;
+        }
+
+        function calculatePayrunStats(run) {
+            let total = 0, finalized = 0, pending = 0;
+            const paymentGroups = { All: { count: 0, total: 0 }, EFT: { count: 0, total: 0 }, Cash: { count: 0, total: 0 }, Cheque: { count: 0, total: 0 } };
+            
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                
+                if (calc.gross > 0) {
+                    total++;
+                    if (psStatus.status === 'finalized') {
+                        finalized++;
+                        const method = emp.payment_method || 'EFT';
+                        paymentGroups.All.count++;
+                        paymentGroups.All.total += calc.net;
+                        if (paymentGroups[method]) {
+                            paymentGroups[method].count++;
+                            paymentGroups[method].total += calc.net;
+                        }
+                    } else {
+                        pending++;
+                    }
+                }
+            });
+            
+            return { total, finalized, pending, paymentGroups };
+        }
+
+        function togglePayrunExpand(runId) {
+            const item = document.getElementById('payrun-' + runId);
+            if (item) {
+                item.classList.toggle('expanded');
+            }
+        }
+
+        function toggleBreakdown(header) {
+            const content = header.nextElementSibling;
+            if (content) {
+                content.classList.toggle('show');
+            }
+        }
+
+        function toggleHiddenPayruns() {
+            const hidden = document.getElementById('hidden-payruns');
+            const btn = document.getElementById('show-more-text');
+            if (hidden.style.display === 'none') {
+                hidden.style.display = 'block';
+                btn.textContent = 'Show less';
+            } else {
+                hidden.style.display = 'none';
+                const count = document.querySelectorAll('#hidden-payruns .payrun-item').length;
+                btn.textContent = 'Show ' + count + ' more';
+            }
+        }
+
+        function createPayrunFromPending(runId) {
+            if (!Permissions.require('CREATE_PAYRUN')) return;
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            
+            const stats = calculatePayrunStats(run);
+            if (stats.finalized === 0) {
+                alert('Cannot create pay run: No employees have finalized payslips.\n\nPlease finalize payslips first.');
+                return;
+            }
+            
+            if (confirm('Create pay run for ' + (run.period_label || run.period) + '?\n\nThis will include ' + stats.finalized + ' finalized payslip(s).')) {
+                run.status = 'draft';
+                savePayruns();
+                AuditTrail.logCreate(currentCompanyId, 'payrun', 'Created pay run for ' + (run.period_label || run.period) + ' with ' + stats.finalized + ' finalized payslip(s)');
+                displayPayruns();
+            }
+        }
+
+        function previewPayrun(runId) {
+            viewSummary(runId);
+        }
+
+        function viewPayrun(runId) {
+            viewSummary(runId);
+        }
+
+        function unfinalisePayrun(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run || !confirm('Unfinalise pay run for ' + (run.period_label || run.period) + '?')) return;
+            run.status = 'pending';
+            run.finalized_date = null;
+            savePayruns();
+            displayPayruns();
+        }
+
+        function downloadPDF(runId, type) {
+            if (!Permissions.require('EXPORT_DATA')) return;
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (type === 'all' || type === 'eft' || type === 'cash') {
+                // Generate bulk payslip PDFs
+                if (typeof PDFBranding === 'undefined') {
+                    alert('PDF module not loaded. Please refresh and try again.');
+                    return;
+                }
+                var filteredEmps = employees.filter(function(emp) {
+                    var psStatus = getPayslipStatus(emp.id, run.period);
+                    if (psStatus.status !== 'finalized') return false;
+                    if (type === 'eft') return (emp.payment_method || 'EFT') === 'EFT';
+                    if (type === 'cash') return emp.payment_method === 'Cash';
+                    return true;
+                });
+                var calcFn = function(empId) {
+                    var pd = getEmployeePayroll(empId);
+                    var c = calculateEmployeePeriod(empId, run.period, pd);
+                    c.basicSalary = pd.basic_salary || 0;
+                    c.allowances = (pd.regular_inputs || []).filter(function(ri) { return ri.type !== 'deduction'; });
+                    c.deductionsList = (pd.regular_inputs || []).filter(function(ri) { return ri.type === 'deduction'; });
+                    c.totalDeductions = c.deductions || 0;
+                    c.overtimeAmount = 0;
+                    var hr = pd.basic_salary ? pd.basic_salary / 173.33 : 0;
+                    JSON.parse(localStorage.getItem('emp_overtime_' + currentCompanyId + '_' + empId + '_' + run.period) || '[]').forEach(function(ot) {
+                        c.overtimeAmount += (parseFloat(ot.hours) || 0) * hr * (parseFloat(ot.rate_multiplier) || 1.5);
+                    });
+                    return c;
+                };
+                var count = PDFBranding.generateBulkPayslips(filteredEmps, run.period, currentCompanyId, calcFn);
+                if (count) alert(count + ' payslip(s) generated successfully.');
+            } else {
+                alert('Export type "' + type + '" is not yet supported for PDF download.');
+            }
+        }
+
+        function downloadBanking(runId) {
+            if (!Permissions.require('EXPORT_DATA')) return;
+            document.getElementById('bankingRunId').textContent = runId;
+            document.getElementById('bankingModal').classList.add('show');
+        }
+
+        function exportBankingFormat(bank) {
+            if (!Permissions.require('EXPORT_DATA')) return;
+            var runId = document.getElementById('bankingRunId').textContent;
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (typeof BankingFormats === 'undefined') {
+                alert('Banking formats module not loaded. Please refresh and try again.');
+                return;
+            }
+
+            var calcFn = function(empId) {
+                var pd = getEmployeePayroll(empId);
+                return calculateEmployeePeriod(empId, run.period, pd);
+            };
+
+            var result;
+            if (bank === 'absa') result = BankingFormats.generateABSA(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'fnb') result = BankingFormats.generateFNB(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'standard') result = BankingFormats.generateStandardBank(run, employees, currentCompanyId, calcFn);
+            else if (bank === 'nedbank') result = BankingFormats.generateNedbank(run, employees, currentCompanyId, calcFn);
+
+            closeModal('bankingModal');
+            if (result && result.count > 0) {
+                AuditTrail.logExport(currentCompanyId, 'banking_file', 'Exported ' + bank.toUpperCase() + ' banking file for ' + formatPeriod(run.period) + ' - ' + result.count + ' payments, R' + result.total.toFixed(2));
+                alert('Banking file generated: ' + result.count + ' payment(s) totalling R' + result.total.toFixed(2));
+            } else {
+                alert('No EFT payments to export. Ensure employees have payment method set to EFT and payslips are finalized.');
+            }
+        }
+
+        function sendToXero(runId) {
+            if (!Permissions.require('EXPORT_DATA')) return;
+            document.getElementById('exportRunId').textContent = runId;
+            document.getElementById('exportModal').classList.add('show');
+        }
+
+        function exportAccountingFormat(format) {
+            if (!Permissions.require('EXPORT_DATA')) return;
+            var runId = document.getElementById('exportRunId').textContent;
+            var run = payruns.find(function(r) { return r.id === runId; });
+            if (!run) return;
+
+            if (typeof ExportFormats === 'undefined') {
+                alert('Export formats module not loaded. Please refresh and try again.');
+                return;
+            }
+
+            // Build payrun data summary
+            var payrunData = {
+                period: run.period,
+                total_gross: 0,
+                total_paye: 0,
+                total_uif: 0,
+                total_net: 0
+            };
+
+            employees.forEach(function(emp) {
+                var psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                var pd = getEmployeePayroll(emp.id);
+                var calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+                payrunData.total_gross += calc.gross;
+                payrunData.total_paye += calc.paye;
+                payrunData.total_uif += calc.uif;
+                payrunData.total_net += calc.net;
+            });
+
+            closeModal('exportModal');
+
+            if (format === 'sage') {
+                ExportFormats.exportSageJournal(payrunData, currentCompanyId);
+                AuditTrail.logExport(currentCompanyId, 'accounting_export', 'Exported Sage Pastel journal for ' + formatPeriod(run.period));
+                alert('Sage Pastel journal exported for ' + formatPeriod(run.period));
+            } else if (format === 'xero') {
+                ExportFormats.exportXeroJournal(payrunData, currentCompanyId);
+                AuditTrail.logExport(currentCompanyId, 'accounting_export', 'Exported Xero journal for ' + formatPeriod(run.period));
+                alert('Xero journal exported for ' + formatPeriod(run.period));
+            }
+        }
+
+        function getHistoricalGroupKey(run) {
+            const [year, month] = run.period.split('-');
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const now = new Date();
+            const runDate = new Date(parseInt(year), parseInt(month) - 1);
+            const monthsDiff = (now.getFullYear() - runDate.getFullYear()) * 12 + (now.getMonth() - runDate.getMonth());
+            
+            if (monthsDiff === 1) return 'Last month (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            if (monthsDiff === 2) return '2 months ago (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            if (monthsDiff >= 3 && monthsDiff <= 12) return monthsDiff + ' months ago (' + monthNames[runDate.getMonth()] + ' ' + year + ')';
+            return monthNames[runDate.getMonth()] + ' ' + year;
+        }
+
+        function getMonthName(monthIndex) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[monthIndex];
+        }
+
+        function formatDate(date) {
+            return date.getDate() + ' ' + getMonthName(date.getMonth()) + ' ' + date.getFullYear();
+        }
+
+        function finalizePayrun(runId) {
+            if (!Permissions.require('FINALIZE_PAYRUN')) return;
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+
+            // Check which employees have finalized payslips
+            const finalizedEmps = [];
+            const unfinalizedEmps = [];
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                const pd = getEmployeePayroll(emp.id);
+                if (psStatus.status === 'finalized') {
+                    finalizedEmps.push(emp);
+                } else if (pd.basic_salary > 0 || pd.regular_inputs.length > 0) {
+                    unfinalizedEmps.push(emp);
+                }
+            });
+
+            if (finalizedEmps.length === 0) {
+                alert('Cannot finalize pay run: No employees have finalized payslips for ' + formatPeriod(run.period) + '.\n\nGo to each employee\'s payroll and click "Finalize Payslip" first.');
+                return;
+            }
+
+            // Warn about unfinalized employees
+            let warningMsg = '';
+            if (unfinalizedEmps.length > 0) {
+                warningMsg = '\n\n⚠ ' + unfinalizedEmps.length + ' employee(s) have unfinalized payslips and will NOT be included:\n' +
+                    unfinalizedEmps.map(e => '  - ' + e.first_name + ' ' + e.last_name).join('\n');
+            }
+
+            let totalGross = 0, totalPaye = 0, totalUif = 0, totalNet = 0;
+            finalizedEmps.forEach(emp => {
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                totalGross += calc.gross;
+                totalPaye += calc.paye;
+                totalUif += calc.uif;
+                totalNet += calc.net;
+            });
+
+            if (!confirm('Finalize pay run for ' + formatPeriod(run.period) + '?\n\nFinalized Employees: ' + finalizedEmps.length + '\nGross: ' + formatMoney(totalGross) + '\nPAYE: ' + formatMoney(totalPaye) + '\nUIF: ' + formatMoney(totalUif) + '\nNet: ' + formatMoney(totalNet) + warningMsg)) return;
+
+            run.employee_count = finalizedEmps.length;
+            run.total_gross = totalGross;
+            run.total_paye = totalPaye;
+            run.total_uif = totalUif;
+            run.total_net = totalNet;
+            run.status = 'finalized';
+            run.finalized_date = new Date().toISOString();
+            savePayruns();
+            AuditTrail.logFinalize(currentCompanyId, 'payrun', 'Finalized pay run for ' + formatPeriod(run.period) + ' - ' + finalizedEmps.length + ' employees, Net: ' + formatMoney(totalNet));
+            displayPayruns();
+        }
+
+        function savePayruns() {
+            localStorage.setItem('payruns_' + currentCompanyId, JSON.stringify(payruns));
+        }
+
+        function getPayslipStatus(empId, period) {
+            const key = 'emp_payslip_status_' + currentCompanyId + '_' + empId + '_' + period;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { status: 'draft' };
+        }
+
+        function markAsPaid(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run || !confirm('Mark pay run for ' + formatPeriod(run.period) + ' as paid?')) return;
+            run.status = 'paid';
+            run.paid_date = new Date().toISOString();
+            savePayruns();
+            AuditTrail.logUpdate(currentCompanyId, 'payrun', 'Marked pay run for ' + formatPeriod(run.period) + ' as paid');
+            displayPayruns();
+        }
+
+        function deletePayrun(runId) {
+            if (!confirm('Are you sure you want to delete this pay run?')) return;
+            payruns = payruns.filter(r => r.id !== runId);
+            savePayruns();
+            displayPayruns();
+        }
+
+        function viewSummary(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const groups = { EFT: [], Cash: [], Cheque: [] };
+            let overallGross = 0, overallPaye = 0, overallUif = 0, overallNet = 0;
+            employees.forEach(emp => {
+                // Only include finalized payslips in summary
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+                const method = emp.payment_method || 'EFT';
+                if (!groups[method]) groups[method] = [];
+                groups[method].push({ name: emp.first_name + ' ' + emp.last_name, number: emp.employee_number, gross: calc.gross, paye: calc.paye, uif: calc.uif, net: calc.net });
+                overallGross += calc.gross;
+                overallPaye += calc.paye;
+                overallUif += calc.uif;
+                overallNet += calc.net;
+            });
+            let html = '<h3 style="margin-bottom: 20px;">Pay Run: ' + formatPeriod(run.period) + ' <span class="status-badge status-' + run.status + '">' + run.status + '</span></h3>';
+            for (const method of ['EFT', 'Cash', 'Cheque']) {
+                const empList = groups[method];
+                if (!empList || empList.length === 0) continue;
+                const methodTotal = empList.reduce((sum, e) => sum + e.net, 0);
+                html += '<div class="summary-section"><h4>' + method + ' (' + empList.length + ' employee' + (empList.length > 1 ? 's' : '') + ') - Total: ' + formatMoney(methodTotal) + '</h4>' +
+                    '<table class="summary-table"><thead><tr><th>Employee</th><th>Emp #</th><th style="text-align:right;">Gross</th><th style="text-align:right;">Net</th></tr></thead><tbody>' +
+                    empList.map(e => '<tr><td>' + e.name + '</td><td>' + e.number + '</td><td style="text-align:right;">' + formatMoney(e.gross) + '</td><td style="text-align:right;">' + formatMoney(e.net) + '</td></tr>').join('') +
+                    '</tbody></table></div>';
+            }
+            html += '<div class="summary-totals"><h4>Overall Totals</h4>' +
+                '<div class="total-row-item"><span>Total Gross</span><strong>' + formatMoney(overallGross) + '</strong></div>' +
+                '<div class="total-row-item"><span>Total PAYE</span><strong>' + formatMoney(overallPaye) + '</strong></div>' +
+                '<div class="total-row-item"><span>Total UIF</span><strong>' + formatMoney(overallUif) + '</strong></div>' +
+                '<div class="total-row-item net"><span>Total Net</span><strong>' + formatMoney(overallNet) + '</strong></div></div>';
+            document.getElementById('summary-content').innerHTML = html;
+            document.getElementById('summaryModal').classList.add('show');
+        }
+
+        // ========== PAYROLL CALCULATION ==========
+        function getEmployeePayroll(empId) {
+            const stored = localStorage.getItem('emp_payroll_' + currentCompanyId + '_' + empId);
+            return stored ? JSON.parse(stored) : { basic_salary: 0, regular_inputs: [] };
+        }
+
+        function calculateEmployeePeriod(empId, period, payrollData) {
+            if (!payrollData) payrollData = getEmployeePayroll(empId);
+            return PayrollEngine.calculateEmployeePeriod(currentCompanyId, empId, period, payrollData);
+        }
+
+        // ========== EMP201 & UIF RETURNS ==========
+        function getReturnStatus(runId, type) {
+            const key = 'return_status_' + currentCompanyId + '_' + runId + '_' + type;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : { status: 'pending', submitted_date: null };
+        }
+
+        function setReturnStatus(runId, type, status) {
+            const key = 'return_status_' + currentCompanyId + '_' + runId + '_' + type;
+            localStorage.setItem(key, JSON.stringify(status));
+        }
+
+        function createReturnsSection(run) {
+            const emp201Status = getReturnStatus(run.id, 'emp201');
+            const uifStatus = getReturnStatus(run.id, 'uif');
+            const emp501Status = getReturnStatus(run.id, 'emp501');
+            const wcfStatus = getReturnStatus(run.id, 'wcf');
+            const returnCalc = calculateReturns(run);
+
+            let html = '<div class="returns-section">' +
+                '<div class="returns-title">Statutory Returns</div>' +
+                '<div class="returns-grid">';
+
+            // EMP201 Card
+            html += createReturnCard('EMP201', 'Monthly Employer Declaration to SARS',
+                'Total Payable: ' + formatMoney(returnCalc.emp201Total), emp201Status, run.id, 'emp201', 'previewEMP201');
+
+            // UIF Card
+            html += createReturnCard('UIF Return', 'Monthly Declaration to Department of Labour',
+                'Total UIF: ' + formatMoney(returnCalc.uifTotal), uifStatus, run.id, 'uif', 'previewUIF');
+
+            // EMP501 Card
+            const emp501Period = getEMP501Period(run.period);
+            html += createReturnCard('EMP501', 'Bi-Annual Employer Reconciliation (' + emp501Period.label + ')',
+                'PAYE + SDL + UIF Reconciliation', emp501Status, run.id, 'emp501', 'previewEMP501');
+
+            // WCF Card
+            html += createReturnCard('WCF Return', 'Workmen\'s Compensation Fund Return',
+                'Total Earnings: ' + formatMoney(returnCalc.totalGross), wcfStatus, run.id, 'wcf', 'previewWCF');
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function createReturnCard(title, desc, amountText, status, runId, type, previewFn) {
+            let html = '<div class="return-card">' +
+                '<div class="return-card-header">' +
+                '<span class="return-card-title">' + title + '</span>' +
+                '<span class="return-status ' + (status.status === 'submitted' ? 'return-status-submitted' : 'return-status-pending') + '">' +
+                (status.status === 'submitted' ? 'Submitted' : 'Pending') + '</span>' +
+                '</div>' +
+                '<div class="return-card-desc">' + desc + '</div>' +
+                '<div class="return-card-amount">' + amountText + '</div>' +
+                '<div class="return-card-actions">' +
+                '<button class="btn-outline" onclick="event.stopPropagation(); ' + previewFn + '(\'' + runId + '\')">Preview</button>';
+            if (status.status !== 'submitted') {
+                html += '<button class="btn-submit-return" onclick="event.stopPropagation(); submitReturn(\'' + runId + '\', \'' + type + '\')">Submit Return</button>';
+            } else {
+                html += '<span style="font-size:0.75rem; color:#155724;">Submitted ' + formatSubmitDate(status.submitted_date) + '</span>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        function calculateReturns(run) {
+            let totalPaye = 0, totalSdl = 0, totalUifEmployee = 0, totalUifEmployer = 0, totalGross = 0;
+            const empDetails = [];
+
+            employees.forEach(emp => {
+                const psStatus = getPayslipStatus(emp.id, run.period);
+                if (psStatus.status !== 'finalized') return;
+                const pd = getEmployeePayroll(emp.id);
+                const calc = calculateEmployeePeriod(emp.id, run.period, pd);
+                if (calc.gross <= 0) return;
+
+                const uifEmp = calc.uif;
+                const uifEmployer = uifEmp; // Employer matches employee contribution
+                const sdl = calc.sdl;
+
+                totalPaye += calc.paye;
+                totalSdl += sdl;
+                totalUifEmployee += uifEmp;
+                totalUifEmployer += uifEmployer;
+                totalGross += calc.gross;
+
+                empDetails.push({
+                    name: emp.first_name + ' ' + emp.last_name,
+                    id_number: emp.id_number || emp.sa_id || '-',
+                    employee_number: emp.employee_number,
+                    gross: calc.gross,
+                    paye: calc.paye,
+                    sdl: sdl,
+                    uif_employee: uifEmp,
+                    uif_employer: uifEmployer,
+                    net: calc.net
+                });
+            });
+
+            return {
+                totalPaye: Math.round(totalPaye * 100) / 100,
+                totalSdl: Math.round(totalSdl * 100) / 100,
+                totalUifEmployee: Math.round(totalUifEmployee * 100) / 100,
+                totalUifEmployer: Math.round(totalUifEmployer * 100) / 100,
+                uifTotal: Math.round((totalUifEmployee + totalUifEmployer) * 100) / 100,
+                emp201Total: Math.round((totalPaye + totalSdl + totalUifEmployee + totalUifEmployer) * 100) / 100,
+                totalGross: Math.round(totalGross * 100) / 100,
+                employees: empDetails
+            };
+        }
+
+        function previewEMP201(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const emp201Status = getReturnStatus(runId, 'emp201');
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">PAYE Ref No.</div><div class="preview-info-value">' + (companyDetails.paye_ref || companyDetails.tax_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">SDL Ref No.</div><div class="preview-info-value">' + (companyDetails.sdl_ref || 'Not set') + '</div></div>' +
+                '</div>';
+
+            // Summary table
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Declaration Summary</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Tax Type</th><th style="text-align:right;">Amount</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>PAYE (Pay As You Earn)</td><td class="amount">' + formatMoney(calc.totalPaye) + '</td></tr>' +
+                '<tr><td>SDL (Skills Development Levy) - 1%</td><td class="amount">' + formatMoney(calc.totalSdl) + '</td></tr>' +
+                '<tr><td>UIF - Employee Contribution (1%)</td><td class="amount">' + formatMoney(calc.totalUifEmployee) + '</td></tr>' +
+                '<tr><td>UIF - Employer Contribution (1%)</td><td class="amount">' + formatMoney(calc.totalUifEmployer) + '</td></tr>' +
+                '<tr class="total-row"><td><strong>Total Payable to SARS</strong></td><td class="amount"><strong>' + formatMoney(calc.emp201Total) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee breakdown
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Breakdown</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>Emp #</th><th style="text-align:right;">Gross</th><th style="text-align:right;">PAYE</th><th style="text-align:right;">SDL</th><th style="text-align:right;">UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.employee_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.paye) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.sdl) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalPaye) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalSdl) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (emp201Status.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(emp201Status.submitted_date) + '</div>';
+            }
+
+            document.getElementById('emp201-content').innerHTML = html;
+            document.getElementById('emp201Modal').classList.add('show');
+        }
+
+        function previewUIF(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const uifStatus = getReturnStatus(runId, 'uif');
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '</div>';
+
+            // Employee table
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">UIF Contributions per Employee</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Gross Remuneration</th><th style="text-align:right;">Employee (1%)</th><th style="text-align:right;">Employer (1%)</th><th style="text-align:right;">Total UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employer) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee + emp.uif_employer) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployer) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.uifTotal) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Summary
+            html += '<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Employee Contributions:</span><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></div>' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Employer Contributions:</span><strong>' + formatMoney(calc.totalUifEmployer) + '</strong></div>' +
+                '<div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 2px solid #90caf9; font-size: 1.1rem;"><span><strong>Total Payable:</strong></span><strong>' + formatMoney(calc.uifTotal) + '</strong></div>' +
+                '</div>';
+
+            if (uifStatus.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(uifStatus.submitted_date) + '</div>';
+            }
+
+            document.getElementById('uif-content').innerHTML = html;
+            document.getElementById('uifModal').classList.add('show');
+        }
+
+        function getEMP501Period(period) {
+            const [year, month] = period.split('-');
+            const m = parseInt(month);
+            // EMP501 has two periods: March-August (Interim) and September-February (Annual)
+            // Tax year runs March to February
+            if (m >= 3 && m <= 8) {
+                return { label: 'Interim', period: year + '-interim', months: 'March - August ' + year };
+            } else {
+                const taxYear = m >= 9 ? year : (parseInt(year) - 1);
+                return { label: 'Annual', period: taxYear + '-annual', months: 'March ' + taxYear + ' - February ' + (parseInt(taxYear) + 1) };
+            }
+        }
+
+        function previewEMP501(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const emp501Status = getReturnStatus(runId, 'emp501');
+            const emp501Period = getEMP501Period(run.period);
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">PAYE Ref No.</div><div class="preview-info-value">' + (companyDetails.paye_ref || companyDetails.tax_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period Type</div><div class="preview-info-value">' + emp501Period.label + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Tax Period</div><div class="preview-info-value">' + emp501Period.months + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">SDL Ref No.</div><div class="preview-info-value">' + (companyDetails.sdl_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">UIF Ref No.</div><div class="preview-info-value">' + (companyDetails.uif_ref || 'Not set') + '</div></div>' +
+                '</div>';
+
+            html += '<div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #856404;">' +
+                '<strong>Note:</strong> EMP501 is a bi-annual reconciliation that summarizes all EMP201 declarations for the period. ' +
+                'This preview shows data for <strong>' + formatPeriod(run.period) + '</strong>. ' +
+                'To submit the full reconciliation, you would need to aggregate all months in the ' + emp501Period.label.toLowerCase() + ' period (' + emp501Period.months + ').' +
+                '</div>';
+
+            // Reconciliation Summary
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Reconciliation Summary for ' + formatPeriod(run.period) + '</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Description</th><th style="text-align:right;">Amount Declared</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>Total PAYE withheld</td><td class="amount">' + formatMoney(calc.totalPaye) + '</td></tr>' +
+                '<tr><td>SDL @ 1% of gross remuneration</td><td class="amount">' + formatMoney(calc.totalSdl) + '</td></tr>' +
+                '<tr><td>UIF - Employee contributions @ 1%</td><td class="amount">' + formatMoney(calc.totalUifEmployee) + '</td></tr>' +
+                '<tr><td>UIF - Employer contributions @ 1%</td><td class="amount">' + formatMoney(calc.totalUifEmployer) + '</td></tr>' +
+                '<tr class="total-row"><td><strong>Total Amount Due to SARS</strong></td><td class="amount"><strong>' + formatMoney(calc.emp201Total) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee summary
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Certificate Summary (IRP5/IT3a)</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Remuneration</th><th style="text-align:right;">PAYE</th><th style="text-align:right;">UIF</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.paye) + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.uif_employee) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals (' + calc.employees.length + ' employees)</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalPaye) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalUifEmployee) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (emp501Status.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(emp501Status.submitted_date) + '</div>';
+            }
+
+            document.getElementById('emp501-content').innerHTML = html;
+            document.getElementById('emp501Modal').classList.add('show');
+        }
+
+        function previewWCF(runId) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const calc = calculateReturns(run);
+            const companyDetails = getCompanyDetails();
+            const company = AUTH.getCompanyById(currentCompanyId);
+            const wcfStatus = getReturnStatus(runId, 'wcf');
+
+            // WCF assessment is typically based on industry risk class (we'll use a default 1% for demo)
+            const wcfRate = 0.01; // 1% of gross remuneration (varies by industry)
+            const wcfAmount = Math.round(calc.totalGross * wcfRate * 100) / 100;
+
+            let html = '<div class="preview-header-info">' +
+                '<div class="preview-info-item"><div class="preview-info-label">Company</div><div class="preview-info-value">' + (company ? company.name : '-') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Registration No.</div><div class="preview-info-value">' + (companyDetails.reg_number || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">COID Ref No.</div><div class="preview-info-value">' + (companyDetails.coid_ref || 'Not set') + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Period</div><div class="preview-info-value">' + formatPeriod(run.period) + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Total Employees</div><div class="preview-info-value">' + calc.employees.length + '</div></div>' +
+                '<div class="preview-info-item"><div class="preview-info-label">Industry Class</div><div class="preview-info-value">' + (companyDetails.industry_class || 'Not specified') + '</div></div>' +
+                '</div>';
+
+            html += '<div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #0d47a1;">' +
+                '<strong>Note:</strong> WCF (Compensation for Occupational Injuries and Diseases Act) returns are typically submitted annually. ' +
+                'The assessment rate varies by industry classification. This preview uses an estimated rate of ' + (wcfRate * 100) + '% for demonstration.' +
+                '</div>';
+
+            // Summary
+            html += '<h4 style="color: #667eea; margin-bottom: 10px;">Return Summary</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Description</th><th style="text-align:right;">Amount</th></tr></thead>' +
+                '<tbody>' +
+                '<tr><td>Total Gross Remuneration (Earnings)</td><td class="amount">' + formatMoney(calc.totalGross) + '</td></tr>' +
+                '<tr><td>Number of Employees</td><td class="amount">' + calc.employees.length + '</td></tr>' +
+                '<tr><td>Assessment Rate (Industry Class)</td><td class="amount">' + (wcfRate * 100) + '%</td></tr>' +
+                '<tr class="total-row"><td><strong>Estimated Assessment Amount</strong></td><td class="amount"><strong>' + formatMoney(wcfAmount) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            // Employee earnings breakdown
+            html += '<h4 style="color: #667eea; margin: 20px 0 10px;">Employee Earnings Breakdown</h4>' +
+                '<table class="preview-table">' +
+                '<thead><tr><th>Employee</th><th>ID Number</th><th style="text-align:right;">Gross Remuneration</th><th style="text-align:right;">Contribution</th></tr></thead>' +
+                '<tbody>';
+            calc.employees.forEach(emp => {
+                const empContribution = Math.round(emp.gross * wcfRate * 100) / 100;
+                html += '<tr><td>' + emp.name + '</td><td>' + emp.id_number + '</td>' +
+                    '<td class="amount">' + formatMoney(emp.gross) + '</td>' +
+                    '<td class="amount">' + formatMoney(empContribution) + '</td></tr>';
+            });
+            html += '<tr class="total-row"><td colspan="2"><strong>Totals</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(calc.totalGross) + '</strong></td>' +
+                '<td class="amount"><strong>' + formatMoney(wcfAmount) + '</strong></td></tr>' +
+                '</tbody></table>';
+
+            if (wcfStatus.status === 'submitted') {
+                html += '<div style="background: #d4edda; padding: 12px; border-radius: 8px; margin-top: 15px; color: #155724; font-weight: 600;">' +
+                    '✓ Submitted on ' + formatSubmitDate(wcfStatus.submitted_date) + '</div>';
+            }
+
+            document.getElementById('wcf-content').innerHTML = html;
+            document.getElementById('wcfModal').classList.add('show');
+        }
+
+        function submitReturn(runId, type) {
+            const run = payruns.find(r => r.id === runId);
+            if (!run) return;
+            const typeNames = {
+                'emp201': 'EMP201',
+                'uif': 'UIF Return',
+                'emp501': 'EMP501',
+                'wcf': 'WCF Return'
+            };
+            const typeName = typeNames[type] || type;
+            if (!confirm('Mark ' + typeName + ' for ' + formatPeriod(run.period) + ' as submitted?\n\nThis records that the return has been filed.')) return;
+
+            setReturnStatus(runId, type, {
+                status: 'submitted',
+                submitted_date: new Date().toISOString()
+            });
+
+            AuditTrail.log(currentCompanyId, 'SUBMIT', 'statutory_return', 'Submitted ' + typeName + ' for ' + formatPeriod(run.period));
+            displayPayruns();
+            alert(typeName + ' for ' + formatPeriod(run.period) + ' has been marked as submitted.');
+        }
+
+        function formatSubmitDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.getDate() + ' ' + getMonthName(d.getMonth()) + ' ' + d.getFullYear();
+        }
+
+        // ========== HELPERS ==========
+        function formatPeriod(period) {
+            const [year, month] = period.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months[parseInt(month) - 1] + ' ' + year;
+        }
+
+        function formatMoney(amount) {
+            return 'R ' + (amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('show');
+            });
+        });
+
+        // ========== PAYROLL BULK UPLOAD ==========
+
+        var payrollUploadData = null;
+        var payrollPreviewRows = null;
+
+        var PAYROLL_FIELD_ALIASES = {
+            'employee_number': ['employee_number', 'emp_number', 'EmpNo', 'emp_no', 'empno', 'Employee Number', 'EmployeeNumber', 'emp_id'],
+            'basic_salary': ['basic_salary', 'BasicSalary', 'salary', 'basic', 'base_salary', 'Basic Salary', 'gross_salary', 'basic_pay'],
+            'overtime_hours': ['overtime_hours', 'OvertimeHours', 'ot_hours', 'OT Hours', 'overtime', 'OT_Hours'],
+            'overtime_rate': ['overtime_rate', 'OvertimeRate', 'ot_rate', 'OT Rate', 'OT_Rate']
+        };
+
+        // Setup drag-drop on page load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof BulkImportUtils !== 'undefined') {
+                    BulkImportUtils.setupDragDrop('payrollDropZone', 'payrollFileInput', handlePayrollFile);
+                }
+            }, 200);
+        });
+
+        function openPayrollUploadModal() {
+            if (!Permissions.require('CREATE_PAYRUN')) return;
+            resetPayrollUpload();
+            var now = new Date();
+            var period = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('payrollUploadPeriod').value = period;
+            document.getElementById('payrollUploadModal').classList.add('show');
+        }
+
+        function resetPayrollUpload() {
+            payrollUploadData = null;
+            payrollPreviewRows = null;
+            document.getElementById('payrollUploadStep1').style.display = 'block';
+            document.getElementById('payrollUploadStep2').style.display = 'none';
+            var fileInput = document.getElementById('payrollFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        function handlePayrollFile(file) {
+            if (typeof XLSX === 'undefined') {
+                alert('File parser not loaded. Please refresh the page and try again.');
+                return;
+            }
+            var period = document.getElementById('payrollUploadPeriod').value;
+            if (!period) {
+                alert('Please select a pay period first.');
+                return;
+            }
+
+            BulkImportUtils.parseFile(file, function(data, error) {
+                if (error) {
+                    alert(error);
+                    return;
+                }
+                payrollUploadData = data;
+                processPayrollData(data, period);
+            });
+        }
+
+        function processPayrollData(jsonData, period) {
+            var headers = Object.keys(jsonData[0]);
+            var mapping = BulkImportUtils.autoMapColumns(headers, PAYROLL_FIELD_ALIASES);
+
+            // Detect allowance and deduction columns
+            var allowanceCols = headers.filter(function(h) {
+                return h.toLowerCase().indexOf('allowance') === 0;
+            });
+            var deductionCols = headers.filter(function(h) {
+                return h.toLowerCase().indexOf('deduction') === 0;
+            });
+
+            var empNumberCol = mapping.employee_number;
+            var basicSalaryCol = mapping.basic_salary;
+            var otHoursCol = mapping.overtime_hours;
+            var otRateCol = mapping.overtime_rate;
+
+            if (!empNumberCol) {
+                alert('Could not find an employee_number column. Please check your file.');
+                return;
+            }
+            if (!basicSalaryCol) {
+                alert('Could not find a basic_salary column. Please check your file.');
+                return;
+            }
+
+            var preview = [];
+            var errorCount = 0;
+            var totalGross = 0, totalPaye = 0, totalUif = 0, totalNet = 0;
+
+            jsonData.forEach(function(row, idx) {
+                var empNum = String(row[empNumberCol] || '').trim();
+                var emp = employees.find(function(e) { return e.employee_number === empNum; });
+
+                if (!emp) {
+                    preview.push({
+                        _row: idx + 1,
+                        employee_number: empNum,
+                        employee_name: 'NOT FOUND',
+                        basic: 0, gross: 0, paye: 0, uif: 0, net: 0,
+                        allowances: [], deductions: [], overtime: null,
+                        _error: 'Employee not found',
+                        _empId: null
+                    });
+                    errorCount++;
+                    return;
+                }
+
+                var basic = BulkImportUtils.parseMoney(row[basicSalaryCol]) || 0;
+                if (basic <= 0) {
+                    preview.push({
+                        _row: idx + 1,
+                        employee_number: empNum,
+                        employee_name: emp.first_name + ' ' + emp.last_name,
+                        basic: 0, gross: 0, paye: 0, uif: 0, net: 0,
+                        allowances: [], deductions: [], overtime: null,
+                        _error: 'Invalid basic salary',
+                        _empId: emp.id
+                    });
+                    errorCount++;
+                    return;
+                }
+
+                // Build regular inputs
+                var regularInputs = [];
+                var totalAllowances = 0;
+                var totalDeductions = 0;
+
+                allowanceCols.forEach(function(col) {
+                    var amt = BulkImportUtils.parseMoney(row[col]);
+                    if (amt && amt > 0) {
+                        var name = col.replace(/^allowance_?/i, '').replace(/_/g, ' ').trim() || 'Allowance';
+                        regularInputs.push({ type: 'allowance', description: name, amount: amt });
+                        totalAllowances += amt;
+                    }
+                });
+
+                deductionCols.forEach(function(col) {
+                    var amt = BulkImportUtils.parseMoney(row[col]);
+                    if (amt && amt > 0) {
+                        var name = col.replace(/^deduction_?/i, '').replace(/_/g, ' ').trim() || 'Deduction';
+                        regularInputs.push({ type: 'deduction', description: name, amount: amt });
+                        totalDeductions += amt;
+                    }
+                });
+
+                // Overtime
+                var otHours = otHoursCol ? parseFloat(row[otHoursCol]) || 0 : 0;
+                var otRate = otRateCol ? parseFloat(row[otRateCol]) || 1.5 : 1.5;
+                var overtime = otHours > 0 ? [{ hours: otHours, rate_multiplier: otRate }] : [];
+
+                // Calculate using PayrollEngine
+                var payrollData = { basic_salary: basic, regular_inputs: regularInputs };
+                var calc = PayrollEngine.calculateFromData(payrollData, [], overtime, [], []);
+
+                totalGross += calc.gross;
+                totalPaye += calc.paye;
+                totalUif += calc.uif_employee;
+                totalNet += calc.net;
+
+                preview.push({
+                    _row: idx + 1,
+                    employee_number: empNum,
+                    employee_name: emp.first_name + ' ' + emp.last_name,
+                    basic: basic,
+                    allowances_total: totalAllowances,
+                    deductions_total: totalDeductions,
+                    ot_hours: otHours,
+                    gross: calc.gross,
+                    paye: calc.paye,
+                    uif: calc.uif_employee,
+                    net: calc.net,
+                    regularInputs: regularInputs,
+                    overtime: overtime,
+                    _error: null,
+                    _empId: emp.id
+                });
+            });
+
+            payrollPreviewRows = preview;
+
+            // Render summary
+            var validCount = preview.filter(function(r) { return !r._error; }).length;
+            var summaryHtml = '<div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">';
+            summaryHtml += '<div style="padding:12px 20px; background:#d4edda; border-radius:8px; flex:1; text-align:center; min-width:120px;"><strong style="font-size:1.3rem; color:#155724;">' + validCount + '</strong><br><span style="color:#155724; font-size:0.85rem;">Valid rows</span></div>';
+            summaryHtml += '<div style="padding:12px 20px; background:' + (errorCount > 0 ? '#f8d7da' : '#e2e3e5') + '; border-radius:8px; flex:1; text-align:center; min-width:120px;"><strong style="font-size:1.3rem; color:' + (errorCount > 0 ? '#721c24' : '#383d41') + ';">' + errorCount + '</strong><br><span style="font-size:0.85rem;">Errors</span></div>';
+            summaryHtml += '<div style="padding:12px 20px; background:#e3f2fd; border-radius:8px; flex:1; text-align:center; min-width:120px;"><strong style="font-size:1.3rem; color:#1565c0;">R ' + totalGross.toFixed(2) + '</strong><br><span style="color:#1565c0; font-size:0.85rem;">Total Gross</span></div>';
+            summaryHtml += '<div style="padding:12px 20px; background:#e8f5e9; border-radius:8px; flex:1; text-align:center; min-width:120px;"><strong style="font-size:1.3rem; color:#2e7d32;">R ' + totalNet.toFixed(2) + '</strong><br><span style="color:#2e7d32; font-size:0.85rem;">Total Net</span></div>';
+            summaryHtml += '</div>';
+            document.getElementById('payrollUploadSummary').innerHTML = summaryHtml;
+
+            // Render preview table
+            var tableHtml = '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;">';
+            tableHtml += '<th style="padding:10px 8px;">Row</th><th style="padding:10px 8px;">Emp #</th><th style="padding:10px 8px;">Name</th>';
+            tableHtml += '<th style="padding:10px 8px; text-align:right;">Basic</th><th style="padding:10px 8px; text-align:right;">Gross</th>';
+            tableHtml += '<th style="padding:10px 8px; text-align:right;">PAYE</th><th style="padding:10px 8px; text-align:right;">UIF</th>';
+            tableHtml += '<th style="padding:10px 8px; text-align:right;">Net</th><th style="padding:10px 8px;">Status</th>';
+            tableHtml += '</tr></thead><tbody>';
+
+            preview.forEach(function(row) {
+                var bg = row._error ? '#f8d7da' : '';
+                tableHtml += '<tr style="background:' + bg + '; border-bottom:1px solid #eee;">';
+                tableHtml += '<td style="padding:8px;">' + row._row + '</td>';
+                tableHtml += '<td style="padding:8px;">' + row.employee_number + '</td>';
+                tableHtml += '<td style="padding:8px;">' + row.employee_name + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.basic) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.gross) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.paye) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right;">' + formatMoney(row.uif) + '</td>';
+                tableHtml += '<td style="padding:8px; text-align:right; font-weight:600;">' + formatMoney(row.net) + '</td>';
+                if (row._error) {
+                    tableHtml += '<td style="padding:8px; color:#dc3545; font-weight:600;">' + row._error + '</td>';
+                } else {
+                    tableHtml += '<td style="padding:8px; color:#28a745; font-weight:600;">Ready</td>';
+                }
+                tableHtml += '</tr>';
+            });
+
+            tableHtml += '</tbody>';
+            document.getElementById('payrollPreviewTable').innerHTML = tableHtml;
+
+            if (validCount === 0) {
+                document.getElementById('confirmPayrollBtn').disabled = true;
+                document.getElementById('confirmPayrollBtn').style.opacity = '0.5';
+            } else {
+                document.getElementById('confirmPayrollBtn').disabled = false;
+                document.getElementById('confirmPayrollBtn').style.opacity = '1';
+            }
+
+            document.getElementById('payrollUploadStep1').style.display = 'none';
+            document.getElementById('payrollUploadStep2').style.display = 'block';
+        }
+
+        function confirmPayrollUpload() {
+            if (!payrollPreviewRows) return;
+            var period = document.getElementById('payrollUploadPeriod').value;
+            var savedCount = 0;
+
+            payrollPreviewRows.forEach(function(row) {
+                if (row._error || !row._empId) return;
+
+                // Save payroll data
+                var payrollKey = 'emp_payroll_' + currentCompanyId + '_' + row._empId;
+                var payrollData = {
+                    basic_salary: row.basic,
+                    regular_inputs: row.regularInputs || []
+                };
+                localStorage.setItem(payrollKey, JSON.stringify(payrollData));
+
+                // Save overtime if present
+                if (row.overtime && row.overtime.length > 0) {
+                    var otKey = 'emp_overtime_' + currentCompanyId + '_' + row._empId + '_' + period;
+                    localStorage.setItem(otKey, JSON.stringify(row.overtime));
+                }
+
+                // Set payslip status to draft
+                var statusKey = 'emp_payslip_status_' + currentCompanyId + '_' + row._empId + '_' + period;
+                localStorage.setItem(statusKey, JSON.stringify({ status: 'draft' }));
+
+                savedCount++;
+            });
+
+            BulkImportUtils.logAudit(currentCompanyId, 'PAYROLL_UPLOAD', 'Uploaded payroll data for ' + savedCount + ' employees for period ' + period);
+
+            closeModal('payrollUploadModal');
+            resetPayrollUpload();
+            loadEmployees();
+            alert('Payroll data saved for ' + savedCount + ' employees for period ' + period + '.');
+        }
+
+        function downloadPayrollTemplate() {
+            BulkImportUtils.downloadCSVTemplate(
+                'payroll_upload_template.csv',
+                ['employee_number', 'basic_salary', 'allowance_travel', 'allowance_housing', 'deduction_medical', 'deduction_pension', 'overtime_hours', 'overtime_rate'],
+                [
+                    ['EMP001', '25000', '3500', '2000', '1800', '1500', '8', '1.5'],
+                    ['EMP002', '18000', '2000', '0', '1200', '900', '0', '1.5']
+                ]
+            );
+        }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+    <script src="js/export-formats.js"></script>
+    <script src="js/banking-formats.js"></script>
+    <script src="js/pdf-branding.js"></script>
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

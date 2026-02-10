@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Company Dashboard - Lorenco Paytime</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin-left: 0;
+        }
+
+        .wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .sidebar-title {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .current-company {
+            background: #f0f4ff;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: #333;
+            font-size: 0.9rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .sidebar-section {
+            margin-top: 20px;
+        }
+
+        .sidebar-section-title {
+            padding: 10px 20px;
+            color: #999;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover {
+            background: #f8f9fa;
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+
+        .sidebar-link.active {
+            background: #f0f4ff;
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 600;
+        }
+
+        .company-carousel {
+            margin-top: 15px;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .carousel-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-companies {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .carousel-company {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .carousel-company:hover {
+            background: #eee;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .sidebar-actions {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-sidebar {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-switch {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-switch:hover {
+            background: #5568d3;
+        }
+
+        .btn-logout {
+            background: #eee;
+            color: #333;
+        }
+
+        .btn-logout:hover {
+            background: #ddd;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .user-info strong {
+            color: #333;
+            display: block;
+            font-size: 1.1rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .card-secondary {
+            background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+        }
+
+        .card-accent {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 250px;
+            }
+
+            .main-content {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+                top: 0;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .user-info {
+                text-align: center;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link active" id="sidebar-dashboard">📊 Dashboard</a>
+                <a href="#" class="sidebar-link" id="sidebar-employees" onclick="showEmployeeManagement(); return false;">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="paye-reconciliation.html" class="sidebar-link">🧾 PAYE Reconciliation</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
+                <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+            </div>
+
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel">
+                        <!-- Companies will load here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="goToCompanySelection()">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view">
+                <div class="header">
+                    <div>
+                        <h1>Welcome to Your Dashboard</h1>
+                        <p style="color: #667eea; font-weight: 600; margin-top: 5px;" id="company-name-header"></p>
+                    </div>
+                    <div class="user-info">
+                        <p>Logged in as</p>
+                        <strong id="user-name"></strong>
+                        <p id="user-role" style="font-size: 0.9rem; color: #999;"></p>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="card" onclick="showEmployeeManagement()" style="cursor: pointer;">
+                        <div class="card-icon">👥</div>
+                        <div class="card-title">Employee Management</div>
+                        <div class="card-subtitle" id="employee-count">View & Manage Employees</div>
+                    </div>
+
+                    <a href="payruns.html" class="card card-secondary">
+                        <div class="card-icon">💵</div>
+                        <div class="card-title">Pay Runs</div>
+                        <div class="card-subtitle">Process Payroll</div>
+                    </a>
+
+                    <a href="payroll-items.html" class="card card-accent">
+                        <div class="card-icon">📋</div>
+                        <div class="card-title">Payroll Items</div>
+                        <div class="card-subtitle">Configure Deductions & Allowances</div>
+                    </a>
+
+                    <a href="reports.html" class="card" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Reports</div>
+                        <div class="card-subtitle">Generate & Export Reports</div>
+                    </a>
+
+                    <a href="company-details.html" class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="card-icon">🏢</div>
+                        <div class="card-title">Company Details</div>
+                        <div class="card-subtitle">Company Information</div>
+                    </a>
+
+                    <a href="paye-reconciliation.html" class="card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <div class="card-icon">🧾</div>
+                        <div class="card-title">PAYE Reconciliation</div>
+                        <div class="card-subtitle">EMP201 & Tax Reconciliation</div>
+                    </a>
+
+                    <div class="card" id="addCompanyCard" style="display:none; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); cursor:pointer;" onclick="openAddCompanyModal()">
+                        <div class="card-icon">+</div>
+                        <div class="card-title">Add Company</div>
+                        <div class="card-subtitle">Create a new company</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Employee Management View -->
+            <div id="employee-management-view" style="display: none;">
+                <div class="header">
+                    <div>
+                        <h1>👥 Employee Management</h1>
+                        <p style="color: #667eea; font-weight: 600; margin-top: 5px;" id="emp-company-name-header"></p>
+                    </div>
+                    <div class="user-info">
+                        <button class="btn" style="padding: 10px 20px; font-size: 13px;" onclick="backToDashboard()">← Back to Dashboard</button>
+                        <button class="btn btn-success" style="padding: 10px 20px; font-size: 13px; margin-left: 10px;" onclick="openAddEmployeeModal()">+ Add Employee</button>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+                    <table class="employee-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Employee #</th>
+                                <th>Name</th>
+                                <th>ID Number</th>
+                                <th>Position</th>
+                                <th>Department</th>
+                                <th>Payment Method</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employee-list">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">No employees yet. Click "Add Employee" to get started.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Modal -->
+    <div id="employeeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; max-width: 600px; width: 90%; border-radius: 15px; padding: 30px; margin: 50px auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea;">
+                <h2 id="modalTitle" style="color: #667eea; margin: 0;">Add New Employee</h2>
+                <button onclick="closeEmployeeModal()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold;">Close</button>
+            </div>
+
+            <div id="modalSuccess" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #c3e6cb;"></div>
+            <div id="modalError" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #f5c6cb;"></div>
+
+            <form id="employeeForm" onsubmit="saveEmployee(event)">
+                <input type="hidden" id="employeeId">
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Employee Number <span style="color: #dc3545;">*</span></label>
+                        <input type="text" id="employee_number" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">First Name <span style="color: #dc3545;">*</span></label>
+                        <input type="text" id="first_name" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Last Name <span style="color: #dc3545;">*</span></label>
+                        <input type="text" id="last_name" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">ID Number</label>
+                        <input type="text" id="id_number" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" maxlength="13">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Email</label>
+                        <input type="email" id="email" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Phone</label>
+                        <input type="tel" id="phone" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Job Title</label>
+                        <input type="text" id="job_title" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Department</label>
+                        <input type="text" id="department" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Position</label>
+                        <input type="text" id="position" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Payment Method <span style="color: #dc3545;">*</span></label>
+                        <select id="payment_method" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" required>
+                            <option value="EFT">EFT</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Bank Name</label>
+                        <input type="text" id="bank_name" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Account Holder</label>
+                        <input type="text" id="account_holder" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Account Number</label>
+                        <input type="text" id="account_number" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Branch Code</label>
+                        <input type="text" id="branch_code" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Date Appointed</label>
+                        <input type="date" id="date_appointed" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Medical Aid Members</label>
+                        <input type="number" id="medical_aid_members" min="0" max="20" step="1" placeholder="0 = none" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px;">Tax Directive (%)</label>
+                        <input type="number" id="tax_directive" min="0" max="100" step="0.01" placeholder="0 = standard PAYE" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <!-- Switch Company Modal -->
+    <div id="switch-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h3 style="color: #667eea; margin-bottom: 20px;">Select Company</h3>
+            <div id="switch-companies-list" style="max-height: 300px; overflow-y: auto;"></div>
+            <button onclick="closeSwitchModal()" style="width: 100%; padding: 10px; background: #eee; border: none; border-radius: 6px; font-weight: 600; margin-top: 15px; cursor: pointer;">Close</button>
+        </div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let employees = [];
+        let currentCompanyId = null;
+
+        // Check authentication
+        window.addEventListener('load', function() {
+            const session = AUTH.getSession();
+            if (!session || !session.company_id) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentCompanyId = session.company_id;
+            loadDashboard();
+        });
+
+        function loadDashboard() {
+            const session = AUTH.getSession();
+            const company = AUTH.getCompanyById(session.company_id);
+
+            // Set user info
+            document.getElementById('user-name').textContent = session.email;
+            const roleLabels = { business_owner: 'Business Owner', accountant: 'Accountant', manager: 'Manager', admin: 'Admin', super_admin: 'Super Admin' };
+            const roleText = roleLabels[session.role] || session.role;
+            document.getElementById('user-role').textContent = roleText;
+
+            // Set company info
+            if (company) {
+                document.getElementById('company-name-header').textContent = company.name;
+                document.getElementById('emp-company-name-header').textContent = company.name;
+            }
+
+            // Update employee count from actual stored employees
+            updateEmployeeCount();
+
+            // Show Add Company card for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                document.getElementById('addCompanyCard').style.display = '';
+            }
+
+            // Load sidebar
+            loadCompaniesCarousel();
+            loadEmployeesFromStorage();
+        }
+
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const companies = AUTH.getCompaniesForUser(session);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(company_id) {
+            const session = AUTH.getSession();
+            session.company_id = company_id;
+            localStorage.setItem('session', JSON.stringify(session));
+            location.reload();
+        }
+
+        function goToCompanySelection() {
+            window.location.href = 'company-selection.html';
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AUTH.logout();
+            }
+        }
+
+        function closeSwitchModal() {
+            document.getElementById('switch-modal').style.display = 'none';
+        }
+
+        function updateEmployeeCount() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            let count = 0;
+            if (stored) {
+                try { count = JSON.parse(stored).length; } catch (e) {}
+            }
+            document.getElementById('employee-count').textContent = `${count} employee${count !== 1 ? 's' : ''}`;
+        }
+
+        // ========== EMPLOYEE MANAGEMENT FUNCTIONS ==========
+
+        function showEmployeeManagement() {
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('employee-management-view').style.display = 'block';
+            loadEmployeesFromStorage();
+            displayEmployees();
+
+            // Update sidebar active state
+            document.getElementById('sidebar-dashboard').classList.remove('active');
+            document.getElementById('sidebar-employees').classList.add('active');
+        }
+
+        function backToDashboard() {
+            document.getElementById('employee-management-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
+            updateEmployeeCount();
+
+            // Update sidebar active state
+            document.getElementById('sidebar-employees').classList.remove('active');
+            document.getElementById('sidebar-dashboard').classList.add('active');
+        }
+
+        function loadEmployeesFromStorage() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            if (stored) {
+                try {
+                    employees = JSON.parse(stored);
+                } catch (e) {
+                    employees = [];
+                }
+            }
+        }
+
+        function displayEmployees() {
+            let html = '';
+            if (employees.length === 0) {
+                html = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #999;">No employees yet. Click "Add Employee" to get started.</td></tr>';
+            } else {
+                employees.forEach(emp => {
+                    html += `
+                        <tr>
+                            <td><strong>${emp.employee_number}</strong></td>
+                            <td>${emp.first_name} ${emp.last_name}</td>
+                            <td>${emp.id_number || '-'}</td>
+                            <td>${emp.position || '-'}</td>
+                            <td>${emp.department || '-'}</td>
+                            <td>${emp.payment_method || 'EFT'}</td>
+                            <td>
+                                <button class="btn-small btn-edit" onclick="editEmployee('${emp.id}')" style="padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; background: #667eea; color: white;">Edit</button>
+                                <button class="btn-small btn-delete" onclick="deleteEmployee('${emp.id}')" style="padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; background: #dc3545; color: white;">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('employee-list').innerHTML = html;
+        }
+
+        function openAddEmployeeModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Employee';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeeModal').style.display = 'flex';
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').style.display = 'none';
+            document.getElementById('modalSuccess').style.display = 'none';
+            document.getElementById('modalError').style.display = 'none';
+        }
+
+        function editEmployee(id) {
+            const emp = employees.find(e => e.id === id);
+            if (emp) {
+                document.getElementById('modalTitle').textContent = 'Edit Employee';
+                document.getElementById('employeeId').value = emp.id;
+                document.getElementById('employee_number').value = emp.employee_number || '';
+                document.getElementById('first_name').value = emp.first_name || '';
+                document.getElementById('last_name').value = emp.last_name || '';
+                document.getElementById('id_number').value = emp.id_number || '';
+                document.getElementById('email').value = emp.email || '';
+                document.getElementById('phone').value = emp.phone || '';
+                document.getElementById('job_title').value = emp.job_title || '';
+                document.getElementById('department').value = emp.department || '';
+                document.getElementById('position').value = emp.position || '';
+                document.getElementById('payment_method').value = emp.payment_method || 'EFT';
+                document.getElementById('bank_name').value = emp.bank_name || '';
+                document.getElementById('account_holder').value = emp.account_holder || '';
+                document.getElementById('account_number').value = emp.account_number || '';
+                document.getElementById('branch_code').value = emp.branch_code || '';
+                document.getElementById('date_appointed').value = emp.date_appointed || '';
+                document.getElementById('medical_aid_members').value = emp.medical_aid_members || '';
+                document.getElementById('tax_directive').value = emp.tax_directive || '';
+                document.getElementById('employeeModal').style.display = 'flex';
+            }
+        }
+
+        function saveEmployee(event) {
+            event.preventDefault();
+
+            const successDiv = document.getElementById('modalSuccess');
+            const errorDiv = document.getElementById('modalError');
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            const employeeId = document.getElementById('employeeId').value;
+            const isEdit = employeeId !== '';
+
+            const newEmployee = {
+                id: employeeId || 'emp-' + Math.random().toString(36).substr(2, 9),
+                employee_number: document.getElementById('employee_number').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                id_number: document.getElementById('id_number').value || null,
+                email: document.getElementById('email').value || null,
+                phone: document.getElementById('phone').value || null,
+                job_title: document.getElementById('job_title').value || null,
+                department: document.getElementById('department').value || null,
+                position: document.getElementById('position').value || null,
+                payment_method: document.getElementById('payment_method').value,
+                bank_name: document.getElementById('bank_name').value || null,
+                account_holder: document.getElementById('account_holder').value || null,
+                account_number: document.getElementById('account_number').value || null,
+                branch_code: document.getElementById('branch_code').value || null,
+                date_appointed: document.getElementById('date_appointed').value || null,
+                medical_aid_members: parseInt(document.getElementById('medical_aid_members').value) || 0,
+                tax_directive: parseFloat(document.getElementById('tax_directive').value) || 0
+            };
+
+            if (isEdit) {
+                const index = employees.findIndex(e => e.id === employeeId);
+                if (index !== -1) {
+                    employees[index] = newEmployee;
+                }
+            } else {
+                employees.push(newEmployee);
+            }
+
+            localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+
+            successDiv.textContent = isEdit ? 'Employee updated successfully!' : 'Employee added successfully!';
+            successDiv.style.display = 'block';
+
+            updateEmployeeCount();
+
+            setTimeout(() => {
+                closeEmployeeModal();
+                displayEmployees();
+            }, 1500);
+        }
+
+        function deleteEmployee(id) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                employees = employees.filter(e => e.id !== id);
+                localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+                displayEmployees();
+                updateEmployeeCount();
+            }
+        }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

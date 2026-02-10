@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEAN AI — Smart Accounting Assistant</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #d1fae5;
+            --accent: #6366f1;
+            --accent-light: #e0e7ff;
+            --bg: #f0fdf4;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ─── Login Screen ──────────────────────────────────────── */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #6366f1 100%);
+            padding: 20px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 50px 40px;
+            box-shadow: var(--shadow-lg); max-width: 440px; width: 100%; text-align: center;
+        }
+        .login-card .logo { font-size: 3rem; margin-bottom: 8px; }
+        .login-card h1 { color: var(--primary-dark); font-size: 1.8rem; margin-bottom: 4px; }
+        .login-card .subtitle { color: var(--text-muted); margin-bottom: 30px; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 1rem; transition: border-color 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border: none; border-radius: 10px; font-size: 0.95rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; width: 100%; padding: 14px;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); color: white; }
+        .login-hint { margin-top: 20px; padding: 12px; background: var(--primary-light); border-radius: 8px; font-size: 0.85rem; color: var(--primary-dark); }
+        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 8px; display: none; }
+
+        /* ─── Main App ──────────────────────────────────────────── */
+        #app { display: none; }
+        .topbar {
+            background: white; border-bottom: 1px solid var(--border); padding: 12px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-left .logo { font-size: 1.6rem; }
+        .topbar-left h2 { font-size: 1.1rem; color: var(--primary-dark); }
+        .topbar-left .tag { font-size: 0.7rem; background: var(--primary-light); color: var(--primary-dark); padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .user-info { font-size: 0.85rem; color: var(--text-muted); }
+        .btn-logout { background: none; border: 1px solid var(--border); padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); }
+        .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* ─── Navigation Tabs ───────────────────────────────────── */
+        .nav-tabs {
+            background: white; border-bottom: 1px solid var(--border);
+            display: flex; gap: 0; overflow-x: auto; padding: 0 24px;
+        }
+        .nav-tab {
+            padding: 14px 20px; font-size: 0.9rem; font-weight: 500; color: var(--text-muted);
+            cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap;
+            transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+        }
+        .nav-tab:hover { color: var(--primary); }
+        .nav-tab.active { color: var(--primary-dark); border-bottom-color: var(--primary); font-weight: 600; }
+
+        /* ─── Content Area ──────────────────────────────────────── */
+        .content { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ─── Cards ─────────────────────────────────────────────── */
+        .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
+        .card h3 { font-size: 1rem; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+
+        /* ─── Stats ─────────────────────────────────────────────── */
+        .stat-card {
+            background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+            text-align: center; transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon { font-size: 2rem; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-dark); }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ─── Chat ──────────────────────────────────────────────── */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 220px); max-height: 600px; }
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+            background: #f8fafb; border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5; }
+        .msg-user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg-sean { background: white; color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: var(--shadow); }
+        .msg-sean .method { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; display: flex; gap: 8px; }
+        .msg-sean .method span { background: var(--primary-light); color: var(--primary-dark); padding: 1px 6px; border-radius: 4px; }
+        .chat-input {
+            display: flex; gap: 8px; padding: 12px 16px;
+            background: white; border-radius: 0 0 var(--radius) var(--radius);
+            border-top: 1px solid var(--border);
+        }
+        .chat-input input {
+            flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 24px;
+            font-size: 0.95rem; outline: none;
+        }
+        .chat-input input:focus { border-color: var(--primary); }
+        .chat-input button {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--primary);
+            color: white; border: none; font-size: 1.2rem; cursor: pointer;
+        }
+        .chat-input button:hover { background: var(--primary-dark); }
+
+        /* ─── Transactions ──────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 10px 12px; background: #f8fafc; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        tr:hover { background: #f8fafb; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-green { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-blue { background: var(--accent-light); color: var(--accent); }
+        .amount-debit { color: var(--danger); font-weight: 600; }
+        .amount-credit { color: var(--success); font-weight: 600; }
+        .confidence-bar { width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px; display: inline-block; vertical-align: middle; margin-left: 6px; }
+        .confidence-fill { height: 100%; border-radius: 3px; }
+
+        /* ─── Calculator ────────────────────────────────────────── */
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .calc-result { background: var(--primary-light); border-radius: var(--radius); padding: 20px; margin-top: 16px; }
+        .calc-result h4 { color: var(--primary-dark); margin-bottom: 8px; }
+        .calc-result .big-num { font-size: 2rem; font-weight: 700; color: var(--primary-dark); }
+
+        /* ─── Knowledge Base ────────────────────────────────────── */
+        .kb-item { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; transition: all 0.2s; }
+        .kb-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(16,185,129,0.1); }
+        .kb-item h4 { font-size: 0.95rem; margin-bottom: 6px; }
+        .kb-item .meta { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+        .kb-tag { display: inline-block; background: var(--accent-light); color: var(--accent); padding: 1px 8px; border-radius: 4px; font-size: 0.75rem; }
+
+        /* ─── Allocate Modal ────────────────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white; border-radius: var(--radius); padding: 30px;
+            max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+        }
+        .modal h3 { margin-bottom: 16px; }
+        .modal select { width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.95rem; margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+        /* ─── Filters ───────────────────────────────────────────── */
+        .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filter-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; background: white; font-size: 0.8rem; cursor: pointer; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ─── Responsive ────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .calc-grid { grid-template-columns: 1fr; }
+            .card-grid { grid-template-columns: 1fr 1fr; }
+            .content { padding: 16px; }
+            .msg { max-width: 90%; }
+        }
+        @media (max-width: 480px) {
+            .card-grid { grid-template-columns: 1fr; }
+            .nav-tab { padding: 12px 14px; font-size: 0.8rem; }
+        }
+
+        /* ─── Loading ───────────────────────────────────────────── */
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .typing-dots::after { content: '...'; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN SCREEN ═══════════════════ -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="logo">🧠</div>
+        <h1>SEAN AI</h1>
+        <p class="subtitle">Smart Expense Allocation Navigator</p>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" value="pos@test.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" value="pos123" required>
+            </div>
+            <div id="loginError" class="error-msg"></div>
+            <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+        </form>
+        <div class="login-hint">
+            <strong>Test Credentials:</strong><br>
+            pos@test.com / pos123 &nbsp;|&nbsp; admin@test.com / admin123
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════ MAIN APPLICATION ═══════════════════ -->
+<div id="app">
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <span class="logo">🧠</span>
+            <h2>SEAN AI</h2>
+            <span class="tag">MOCK MODE</span>
+        </div>
+        <div class="topbar-right">
+            <span class="user-info" id="userInfo"></span>
+            <button class="btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="nav-tab" data-tab="chat" onclick="switchTab('chat')">💬 Chat</button>
+        <button class="nav-tab" data-tab="transactions" onclick="switchTab('transactions')">🏦 Transactions</button>
+        <button class="nav-tab" data-tab="calculator" onclick="switchTab('calculator')">🧮 Calculator</button>
+        <button class="nav-tab" data-tab="knowledge" onclick="switchTab('knowledge')">📚 Knowledge Base</button>
+        <button class="nav-tab" data-tab="categories" onclick="switchTab('categories')">🏷️ Categories</button>
+    </div>
+
+    <div class="content">
+
+        <!-- ═══════ DASHBOARD TAB ═══════ -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="card-grid" id="statsGrid">
+                <!-- Stats loaded dynamically -->
+            </div>
+            <div class="card">
+                <h3>📈 Recent Activity</h3>
+                <div id="recentActivity">Loading...</div>
+            </div>
+            <div class="card">
+                <h3>⚡ Quick Actions</h3>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="btn btn-outline btn-sm" onclick="switchTab('chat')">💬 Ask SEAN</button>
+                    <button class="btn btn-outline btn-sm" onclick="switchTab('transactions')">🏦 View Transactions</button>
+                    <button class="btn btn-outline btn-sm" onclick="switchTab('calculator')">🧮 Tax Calculator</button>
+                    <button class="btn btn-outline btn-sm" onclick="promptTeach()">📝 Teach SEAN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ CHAT TAB ═══════ -->
+        <div id="tab-chat" class="tab-content">
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="msg msg-sean">
+                            Hello! I'm <strong>SEAN</strong> — your Smart Expense Allocation Navigator. 🧠<br><br>
+                            I can help you with:<br>
+                            • <strong>Allocate transactions</strong> — "What category is ENGEN SANDTON R850?"<br>
+                            • <strong>Tax calculations</strong> — "VAT on R1000 excl" or "PAYE salary R25000"<br>
+                            • <strong>Tax questions</strong> — "Is entertainment deductible?"<br>
+                            • <strong>Teach me</strong> — "LEER: Title | Content"<br><br>
+                            Ask me anything!
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Ask SEAN anything..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button onclick="sendChat()">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ TRANSACTIONS TAB ═══════ -->
+        <div id="tab-transactions" class="tab-content">
+            <div class="card">
+                <h3>🏦 Bank Transactions</h3>
+                <div class="filters">
+                    <button class="filter-btn active" onclick="filterTxns('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterTxns('unallocated', this)">⏳ Pending</button>
+                    <button class="filter-btn" onclick="filterTxns('allocated', this)">✅ Allocated</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Confidence</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="txnTableBody">
+                            <tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <h3>➕ Add Transaction</h3>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                    <div class="form-group" style="flex:2;min-width:200px;">
+                        <label>Description</label>
+                        <input type="text" id="newTxnDesc" placeholder="e.g. ENGEN SANDTON FUEL">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:120px;">
+                        <label>Amount (negative = debit)</label>
+                        <input type="number" id="newTxnAmount" placeholder="-850" step="0.01">
+                    </div>
+                    <button class="btn btn-primary btn-sm" style="width:auto;margin-bottom:16px;" onclick="addTransaction()">Add & Auto-Allocate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ CALCULATOR TAB ═══════ -->
+        <div id="tab-calculator" class="tab-content">
+            <div class="calc-grid">
+                <div class="card">
+                    <h3>🧮 Natural Language Calculator</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">
+                        Type any SA tax question in plain English or Afrikaans.
+                    </p>
+                    <div class="form-group">
+                        <label>Your Question</label>
+                        <input type="text" id="calcQuery" placeholder='e.g. "VAT on R1000 excl"' onkeydown="if(event.key==='Enter')runCalc()">
+                    </div>
+                    <button class="btn btn-primary btn-sm" style="width:auto;" onclick="runCalc()">Calculate</button>
+                    <div id="calcResult" class="calc-result" style="display:none;"></div>
+                </div>
+                <div class="card">
+                    <h3>⚡ Quick Calculations</h3>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('VAT on R1000 excl')">VAT on R1,000 (excl)</button>
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('VAT from R1150 incl')">Extract VAT from R1,150</button>
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('PAYE salary R25000 30 years old')">PAYE on R25,000 salary</button>
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('PAYE salary R50000 45 years old')">PAYE on R50,000 salary</button>
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('income tax R500000 40 years old')">Income Tax on R500k</button>
+                        <button class="btn btn-outline btn-sm" onclick="quickCalc('VAT on R5000 excl')">VAT on R5,000 (excl)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ KNOWLEDGE BASE TAB ═══════ -->
+        <div id="tab-knowledge" class="tab-content">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="margin:0;">📚 Knowledge Base (Codex)</h3>
+                    <button class="btn btn-accent btn-sm" onclick="promptTeach()">+ Teach SEAN</button>
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <input type="text" id="kbSearch" placeholder="Search knowledge base..." onkeydown="if(event.key==='Enter')searchKB()">
+                </div>
+                <div id="kbItems">Loading...</div>
+            </div>
+        </div>
+
+        <!-- ═══════ CATEGORIES TAB ═══════ -->
+        <div id="tab-categories" class="tab-content">
+            <div class="card">
+                <h3>🏷️ Allocation Categories (<span id="catCount">0</span>)</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Code</th><th>Label</th><th>Tax Category</th><th>VAT Claimable</th></tr></thead>
+                        <tbody id="catTableBody"><tr><td colspan="4" style="text-align:center;padding:40px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ═══════ ALLOCATE MODAL ═══════ -->
+<div class="modal-overlay" id="allocateModal">
+    <div class="modal">
+        <h3>📝 Allocate Transaction</h3>
+        <p id="modalTxnDesc" style="font-size:0.9rem;color:var(--text-muted);margin-bottom:12px;"></p>
+        <p id="modalTxnAmt" style="font-weight:600;margin-bottom:16px;"></p>
+        <div class="form-group">
+            <label>Suggested by SEAN</label>
+            <div id="modalSuggestion" style="margin-bottom:12px;"></div>
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select id="modalCategory"></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary btn-sm" style="width:auto;" onclick="confirmAllocate()">Confirm & Learn</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const API = '/api';
+let token = null;
+let user = null;
+let allCategories = [];
+let allTransactions = [];
+let currentTxnId = null;
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    errEl.style.display = 'none';
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        token = data.token;
+        user = data.user;
+        localStorage.setItem('sean_token', token);
+        localStorage.setItem('sean_user', JSON.stringify(user));
+        showApp();
+    } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+    } finally {
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+    }
+}
+
+function logout() {
+    localStorage.removeItem('sean_token');
+    localStorage.removeItem('sean_user');
+    token = null; user = null;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function checkAuth() {
+    // ── SSO Pickup from Ecosystem Dashboard ──
+    const ssoSource = localStorage.getItem('sso_source');
+    if (ssoSource === 'ecosystem') {
+        const ssoToken = localStorage.getItem('token');
+        const ssoUser = localStorage.getItem('user');
+        if (ssoToken && ssoUser) {
+            try {
+                token = ssoToken;
+                user = JSON.parse(ssoUser);
+                localStorage.setItem('sean_token', token);
+                localStorage.setItem('sean_user', ssoUser);
+                localStorage.removeItem('sso_source');
+                console.log('[SSO] Ecosystem bypass — user:', user.fullName || user.email);
+                showApp();
+                return;
+            } catch (e) {
+                console.warn('[SSO] Failed to parse ecosystem data:', e);
+                localStorage.removeItem('sso_source');
+            }
+        }
+    }
+
+    token = localStorage.getItem('sean_token');
+    const u = localStorage.getItem('sean_user');
+    if (token && u) { user = JSON.parse(u); showApp(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════════
+async function api(path, opts = {}) {
+    const res = await fetch(`${API}${path}`, {
+        ...opts,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...(opts.headers || {})
+        }
+    });
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHOW APP
+// ═══════════════════════════════════════════════════════════
+function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userInfo').textContent = user?.fullName || user?.email || '';
+    loadDashboard();
+    loadCategories();
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function switchTab(tabId) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === `tab-${tabId}`));
+    if (tabId === 'dashboard') loadDashboard();
+    if (tabId === 'transactions') loadTransactions();
+    if (tabId === 'knowledge') loadKnowledge();
+    if (tabId === 'categories') loadCategories();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+async function loadDashboard() {
+    try {
+        const stats = await api('/sean/stats');
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-icon">🏦</div><div class="stat-value">${stats.transactions?.total || 0}</div><div class="stat-label">Transactions</div></div>
+            <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">${stats.transactions?.allocationRate || 0}%</div><div class="stat-label">Auto-Allocated</div></div>
+            <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">${stats.globalPatterns || 0}</div><div class="stat-label">Global Patterns</div></div>
+            <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value">${stats.knowledgeBase?.totalItems || 0}</div><div class="stat-label">Knowledge Items</div></div>
+            <div class="stat-card"><div class="stat-icon">📐</div><div class="stat-value">${stats.rules?.companyRules || 0}</div><div class="stat-label">Company Rules</div></div>
+        `;
+        // Recent activity
+        const txns = await api('/sean/transactions?limit=5');
+        const html = txns.transactions.map(t => {
+            const cls = t.amount < 0 ? 'amount-debit' : 'amount-credit';
+            const cat = t.confirmedCategory || t.suggestedCategory || '—';
+            const badge = t.confirmedCategory ? 'badge-green' : (t.suggestedCategory ? 'badge-yellow' : 'badge-red');
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+                <div><strong>${t.description}</strong><br><span style="font-size:0.8rem;color:var(--text-muted)">${t.date}</span></div>
+                <div style="text-align:right;"><span class="${cls}">R ${Math.abs(t.amount).toFixed(2)}</span><br><span class="badge ${badge}">${cat}</span></div>
+            </div>`;
+        }).join('');
+        document.getElementById('recentActivity').innerHTML = html || '<p style="color:var(--text-muted);">No transactions yet.</p>';
+    } catch (err) {
+        document.getElementById('statsGrid').innerHTML = `<div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label">${err.message}</div></div>`;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════════
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+
+    const container = document.getElementById('chatMessages');
+    container.innerHTML += `<div class="msg msg-user">${escHtml(msg)}</div>`;
+    container.innerHTML += `<div class="msg msg-sean" id="typing"><span class="typing-dots">Thinking</span></div>`;
+    container.scrollTop = container.scrollHeight;
+
+    try {
+        const data = await api('/sean/chat', { method: 'POST', body: JSON.stringify({ message: msg }) });
+        document.getElementById('typing').remove();
+        const answer = data.answer || data.suggestion || 'I\'m not sure about that.';
+        const methodHtml = data.method ? `<div class="method"><span>${data.intent || ''}</span><span>${data.method || ''}</span><span>${data.confidence || 0}%</span></div>` : '';
+        const citHtml = data.citations?.length ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">📎 ${data.citations.join(', ')}</div>` : '';
+        container.innerHTML += `<div class="msg msg-sean">${escHtml(answer)}${citHtml}${methodHtml}</div>`;
+    } catch (err) {
+        document.getElementById('typing')?.remove();
+        container.innerHTML += `<div class="msg msg-sean" style="border-left:3px solid var(--danger);">Error: ${escHtml(err.message)}</div>`;
+    }
+    container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRANSACTIONS
+// ═══════════════════════════════════════════════════════════
+async function loadTransactions(filter) {
+    try {
+        const params = filter === 'unallocated' ? '?unallocated=true' : '';
+        const data = await api(`/sean/transactions${params}`);
+        allTransactions = data.transactions;
+        renderTransactions(filter);
+    } catch (err) {
+        document.getElementById('txnTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger)">${err.message}</td></tr>`;
+    }
+}
+
+function renderTransactions(filter) {
+    let txns = allTransactions;
+    if (filter === 'allocated') txns = txns.filter(t => t.confirmedCategory);
+    if (filter === 'unallocated') txns = txns.filter(t => !t.confirmedCategory);
+
+    if (!txns.length) {
+        document.getElementById('txnTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No transactions found.</td></tr>`;
+        return;
+    }
+
+    document.getElementById('txnTableBody').innerHTML = txns.map(t => {
+        const cls = t.amount < 0 ? 'amount-debit' : 'amount-credit';
+        const cat = t.confirmedCategory || t.suggestedCategory || '—';
+        const badge = t.confirmedCategory ? 'badge-green' : (t.suggestedCategory ? 'badge-yellow' : 'badge-red');
+        const conf = t.confidence || 0;
+        const confColor = conf >= 80 ? '#10b981' : conf >= 50 ? '#f59e0b' : '#ef4444';
+        const actionBtn = t.confirmedCategory
+            ? `<span class="badge badge-green">✓ Done</span>`
+            : `<button class="btn btn-outline btn-sm" onclick="openAllocate(${t.id}, '${escAttr(t.description)}', ${t.amount}, '${escAttr(t.suggestedCategory || '')}', ${t.confidence || 0})">Allocate</button>`;
+        return `<tr>
+            <td>${t.date || '—'}</td>
+            <td><strong>${escHtml(t.description)}</strong>${t.merchant ? `<br><span style="font-size:0.8rem;color:var(--text-muted)">${escHtml(t.merchant)}</span>` : ''}</td>
+            <td class="${cls}">R ${Math.abs(t.amount).toFixed(2)}</td>
+            <td><span class="badge ${badge}">${cat}</span></td>
+            <td>${conf}% <span class="confidence-bar"><span class="confidence-fill" style="width:${conf}%;background:${confColor};"></span></span></td>
+            <td>${actionBtn}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterTxns(filter, el) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    if (filter === 'all') renderTransactions();
+    else renderTransactions(filter);
+}
+
+async function addTransaction() {
+    const desc = document.getElementById('newTxnDesc').value.trim();
+    const amt = parseFloat(document.getElementById('newTxnAmount').value);
+    if (!desc || isNaN(amt)) { alert('Please enter a description and amount.'); return; }
+
+    try {
+        await api('/sean/transactions', { method: 'POST', body: JSON.stringify({ description: desc, amount: amt }) });
+        document.getElementById('newTxnDesc').value = '';
+        document.getElementById('newTxnAmount').value = '';
+        loadTransactions();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALLOCATE MODAL
+// ═══════════════════════════════════════════════════════════
+function openAllocate(id, desc, amount, suggested, confidence) {
+    currentTxnId = id;
+    document.getElementById('modalTxnDesc').textContent = desc;
+    document.getElementById('modalTxnAmt').innerHTML = `<span class="${amount < 0 ? 'amount-debit' : 'amount-credit'}">R ${Math.abs(amount).toFixed(2)}</span>`;
+    document.getElementById('modalSuggestion').innerHTML = suggested
+        ? `<span class="badge badge-blue">${suggested}</span> (${confidence}% confidence)`
+        : '<span style="color:var(--text-muted)">No suggestion</span>';
+
+    const sel = document.getElementById('modalCategory');
+    sel.innerHTML = '<option value="">— Select category —</option>' + allCategories.map(c =>
+        `<option value="${c.code}" ${c.code === suggested ? 'selected' : ''}>${c.code} — ${c.label}</option>`
+    ).join('');
+
+    document.getElementById('allocateModal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('allocateModal').classList.remove('show'); currentTxnId = null; }
+
+async function confirmAllocate() {
+    const category = document.getElementById('modalCategory').value;
+    if (!category) { alert('Please select a category.'); return; }
+    try {
+        await api(`/sean/transactions/${currentTxnId}`, { method: 'PATCH', body: JSON.stringify({ category, learn: true }) });
+        closeModal();
+        loadTransactions();
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALCULATOR
+// ═══════════════════════════════════════════════════════════
+function quickCalc(query) {
+    document.getElementById('calcQuery').value = query;
+    runCalc();
+}
+
+async function runCalc() {
+    const query = document.getElementById('calcQuery').value.trim();
+    if (!query) return;
+    const resultEl = document.getElementById('calcResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="loading-spinner"></div>';
+
+    try {
+        const data = await api('/sean/calculate', { method: 'POST', body: JSON.stringify({ query }) });
+        const result = data.formatted || data.result;
+        const resultObj = typeof data.result === 'object' ? data.result : null;
+
+        let detailHtml = '';
+        if (resultObj) {
+            detailHtml = '<div style="margin-top:12px;font-size:0.85rem;">';
+            for (const [k, v] of Object.entries(resultObj)) {
+                if (typeof v === 'number') detailHtml += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${k.replace(/_/g, ' ')}</span><strong>R ${v.toFixed(2)}</strong></div>`;
+                else detailHtml += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${k.replace(/_/g, ' ')}</span><strong>${v}</strong></div>`;
+            }
+            detailHtml += '</div>';
+        }
+
+        resultEl.innerHTML = `
+            <h4>📊 ${escHtml(query)}</h4>
+            <div class="big-num">${typeof result === 'string' ? result : 'R ' + Number(result).toFixed(2)}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">Type: ${data.parsed?.type || '—'}</div>
+            ${detailHtml}
+        `;
+    } catch (err) {
+        resultEl.innerHTML = `<h4 style="color:var(--danger);">Error</h4><p>${escHtml(err.message)}</p><p style="font-size:0.8rem;color:var(--text-muted);">Try: "VAT on R1000 excl" or "PAYE salary R25000 30 years old"</p>`;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════════
+async function loadKnowledge() {
+    try {
+        const data = await api('/sean/codex');
+        const container = document.getElementById('kbItems');
+        if (!data.items.length) { container.innerHTML = '<p style="color:var(--text-muted);">No knowledge items yet. Teach SEAN something!</p>'; return; }
+        container.innerHTML = data.items.map(item => `
+            <div class="kb-item">
+                <h4>${escHtml(item.title)}</h4>
+                <div class="meta">
+                    <span class="badge badge-blue">${item.domain}</span>
+                    <span class="badge" style="background:#f1f5f9;color:var(--text-muted);">${item.layer}</span>
+                    <span class="badge" style="background:#fef3c7;color:#92400e;">${item.contentType}</span>
+                    ${(item.tags || []).map(t => `<span class="kb-tag">${t}</span>`).join('')}
+                </div>
+                <div class="meta" style="margin-top:6px;">
+                    <span>📎 ${item.citationId || '—'}</span>
+                    <span>Status: ${item.status}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        document.getElementById('kbItems').innerHTML = `<p style="color:var(--danger);">${err.message}</p>`;
+    }
+}
+
+async function searchKB() {
+    const q = document.getElementById('kbSearch').value.trim();
+    if (!q) { loadKnowledge(); return; }
+    try {
+        const data = await api(`/sean/codex/search?q=${encodeURIComponent(q)}`);
+        const container = document.getElementById('kbItems');
+        if (!data.items.length) { container.innerHTML = `<p style="color:var(--text-muted);">No results for "${escHtml(q)}"</p>`; return; }
+        container.innerHTML = data.items.map(item => `
+            <div class="kb-item">
+                <h4>${escHtml(item.title)}</h4>
+                <div class="meta">
+                    <span class="badge badge-blue">${item.domain}</span>
+                    <span class="badge" style="background:#fef3c7;color:#92400e;">${item.contentType}</span>
+                    ${(item.tags || []).map(t => `<span class="kb-tag">${t}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        document.getElementById('kbItems').innerHTML = `<p style="color:var(--danger);">${err.message}</p>`;
+    }
+}
+
+function promptTeach() {
+    const msg = prompt('Teach SEAN new knowledge:\n\nFormat: LEER: Title | Content\n\nExample: LEER: Travel Claim Rules | Business travel can be claimed at R4.64/km using SARS fixed rate');
+    if (msg) teachSean(msg);
+}
+
+async function teachSean(message) {
+    try {
+        const data = await api('/sean/codex/teach', { method: 'POST', body: JSON.stringify({ message }) });
+        if (data.success) {
+            alert('✅ SEAN learned something new!\n\n' + (data.message || 'Knowledge saved.'));
+            loadKnowledge();
+        } else {
+            alert('⚠️ Could not save:\n' + (data.message || 'Unknown error'));
+        }
+    } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════
+async function loadCategories() {
+    try {
+        const data = await api('/sean/categories');
+        allCategories = data.categories;
+        document.getElementById('catCount').textContent = data.count;
+        document.getElementById('catTableBody').innerHTML = data.categories.map(c => `
+            <tr>
+                <td><strong>${c.code}</strong></td>
+                <td>${c.label}</td>
+                <td>${c.taxCategory || '—'}</td>
+                <td>${c.vatClaimable ? '<span class="badge badge-green">Yes</span>' : '<span class="badge" style="background:#f1f5f9;color:var(--text-muted);">No</span>'}</td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        document.getElementById('catTableBody').innerHTML = `<tr><td colspan="4" style="color:var(--danger)">${err.message}</td></tr>`;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s) { return (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', checkAuth);
+</script>
+</body>
+</html>

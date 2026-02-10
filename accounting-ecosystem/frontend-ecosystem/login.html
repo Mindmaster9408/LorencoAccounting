@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lorenco Ecosystem — Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            animation: float 20s infinite ease-in-out;
+        }
+        .particle:nth-child(1) { width: 300px; height: 300px; top: -50px; left: -50px; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 200px; height: 200px; top: 50%; right: -40px; animation-delay: -5s; }
+        .particle:nth-child(3) { width: 150px; height: 150px; bottom: -30px; left: 30%; animation-delay: -10s; }
+        .particle:nth-child(4) { width: 250px; height: 250px; top: 20%; left: 60%; animation-delay: -15s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.03; }
+            50% { transform: translateY(-40px) rotate(180deg); opacity: 0.08; }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            padding: 20px;
+        }
+
+        /* Logo / Brand */
+        .brand {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .brand-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            font-size: 36px;
+            color: white;
+            transform: rotate(-5deg);
+            transition: transform 0.3s;
+        }
+        .brand-icon:hover { transform: rotate(0deg) scale(1.05); }
+        .brand h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .brand p {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.95rem;
+            margin-top: 6px;
+        }
+
+        /* Card */
+        .login-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 40px 36px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .login-card h2 {
+            color: white;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+        .login-card .subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+            margin-bottom: 28px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .form-group input::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+        .form-group input:focus {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .form-group .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 38px;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+        .form-group .toggle-password:hover { color: rgba(255,255,255,0.7); }
+
+        .remember-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .remember-row label {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .remember-row input[type="checkbox"] {
+            accent-color: #667eea;
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-login .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        .btn-login.loading .btn-text { display: none; }
+        .btn-login.loading .spinner { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-msg {
+            display: none;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .error-msg.show { display: block; }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 28px 0;
+            gap: 16px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+        .divider span {
+            color: rgba(255,255,255,0.35);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Direct app links */
+        .app-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .app-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+        }
+        .app-link:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .app-link .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .app-link.pos .icon { background: rgba(59, 130, 246, 0.2); }
+        .app-link.payroll .icon { background: rgba(16, 185, 129, 0.2); }
+        .app-link.accounting .icon { background: rgba(245, 158, 11, 0.2); }
+        .app-link.sean .icon { background: rgba(139, 92, 246, 0.2); }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255,255,255,0.25);
+            font-size: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .login-card { padding: 30px 24px; }
+            .brand h1 { font-size: 1.6rem; }
+            .app-links { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="brand">
+            <div class="brand-icon">&#9670;</div>
+            <h1>Lorenco Ecosystem</h1>
+            <p>All your business tools — one login</p>
+        </div>
+
+        <div class="login-card">
+            <h2>Sign In</h2>
+            <p class="subtitle">Access your dashboard & all connected apps</p>
+
+            <div class="error-msg" id="errorMsg"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email / Username</label>
+                    <input type="text" id="loginId" placeholder="you@company.co.za" autocomplete="email" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    <span class="toggle-password" onclick="togglePassword()">&#128065;</span>
+                </div>
+
+                <div class="remember-row">
+                    <label><input type="checkbox" id="rememberMe" checked> Remember me</label>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnLogin">
+                    <span class="btn-text">Sign In to Ecosystem</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+
+            <div class="divider"><span>or login directly to</span></div>
+
+            <div class="app-links">
+                <a href="/pos" class="app-link pos">
+                    <div class="icon">&#128722;</div>
+                    <span>Checkout Charlie</span>
+                </a>
+                <a href="/payroll/login.html" class="app-link payroll">
+                    <div class="icon">&#128176;</div>
+                    <span>Lorenco Paytime</span>
+                </a>
+                <a href="/accounting" class="app-link accounting">
+                    <div class="icon">&#128200;</div>
+                    <span>Accounting</span>
+                </a>
+                <a href="/sean" class="app-link sean">
+                    <div class="icon">&#129302;</div>
+                    <span>SEAN AI</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; 2025 The Infinite Legacy &middot; Lorenco Ecosystem v1.0
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Check if already logged into ecosystem
+        (function checkExistingSession() {
+            const token = localStorage.getItem('eco_token');
+            if (token) {
+                // Verify token is still valid
+                fetch(`${API_BASE}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(r => { if (r.ok) return r.json(); throw new Error('expired'); })
+                .then(() => { window.location.href = '/dashboard'; })
+                .catch(() => { localStorage.removeItem('eco_token'); localStorage.removeItem('eco_user'); });
+            }
+        })();
+
+        function togglePassword() {
+            const pw = document.getElementById('password');
+            pw.type = pw.type === 'password' ? 'text' : 'password';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            const loginId = document.getElementById('loginId').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!loginId || !password) {
+                return showError('Please enter your email and password.');
+            }
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: loginId, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                // Store ecosystem session
+                localStorage.setItem('eco_token', data.token);
+                localStorage.setItem('eco_user', JSON.stringify(data.user));
+                if (data.companies) {
+                    localStorage.setItem('eco_companies', JSON.stringify(data.companies));
+                }
+                if (data.isSuperAdmin) {
+                    localStorage.setItem('eco_super_admin', 'true');
+                }
+
+                // Navigate to ecosystem dashboard
+                window.location.href = '/dashboard';
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

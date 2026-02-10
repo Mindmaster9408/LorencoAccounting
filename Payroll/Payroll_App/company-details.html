@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Company Details - Lorenco Paytime</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px; background: white; border-radius: 15px;
+            padding: 25px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content; position: sticky; top: 20px;
+        }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+        .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-section { margin-top: 20px; }
+        .sidebar-section-title {
+            padding: 10px 20px; color: #999; font-size: 0.75rem;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .sidebar-link {
+            display: block; padding: 12px 20px; color: #666; text-decoration: none;
+            transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500;
+        }
+        .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+        .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+        .company-carousel { margin-top: 15px; padding: 15px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .carousel-title { font-size: 0.85rem; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; }
+        .carousel-companies { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .carousel-company {
+            background: #f8f9fa; padding: 10px 12px; border-radius: 6px; font-size: 0.85rem;
+            color: #333; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .carousel-company:hover { background: #eee; border-color: #667eea; color: #667eea; }
+        .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+        .btn-switch { background: #667eea; color: white; }
+        .btn-switch:hover { background: #5568d3; }
+        .btn-logout { background: #eee; color: #333; }
+        .btn-logout:hover { background: #ddd; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; }
+        .page-header {
+            background: white; padding: 30px; border-radius: 15px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .page-header h1 { color: #667eea; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* CARDS */
+        .card {
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .card h3 {
+            color: #667eea; margin-bottom: 15px; padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .detail-section { background: #f8f9fa; padding: 20px; border-radius: 10px; }
+        .detail-section-title {
+            font-weight: 600; color: #667eea; margin-bottom: 15px; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .detail-item { margin-bottom: 12px; }
+        .detail-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .detail-value { font-size: 15px; font-weight: 600; color: #333; }
+        .detail-value.empty { color: #ccc; font-style: italic; font-weight: 400; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 50px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 15px; padding: 30px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea; }
+        .modal-header h3 { color: #667eea; margin: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-section-title { font-weight: 700; color: #667eea; font-size: 0.95rem; margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="paye-reconciliation.html" class="sidebar-link">🧾 PAYE Reconciliation</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
+                <a href="company-details.html" class="sidebar-link active">🏢 Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1 id="pageTitle">Company Details</h1>
+                <button class="btn btn-primary" data-permission="EDIT_COMPANY" onclick="openEditModal()">Edit Company Details</button>
+            </div>
+
+            <!-- Company Info Display -->
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <div class="detail-section-title">General Information</div>
+                    <div class="detail-item"><div class="detail-label">Company Name</div><div class="detail-value" id="d-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Trading Name</div><div class="detail-value" id="d-trading-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Registration Number</div><div class="detail-value" id="d-reg-number">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Nature of Business</div><div class="detail-value" id="d-nature">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Financial Year End</div><div class="detail-value" id="d-year-end">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Tax & Statutory</div>
+                    <div class="detail-item"><div class="detail-label">PAYE Reference Number</div><div class="detail-value" id="d-paye-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">UIF Reference Number</div><div class="detail-value" id="d-uif-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">SDL Reference Number</div><div class="detail-value" id="d-sdl-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">COID Reference Number</div><div class="detail-value" id="d-coid-ref">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Income Tax Number</div><div class="detail-value" id="d-tax-number">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Contact Details</div>
+                    <div class="detail-item"><div class="detail-label">Email</div><div class="detail-value" id="d-email">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value" id="d-phone">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Website</div><div class="detail-value" id="d-website">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Contact Person</div><div class="detail-value" id="d-contact-person">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Physical Address</div>
+                    <div class="detail-item"><div class="detail-label">Street Address</div><div class="detail-value" id="d-street">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Suburb</div><div class="detail-value" id="d-suburb">-</div></div>
+                    <div class="detail-item"><div class="detail-label">City</div><div class="detail-value" id="d-city">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Province</div><div class="detail-value" id="d-province">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Postal Code</div><div class="detail-value" id="d-postal-code">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Banking Details</div>
+                    <div class="detail-item"><div class="detail-label">Bank Name</div><div class="detail-value" id="d-bank-name">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Holder</div><div class="detail-value" id="d-bank-holder">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Number</div><div class="detail-value" id="d-bank-account">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Branch Code</div><div class="detail-value" id="d-bank-branch">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Account Type</div><div class="detail-value" id="d-bank-type">-</div></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Payroll Settings</div>
+                    <div class="detail-item"><div class="detail-label">Pay Frequencies</div><div class="detail-value" id="d-pay-frequency">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Pay Day</div><div class="detail-value" id="d-pay-day">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Normal Working Hours (per week)</div><div class="detail-value" id="d-work-hours">-</div></div>
+                    <div class="detail-item"><div class="detail-label">Date Created</div><div class="detail-value" id="d-created">-</div></div>
+                </div>
+            </div>
+
+            <!-- Branding & Export Settings -->
+            <div class="card" style="margin-top: 20px;">
+                <h3>Branding & Export Settings</h3>
+                <div class="detail-grid">
+                    <div class="detail-section">
+                        <div class="detail-section-title">Company Logo</div>
+                        <div id="logo-preview" style="margin-bottom: 15px;">
+                            <div style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; padding: 30px; text-align: center; color: #999;">
+                                No logo uploaded
+                            </div>
+                        </div>
+                        <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/svg+xml" style="display:none;" onchange="handleLogoUpload(event)">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary btn-sm" data-permission="EDIT_COMPANY" onclick="document.getElementById('logoFileInput').click()">Upload Logo</button>
+                            <button class="btn btn-sm" data-permission="EDIT_COMPANY" style="background:#eee; color:#333;" onclick="removeLogo()">Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Payslip Branding</div>
+                        <div class="detail-item"><div class="detail-label">Display Name on Payslips</div><div class="detail-value" id="d-company-name-display">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Address Line 1</div><div class="detail-value" id="d-address-line1">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Sage Pastel Account Codes</div>
+                        <div class="detail-item"><div class="detail-label">Salaries & Wages (Debit)</div><div class="detail-value" id="d-sage-salaries">-</div></div>
+                        <div class="detail-item"><div class="detail-label">PAYE Liability (Credit)</div><div class="detail-value" id="d-sage-paye">-</div></div>
+                        <div class="detail-item"><div class="detail-label">UIF Liability (Credit)</div><div class="detail-value" id="d-sage-uif">-</div></div>
+                        <div class="detail-item"><div class="detail-label">SDL Liability (Credit)</div><div class="detail-value" id="d-sage-sdl">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Bank Account (Credit)</div><div class="detail-value" id="d-sage-bank">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Xero Account Codes</div>
+                        <div class="detail-item"><div class="detail-label">Wages Expense (Debit)</div><div class="detail-value" id="d-xero-wages">-</div></div>
+                        <div class="detail-item"><div class="detail-label">PAYE Payable (Credit)</div><div class="detail-value" id="d-xero-paye">-</div></div>
+                        <div class="detail-item"><div class="detail-label">UIF Payable (Credit)</div><div class="detail-value" id="d-xero-uif">-</div></div>
+                        <div class="detail-item"><div class="detail-label">Bank / Wages Payable (Credit)</div><div class="detail-value" id="d-xero-bank">-</div></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Banking / EFT Codes</div>
+                        <div class="detail-item"><div class="detail-label">ABSA User Code</div><div class="detail-value" id="d-absa-code">-</div></div>
+                        <div class="detail-item"><div class="detail-label">FNB Originator Code</div><div class="detail-value" id="d-fnb-code">-</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Company Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Company Details</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal()">Close</button>
+            </div>
+            <form onsubmit="saveCompanyDetails(event)">
+                <div class="form-section-title">General Information</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Company Name *</label><input type="text" id="f-name" required></div>
+                    <div class="form-group"><label>Trading Name</label><input type="text" id="f-trading-name"></div>
+                    <div class="form-group"><label>Registration Number</label><input type="text" id="f-reg-number" placeholder="e.g. 2024/123456/07"></div>
+                    <div class="form-group"><label>Nature of Business</label><input type="text" id="f-nature" placeholder="e.g. IT Services"></div>
+                    <div class="form-group"><label>Financial Year End</label><select id="f-year-end">
+                        <option value="">Select month</option>
+                        <option value="January">January</option><option value="February">February</option>
+                        <option value="March">March</option><option value="April">April</option>
+                        <option value="May">May</option><option value="June">June</option>
+                        <option value="July">July</option><option value="August">August</option>
+                        <option value="September">September</option><option value="October">October</option>
+                        <option value="November">November</option><option value="December">December</option>
+                    </select></div>
+                </div>
+
+                <div class="form-section-title">Tax & Statutory</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>PAYE Reference Number</label><input type="text" id="f-paye-ref" placeholder="e.g. 7123456789"></div>
+                    <div class="form-group"><label>UIF Reference Number</label><input type="text" id="f-uif-ref" placeholder="e.g. U123456789"></div>
+                    <div class="form-group"><label>SDL Reference Number</label><input type="text" id="f-sdl-ref" placeholder="e.g. L123456789"></div>
+                    <div class="form-group"><label>COID Reference Number</label><input type="text" id="f-coid-ref" placeholder="Compensation Fund ref"></div>
+                    <div class="form-group"><label>Income Tax Number</label><input type="text" id="f-tax-number" placeholder="e.g. 9123456789"></div>
+                </div>
+
+                <div class="form-section-title">Contact Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Email</label><input type="email" id="f-email"></div>
+                    <div class="form-group"><label>Phone</label><input type="tel" id="f-phone"></div>
+                    <div class="form-group"><label>Website</label><input type="url" id="f-website" placeholder="https://"></div>
+                    <div class="form-group"><label>Contact Person</label><input type="text" id="f-contact-person"></div>
+                </div>
+
+                <div class="form-section-title">Physical Address</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Street Address</label><input type="text" id="f-street"></div>
+                    <div class="form-group"><label>Suburb</label><input type="text" id="f-suburb"></div>
+                    <div class="form-group"><label>City</label><input type="text" id="f-city"></div>
+                    <div class="form-group"><label>Province</label><select id="f-province">
+                        <option value="">Select province</option>
+                        <option value="Eastern Cape">Eastern Cape</option>
+                        <option value="Free State">Free State</option>
+                        <option value="Gauteng">Gauteng</option>
+                        <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                        <option value="Limpopo">Limpopo</option>
+                        <option value="Mpumalanga">Mpumalanga</option>
+                        <option value="North West">North West</option>
+                        <option value="Northern Cape">Northern Cape</option>
+                        <option value="Western Cape">Western Cape</option>
+                    </select></div>
+                    <div class="form-group"><label>Postal Code</label><input type="text" id="f-postal-code" maxlength="4"></div>
+                </div>
+
+                <div class="form-section-title">Banking Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bank Name</label><select id="f-bank-name">
+                        <option value="">Select bank</option>
+                        <option value="ABSA">ABSA</option>
+                        <option value="Capitec">Capitec</option>
+                        <option value="FNB">FNB</option>
+                        <option value="Nedbank">Nedbank</option>
+                        <option value="Standard Bank">Standard Bank</option>
+                        <option value="Investec">Investec</option>
+                        <option value="TymeBank">TymeBank</option>
+                        <option value="African Bank">African Bank</option>
+                        <option value="Other">Other</option>
+                    </select></div>
+                    <div class="form-group"><label>Account Holder</label><input type="text" id="f-bank-holder"></div>
+                    <div class="form-group"><label>Account Number</label><input type="text" id="f-bank-account"></div>
+                    <div class="form-group"><label>Branch Code</label><input type="text" id="f-bank-branch"></div>
+                    <div class="form-group"><label>Account Type</label><select id="f-bank-type">
+                        <option value="">Select type</option>
+                        <option value="Current/Cheque">Current/Cheque</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Transmission">Transmission</option>
+                    </select></div>
+                </div>
+
+                <div class="form-section-title">Payroll Settings</div>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Pay Frequencies (select all that apply)</label>
+                        <div style="display: flex; gap: 20px; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-top: 5px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Monthly" style="width: auto; cursor: pointer;">
+                                <span>Monthly</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Bi-Weekly" style="width: auto; cursor: pointer;">
+                                <span>Bi-Weekly</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                <input type="checkbox" name="pay-frequency" value="Weekly" style="width: auto; cursor: pointer;">
+                                <span>Weekly</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Pay Day (day of month)</label><input type="number" id="f-pay-day" min="1" max="31" placeholder="e.g. 25"></div>
+                    <div class="form-group"><label>Normal Working Hours (per week)</label><input type="number" id="f-work-hours" min="1" max="60" step="0.5" placeholder="e.g. 45"></div>
+                </div>
+
+                <div class="form-section-title">Payslip Branding</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Display Name on Payslips</label><input type="text" id="f-company-name-display" placeholder="e.g. Acme (Pty) Ltd"></div>
+                    <div class="form-group"><label>Address Line 1 (for payslip header)</label><input type="text" id="f-address-line1" placeholder="e.g. 123 Main Street, Sandton, 2196"></div>
+                </div>
+
+                <div class="form-section-title">Sage Pastel Account Codes</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Salaries & Wages (Debit)</label><input type="text" id="f-sage-salaries" placeholder="e.g. 5000"></div>
+                    <div class="form-group"><label>PAYE Liability (Credit)</label><input type="text" id="f-sage-paye" placeholder="e.g. 2100"></div>
+                    <div class="form-group"><label>UIF Liability (Credit)</label><input type="text" id="f-sage-uif" placeholder="e.g. 2101"></div>
+                    <div class="form-group"><label>UIF Expense (Debit)</label><input type="text" id="f-sage-uif-expense" placeholder="e.g. 5010"></div>
+                    <div class="form-group"><label>SDL Liability (Credit)</label><input type="text" id="f-sage-sdl" placeholder="e.g. 2102"></div>
+                    <div class="form-group"><label>SDL Expense (Debit)</label><input type="text" id="f-sage-sdl-expense" placeholder="e.g. 5020"></div>
+                    <div class="form-group"><label>Bank Account (Credit)</label><input type="text" id="f-sage-bank" placeholder="e.g. 1000"></div>
+                </div>
+
+                <div class="form-section-title">Xero Account Codes</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Wages Expense (Debit)</label><input type="text" id="f-xero-wages" placeholder="e.g. 400"></div>
+                    <div class="form-group"><label>PAYE Payable (Credit)</label><input type="text" id="f-xero-paye" placeholder="e.g. 825"></div>
+                    <div class="form-group"><label>UIF Payable (Credit)</label><input type="text" id="f-xero-uif" placeholder="e.g. 826"></div>
+                    <div class="form-group"><label>UIF Expense (Debit)</label><input type="text" id="f-xero-uif-expense" placeholder="e.g. 401"></div>
+                    <div class="form-group"><label>Bank / Wages Payable (Credit)</label><input type="text" id="f-xero-bank" placeholder="e.g. 090"></div>
+                </div>
+
+                <div class="form-section-title">Banking / EFT Settings</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>ABSA User Code</label><input type="text" id="f-absa-code" placeholder="8-digit code" maxlength="8"></div>
+                    <div class="form-group"><label>FNB Originator Code</label><input type="text" id="f-fnb-code" placeholder="10-digit code" maxlength="10"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                    <button type="button" class="btn" style="background: #eee; color: #333;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Company Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let currentCompanyId = null;
+        let companyData = {};
+
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) { window.location.href = 'login.html'; return; }
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+            loadCompaniesCarousel();
+            loadCompanyDetails();
+        });
+
+        // ========== SIDEBAR ==========
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const companies = AUTH.getCompaniesForUser(session);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            location.reload();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) { AUTH.logout(); }
+        }
+
+        // ========== COMPANY DETAILS ==========
+        function getStorageKey() { return 'company_details_' + currentCompanyId; }
+
+        function loadCompanyDetails() {
+            // Merge AUTH company data with localStorage extended data
+            const authCompany = AUTH.getCompanyById(currentCompanyId) || {};
+            const stored = localStorage.getItem(getStorageKey());
+            const extra = stored ? JSON.parse(stored) : {};
+
+            companyData = {
+                name: extra.name || authCompany.name || '',
+                trading_name: extra.trading_name || '',
+                reg_number: extra.reg_number || '',
+                nature: extra.nature || '',
+                year_end: extra.year_end || '',
+                paye_ref: extra.paye_ref || '',
+                uif_ref: extra.uif_ref || '',
+                sdl_ref: extra.sdl_ref || '',
+                coid_ref: extra.coid_ref || '',
+                tax_number: extra.tax_number || '',
+                email: extra.email || authCompany.email || '',
+                phone: extra.phone || '',
+                website: extra.website || '',
+                contact_person: extra.contact_person || '',
+                street: extra.street || '',
+                suburb: extra.suburb || '',
+                city: extra.city || '',
+                province: extra.province || '',
+                postal_code: extra.postal_code || '',
+                bank_name: extra.bank_name || '',
+                bank_holder: extra.bank_holder || '',
+                bank_account: extra.bank_account || '',
+                bank_branch: extra.bank_branch || '',
+                bank_type: extra.bank_type || '',
+                pay_frequencies: extra.pay_frequencies || [],
+                pay_day: extra.pay_day || '',
+                work_hours: extra.work_hours || '',
+                created_date: authCompany.created_date || '',
+                // Branding & Export
+                company_name: extra.company_name || extra.name || authCompany.name || '',
+                address_line1: extra.address_line1 || '',
+                logo_data: extra.logo_data || '',
+                // Sage
+                sage_salaries_account: extra.sage_salaries_account || '',
+                sage_paye_account: extra.sage_paye_account || '',
+                sage_uif_account: extra.sage_uif_account || '',
+                sage_uif_expense_account: extra.sage_uif_expense_account || '',
+                sage_sdl_account: extra.sage_sdl_account || '',
+                sage_sdl_expense_account: extra.sage_sdl_expense_account || '',
+                sage_bank_account: extra.sage_bank_account || '',
+                // Xero
+                xero_wages_account: extra.xero_wages_account || '',
+                xero_paye_account: extra.xero_paye_account || '',
+                xero_uif_account: extra.xero_uif_account || '',
+                xero_uif_expense_account: extra.xero_uif_expense_account || '',
+                xero_bank_account: extra.xero_bank_account || '',
+                // Banking
+                absa_user_code: extra.absa_user_code || '',
+                fnb_originator_code: extra.fnb_originator_code || ''
+            };
+
+            renderDetails();
+            Permissions.enforceUI();
+        }
+
+        function renderDetails() {
+            document.getElementById('pageTitle').textContent = companyData.name || 'Company Details';
+
+            const fields = [
+                ['d-name', companyData.name],
+                ['d-trading-name', companyData.trading_name],
+                ['d-reg-number', companyData.reg_number],
+                ['d-nature', companyData.nature],
+                ['d-year-end', companyData.year_end],
+                ['d-paye-ref', companyData.paye_ref],
+                ['d-uif-ref', companyData.uif_ref],
+                ['d-sdl-ref', companyData.sdl_ref],
+                ['d-coid-ref', companyData.coid_ref],
+                ['d-tax-number', companyData.tax_number],
+                ['d-email', companyData.email],
+                ['d-phone', companyData.phone],
+                ['d-website', companyData.website],
+                ['d-contact-person', companyData.contact_person],
+                ['d-street', companyData.street],
+                ['d-suburb', companyData.suburb],
+                ['d-city', companyData.city],
+                ['d-province', companyData.province],
+                ['d-postal-code', companyData.postal_code],
+                ['d-bank-name', companyData.bank_name],
+                ['d-bank-holder', companyData.bank_holder],
+                ['d-bank-account', companyData.bank_account],
+                ['d-bank-branch', companyData.bank_branch],
+                ['d-bank-type', companyData.bank_type],
+                ['d-pay-frequency', companyData.pay_frequencies && companyData.pay_frequencies.length > 0 ? companyData.pay_frequencies.join(', ') : ''],
+                ['d-pay-day', companyData.pay_day ? 'Day ' + companyData.pay_day : ''],
+                ['d-work-hours', companyData.work_hours ? companyData.work_hours + ' hours' : ''],
+                ['d-created', companyData.created_date],
+                // Branding
+                ['d-company-name-display', companyData.company_name],
+                ['d-address-line1', companyData.address_line1],
+                // Sage
+                ['d-sage-salaries', companyData.sage_salaries_account || '5000 (default)'],
+                ['d-sage-paye', companyData.sage_paye_account || '2100 (default)'],
+                ['d-sage-uif', companyData.sage_uif_account || '2101 (default)'],
+                ['d-sage-sdl', companyData.sage_sdl_account || '2102 (default)'],
+                ['d-sage-bank', companyData.sage_bank_account || '1000 (default)'],
+                // Xero
+                ['d-xero-wages', companyData.xero_wages_account || '400 (default)'],
+                ['d-xero-paye', companyData.xero_paye_account || '825 (default)'],
+                ['d-xero-uif', companyData.xero_uif_account || '826 (default)'],
+                ['d-xero-bank', companyData.xero_bank_account || '090 (default)'],
+                // Banking
+                ['d-absa-code', companyData.absa_user_code],
+                ['d-fnb-code', companyData.fnb_originator_code]
+            ];
+
+            fields.forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (value) {
+                        el.textContent = value;
+                        el.classList.remove('empty');
+                    } else {
+                        el.textContent = 'Not set';
+                        el.classList.add('empty');
+                    }
+                }
+            });
+
+            // Update logo preview
+            updateLogoPreview();
+        }
+
+        // ========== EDIT MODAL ==========
+        function openEditModal() {
+            // Populate form with current data
+            document.getElementById('f-name').value = companyData.name || '';
+            document.getElementById('f-trading-name').value = companyData.trading_name || '';
+            document.getElementById('f-reg-number').value = companyData.reg_number || '';
+            document.getElementById('f-nature').value = companyData.nature || '';
+            document.getElementById('f-year-end').value = companyData.year_end || '';
+            document.getElementById('f-paye-ref').value = companyData.paye_ref || '';
+            document.getElementById('f-uif-ref').value = companyData.uif_ref || '';
+            document.getElementById('f-sdl-ref').value = companyData.sdl_ref || '';
+            document.getElementById('f-coid-ref').value = companyData.coid_ref || '';
+            document.getElementById('f-tax-number').value = companyData.tax_number || '';
+            document.getElementById('f-email').value = companyData.email || '';
+            document.getElementById('f-phone').value = companyData.phone || '';
+            document.getElementById('f-website').value = companyData.website || '';
+            document.getElementById('f-contact-person').value = companyData.contact_person || '';
+            document.getElementById('f-street').value = companyData.street || '';
+            document.getElementById('f-suburb').value = companyData.suburb || '';
+            document.getElementById('f-city').value = companyData.city || '';
+            document.getElementById('f-province').value = companyData.province || '';
+            document.getElementById('f-postal-code').value = companyData.postal_code || '';
+            document.getElementById('f-bank-name').value = companyData.bank_name || '';
+            document.getElementById('f-bank-holder').value = companyData.bank_holder || '';
+            document.getElementById('f-bank-account').value = companyData.bank_account || '';
+            document.getElementById('f-bank-branch').value = companyData.bank_branch || '';
+            document.getElementById('f-bank-type').value = companyData.bank_type || '';
+            
+            // Set pay frequency checkboxes
+            const frequencyCheckboxes = document.querySelectorAll('input[name="pay-frequency"]');
+            frequencyCheckboxes.forEach(checkbox => {
+                checkbox.checked = companyData.pay_frequencies && companyData.pay_frequencies.includes(checkbox.value);
+            });
+            
+            document.getElementById('f-pay-day').value = companyData.pay_day || '';
+            document.getElementById('f-work-hours').value = companyData.work_hours || '';
+
+            // Branding & Export fields
+            document.getElementById('f-company-name-display').value = companyData.company_name || '';
+            document.getElementById('f-address-line1').value = companyData.address_line1 || '';
+            document.getElementById('f-sage-salaries').value = companyData.sage_salaries_account || '';
+            document.getElementById('f-sage-paye').value = companyData.sage_paye_account || '';
+            document.getElementById('f-sage-uif').value = companyData.sage_uif_account || '';
+            document.getElementById('f-sage-uif-expense').value = companyData.sage_uif_expense_account || '';
+            document.getElementById('f-sage-sdl').value = companyData.sage_sdl_account || '';
+            document.getElementById('f-sage-sdl-expense').value = companyData.sage_sdl_expense_account || '';
+            document.getElementById('f-sage-bank').value = companyData.sage_bank_account || '';
+            document.getElementById('f-xero-wages').value = companyData.xero_wages_account || '';
+            document.getElementById('f-xero-paye').value = companyData.xero_paye_account || '';
+            document.getElementById('f-xero-uif').value = companyData.xero_uif_account || '';
+            document.getElementById('f-xero-uif-expense').value = companyData.xero_uif_expense_account || '';
+            document.getElementById('f-xero-bank').value = companyData.xero_bank_account || '';
+            document.getElementById('f-absa-code').value = companyData.absa_user_code || '';
+            document.getElementById('f-fnb-code').value = companyData.fnb_originator_code || '';
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // Close modal on backdrop click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+                closeModal();
+            }
+        });
+
+        function saveCompanyDetails(e) {
+            e.preventDefault();
+
+            companyData.name = document.getElementById('f-name').value.trim();
+            companyData.trading_name = document.getElementById('f-trading-name').value.trim();
+            companyData.reg_number = document.getElementById('f-reg-number').value.trim();
+            companyData.nature = document.getElementById('f-nature').value.trim();
+            companyData.year_end = document.getElementById('f-year-end').value;
+            companyData.paye_ref = document.getElementById('f-paye-ref').value.trim();
+            companyData.uif_ref = document.getElementById('f-uif-ref').value.trim();
+            companyData.sdl_ref = document.getElementById('f-sdl-ref').value.trim();
+            companyData.coid_ref = document.getElementById('f-coid-ref').value.trim();
+            companyData.tax_number = document.getElementById('f-tax-number').value.trim();
+            companyData.email = document.getElementById('f-email').value.trim();
+            companyData.phone = document.getElementById('f-phone').value.trim();
+            companyData.website = document.getElementById('f-website').value.trim();
+            companyData.contact_person = document.getElementById('f-contact-person').value.trim();
+            companyData.street = document.getElementById('f-street').value.trim();
+            companyData.suburb = document.getElementById('f-suburb').value.trim();
+            companyData.city = document.getElementById('f-city').value.trim();
+            companyData.province = document.getElementById('f-province').value;
+            companyData.postal_code = document.getElementById('f-postal-code').value.trim();
+            companyData.bank_name = document.getElementById('f-bank-name').value;
+            companyData.bank_holder = document.getElementById('f-bank-holder').value.trim();
+            companyData.bank_account = document.getElementById('f-bank-account').value.trim();
+            companyData.bank_branch = document.getElementById('f-bank-branch').value.trim();
+            companyData.bank_type = document.getElementById('f-bank-type').value;
+            
+            // Get selected pay frequencies
+            const selectedFrequencies = [];
+            document.querySelectorAll('input[name="pay-frequency"]:checked').forEach(checkbox => {
+                selectedFrequencies.push(checkbox.value);
+            });
+            companyData.pay_frequencies = selectedFrequencies;
+            
+            companyData.pay_day = document.getElementById('f-pay-day').value;
+            companyData.work_hours = document.getElementById('f-work-hours').value;
+
+            // Branding & Export fields
+            companyData.company_name = document.getElementById('f-company-name-display').value.trim();
+            companyData.address_line1 = document.getElementById('f-address-line1').value.trim();
+            companyData.sage_salaries_account = document.getElementById('f-sage-salaries').value.trim();
+            companyData.sage_paye_account = document.getElementById('f-sage-paye').value.trim();
+            companyData.sage_uif_account = document.getElementById('f-sage-uif').value.trim();
+            companyData.sage_uif_expense_account = document.getElementById('f-sage-uif-expense').value.trim();
+            companyData.sage_sdl_account = document.getElementById('f-sage-sdl').value.trim();
+            companyData.sage_sdl_expense_account = document.getElementById('f-sage-sdl-expense').value.trim();
+            companyData.sage_bank_account = document.getElementById('f-sage-bank').value.trim();
+            companyData.xero_wages_account = document.getElementById('f-xero-wages').value.trim();
+            companyData.xero_paye_account = document.getElementById('f-xero-paye').value.trim();
+            companyData.xero_uif_account = document.getElementById('f-xero-uif').value.trim();
+            companyData.xero_uif_expense_account = document.getElementById('f-xero-uif-expense').value.trim();
+            companyData.xero_bank_account = document.getElementById('f-xero-bank').value.trim();
+            companyData.absa_user_code = document.getElementById('f-absa-code').value.trim();
+            companyData.fnb_originator_code = document.getElementById('f-fnb-code').value.trim();
+
+            // Save extended details to localStorage
+            localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+            AuditTrail.logUpdate(currentCompanyId, 'company_details', 'Updated company details for ' + (companyData.name || 'Unknown'));
+
+            // Also update the company name in AUTH system if changed
+            const authCompany = AUTH.getCompanyById(currentCompanyId);
+            if (authCompany && companyData.name) {
+                authCompany.name = companyData.name;
+                authCompany.email = companyData.email || authCompany.email;
+                // Update in registered companies localStorage
+                const regCompanies = AUTH.getRegisteredCompanies();
+                const regIdx = regCompanies.findIndex(c => c.id === currentCompanyId);
+                if (regIdx !== -1) {
+                    regCompanies[regIdx].name = companyData.name;
+                    regCompanies[regIdx].email = companyData.email || regCompanies[regIdx].email;
+                    localStorage.setItem('registered_companies', JSON.stringify(regCompanies));
+                }
+            }
+
+            renderDetails();
+            closeModal();
+            alert('Company details saved successfully!');
+        }
+
+        // ========== LOGO MANAGEMENT ==========
+        function handleLogoUpload(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 500000) {
+                alert('Logo file is too large. Please use an image under 500KB.');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                companyData.logo_data = e.target.result;
+                localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+                AuditTrail.logUpdate(currentCompanyId, 'company_details', 'Uploaded company logo');
+                updateLogoPreview();
+                alert('Logo uploaded successfully!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeLogo() {
+            if (!companyData.logo_data) return;
+            if (!confirm('Remove the company logo?')) return;
+            companyData.logo_data = '';
+            localStorage.setItem(getStorageKey(), JSON.stringify(companyData));
+            AuditTrail.logUpdate(currentCompanyId, 'company_details', 'Removed company logo');
+            updateLogoPreview();
+        }
+
+        function updateLogoPreview() {
+            var container = document.getElementById('logo-preview');
+            if (companyData.logo_data) {
+                container.innerHTML = '<img src="' + companyData.logo_data + '" style="max-width: 200px; max-height: 100px; border-radius: 8px; border: 1px solid #eee;">';
+            } else {
+                container.innerHTML = '<div style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; padding: 30px; text-align: center; color: #999;">No logo uploaded</div>';
+            }
+        }
+
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

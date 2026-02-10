@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Attendance Management - Lorenco Paytime</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+        /* SIDEBAR */
+        .sidebar { width: 300px; background: white; border-radius: 15px; padding: 20px; position: sticky; top: 20px; height: fit-content; max-height: calc(100vh - 40px); overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); flex-shrink: 0; }
+        .sidebar-header { margin-bottom: 20px; }
+        .sidebar-title { font-size: 1.5rem; font-weight: 700; color: #333; }
+        .sidebar-section { margin-bottom: 20px; }
+        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 10px; }
+        .sidebar-link { display: block; padding: 12px 15px; border-radius: 8px; text-decoration: none; color: #555; font-weight: 500; transition: all 0.3s ease; margin-bottom: 4px; }
+        .sidebar-link:hover { background: #f0f0f0; color: #667eea; }
+        .sidebar-link.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .company-carousel { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+        .carousel-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 10px; }
+        .carousel-companies { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
+        .carousel-companies::-webkit-scrollbar { display: none; }
+        .company-pill { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; border: 2px solid #e0e0e0; background: white; transition: all 0.3s ease; }
+        .company-pill:hover { border-color: #667eea; }
+        .company-pill.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .sidebar-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .btn-sidebar { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.3s ease; }
+        .btn-switch { background: #f0f0f0; color: #555; }
+        .btn-switch:hover { background: #e0e0e0; }
+        .btn-logout { background: #fee; color: #dc3545; }
+        .btn-logout:hover { background: #fdd; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; min-width: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        .header h1 { color: white; font-size: 1.8rem; }
+        .header p { color: rgba(255,255,255,0.8); }
+        .user-info { text-align: right; color: white; }
+        .user-info strong { display: block; }
+
+        /* TABS */
+        .att-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .att-tab { padding: 12px 24px; border-radius: 10px 10px 0 0; border: none; background: rgba(255,255,255,0.3); color: white; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; }
+        .att-tab:hover { background: rgba(255,255,255,0.5); }
+        .att-tab.active { background: white; color: #333; }
+        .att-tab-content { display: none; background: white; border-radius: 0 15px 15px 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .att-tab-content:first-of-type { border-radius: 0 15px 15px 15px; }
+
+        /* CARDS */
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 700; color: #667eea; }
+        .stat-card .stat-label { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+        /* CALENDAR */
+        .calendar-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .calendar-controls select { padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        .calendar-controls select:focus { outline: none; border-color: #667eea; }
+        #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-day-header { text-align: center; font-weight: 700; font-size: 0.8rem; color: #888; padding: 8px 4px; text-transform: uppercase; }
+        .calendar-day { background: #f8f9fa; border-radius: 8px; padding: 8px; min-height: 70px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
+        .calendar-day:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.2); }
+        .calendar-day.empty { background: transparent; cursor: default; border: none; }
+        .calendar-day.empty:hover { transform: none; box-shadow: none; }
+        .calendar-day.weekend { background: #fff3f3; }
+        .calendar-day.today { border-color: #667eea; background: #f0f3ff; }
+        .day-number { font-size: 0.9rem; font-weight: 600; color: #333; }
+        .day-indicator { font-size: 0.75rem; margin-top: 4px; padding: 2px 6px; border-radius: 4px; text-align: center; font-weight: 600; }
+        .day-indicator.present { background: #d4edda; color: #155724; }
+        .day-indicator.absent { background: #f8d7da; color: #721c24; }
+
+        /* IMPORT */
+        .import-zone { border: 3px dashed #ccc; border-radius: 15px; padding: 40px; text-align: center; margin: 20px 0; transition: all 0.3s ease; cursor: pointer; }
+        .import-zone:hover, .import-zone.drag-over { border-color: #667eea; background: #f0f3ff; }
+        .import-icon { font-size: 3rem; margin-bottom: 10px; }
+        .import-zone p { color: #888; margin: 5px 0; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 12px 15px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #e0e0e0; font-size: 0.85rem; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; color: #333; }
+        tr:hover { background: #f8f9fa; }
+
+        /* BADGES */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+
+        /* BUTTONS */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
+        .btn-secondary { background: #f0f0f0; color: #555; }
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 15px; padding: 25px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 1.2rem; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* Day Detail */
+        .day-entry-card { background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .entry-times { display: flex; gap: 20px; color: #666; font-size: 0.9rem; }
+        .entry-notes { font-size: 0.85rem; color: #888; margin-top: 6px; font-style: italic; }
+        .entry-actions { margin-top: 8px; text-align: right; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { padding-top: 50px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            #calendar-grid { gap: 2px; }
+            .calendar-day { min-height: 50px; padding: 4px; }
+            .day-number { font-size: 0.8rem; }
+            .day-indicator { font-size: 0.65rem; padding: 1px 3px; }
+            .form-row { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.3rem; }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+<button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+<div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">&#x1F4CA; Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link">&#x1F465; Employees</a>
+                <a href="payruns.html" class="sidebar-link">&#x1F4B5; Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">&#x1F4CB; Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link active">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">&#x1F4CA; Reports</a>
+                <a href="historical-import.html" class="sidebar-link">&#x1F4E5; Historical Import</a>
+                <a href="company-details.html" class="sidebar-link">&#x1F3E2; Company Details</a>
+            </div>
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel"></div>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="goToCompanySelection()">&#x2190; Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">&#x1F6AA; Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="header">
+                <div>
+                    <h1>&#x23F0; Attendance Management</h1>
+                    <p style="color: rgba(255,255,255,0.8);" id="company-name-header"></p>
+                </div>
+                <div class="user-info">
+                    <p>Logged in as</p>
+                    <strong id="user-name"></strong>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="attTotalDays">0</div>
+                    <div class="stat-label">Days Worked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attTotalHours">0</div>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attOvertimeHours">0</div>
+                    <div class="stat-label">Overtime Hours</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attAbsences">0</div>
+                    <div class="stat-label">Absences</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="att-tabs">
+                <button class="att-tab active" data-tab="calendar-view">&#x1F4C5; Calendar</button>
+                <button class="att-tab" data-tab="entries-view">&#x1F4DD; Time Entries</button>
+                <button class="att-tab" data-tab="import-view">&#x1F4C1; Import Data</button>
+                <button class="att-tab" data-tab="summary-view">&#x1F4CA; Summary</button>
+            </div>
+
+            <!-- CALENDAR VIEW -->
+            <div id="calendar-view" class="att-tab-content" style="display: block;">
+                <div class="calendar-controls">
+                    <select id="attMonthSelect"></select>
+                    <select id="attYearSelect"></select>
+                    <select id="attEmployeeFilter"><option value="all">All Employees</option></select>
+                    <button class="btn btn-success btn-sm" onclick="AttendanceManager.openManualEntry()">+ Add Entry</button>
+                </div>
+                <div id="calendar-grid"></div>
+            </div>
+
+            <!-- TIME ENTRIES VIEW -->
+            <div id="entries-view" class="att-tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3>Time Entries</h3>
+                    <button class="btn btn-success btn-sm" onclick="AttendanceManager.openManualEntry()">+ Add Entry</button>
+                </div>
+                <div class="responsive-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Date</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Hours</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timeEntriesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- IMPORT VIEW -->
+            <div id="import-view" class="att-tab-content">
+                <h3>Import Attendance Data</h3>
+                <p style="color: #888; margin-bottom: 15px;">Import time entries from CSV or Excel files exported from biometric systems (ZKTeco, TimeTec, etc.)</p>
+
+                <div class="card" style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">Required CSV/Excel Format</h4>
+                    <table style="font-size: 0.85rem;">
+                        <thead>
+                            <tr><th>Column</th><th>Format</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>employee_number</strong></td><td>Employee number (e.g., EMP001)</td><td>Yes</td></tr>
+                            <tr><td><strong>date</strong></td><td>YYYY-MM-DD or DD/MM/YYYY</td><td>Yes</td></tr>
+                            <tr><td><strong>clock_in</strong></td><td>HH:MM (24h format)</td><td>Yes</td></tr>
+                            <tr><td><strong>clock_out</strong></td><td>HH:MM (24h format)</td><td>No</td></tr>
+                            <tr><td><strong>notes</strong></td><td>Any text</td><td>No</td></tr>
+                        </tbody>
+                    </table>
+                    <button class="btn btn-secondary btn-sm" style="margin-top: 10px;" onclick="AttendanceManager.downloadTemplate()">&#x1F4E5; Download Template</button>
+                </div>
+
+                <div id="attDropZone" class="import-zone">
+                    <div class="import-icon">&#x1F4C1;</div>
+                    <p><strong>Drag and drop your CSV or Excel file here</strong></p>
+                    <p>or</p>
+                    <input type="file" id="attFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('attFileInput').click()">Browse Files</button>
+                </div>
+
+                <div id="importPreview" style="display: none;">
+                    <h4 style="margin-bottom: 10px;">Preview (<span id="importTotalRows">0</span> rows total - showing first 10)</h4>
+                    <div class="responsive-table-wrapper">
+                        <table id="previewTable"></table>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-success" onclick="AttendanceManager.confirmImport()">&#x2705; Import All</button>
+                        <button class="btn btn-danger" onclick="AttendanceManager.cancelImport()">&#x274C; Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUMMARY VIEW -->
+            <div id="summary-view" class="att-tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3>Monthly Summary</h3>
+                    <button class="btn btn-primary" onclick="AttendanceManager.applyToPayroll()">&#x1F4B5; Apply to Payroll</button>
+                </div>
+                <div class="responsive-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Days Worked</th>
+                                <th>Total Hours</th>
+                                <th>Regular</th>
+                                <th>Overtime</th>
+                                <th>Absences</th>
+                                <th>Late Days</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANUAL ENTRY MODAL -->
+    <div id="manualEntryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Time Entry</h3>
+                <button class="btn btn-sm btn-danger" onclick="AttendanceManager.closeModal('manualEntryModal')">&#x2715;</button>
+            </div>
+            <div class="form-group">
+                <label>Employee</label>
+                <select id="entryEmployee" required></select>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="entryDate" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Clock In</label>
+                    <input type="time" id="entryClockIn" value="08:00" required>
+                </div>
+                <div class="form-group">
+                    <label>Clock Out</label>
+                    <input type="time" id="entryClockOut" value="17:00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes (optional)</label>
+                <textarea id="entryNotes" rows="2" placeholder="Any additional notes..."></textarea>
+            </div>
+            <button class="btn btn-success" style="width: 100%;" onclick="AttendanceManager.saveTimeEntry()">Save Entry</button>
+        </div>
+    </div>
+
+    <!-- DAY DETAIL MODAL -->
+    <div id="dayDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="dayDetailDate">Day Detail</h3>
+                <button class="btn btn-sm btn-danger" onclick="AttendanceManager.closeModal('dayDetailModal')">&#x2715;</button>
+            </div>
+            <div id="dayDetailBody"></div>
+        </div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="js/attendance.js"></script>
+    <script>
+        // Page initialization
+        let currentCompanyId = null;
+
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const session = AUTH.getSession();
+            currentCompanyId = session.company_id;
+
+            // Set user info
+            document.getElementById('user-name').textContent = session.name || session.email;
+
+            // Set company name
+            const company = AUTH.getCompanyById(currentCompanyId);
+            if (company) {
+                document.getElementById('company-name-header').textContent = company.name;
+            }
+
+            // Load company carousel
+            loadCompaniesCarousel();
+        });
+
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const companies = AUTH.getCompaniesForUser(session);
+            const carousel = document.getElementById('companies-carousel');
+            if (!carousel) return;
+
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(function(company) {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = function() { switchCompany(company.id); };
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchCompany(companyId) {
+            const session = AUTH.getSession();
+            session.company_id = companyId;
+            localStorage.setItem('session', JSON.stringify(session));
+            window.location.reload();
+        }
+
+        function goToCompanySelection() {
+            window.location.href = 'company-selection.html';
+        }
+
+        function handleLogout() {
+            AUTH.logout();
+        }
+
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>

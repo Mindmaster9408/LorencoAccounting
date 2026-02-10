@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PAYE Configuration - Lorenco Paytime</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      margin-left: 0;
+    }
+    .wrapper { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px;
+      background: white;
+      border-radius: 15px;
+      padding: 25px 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+      flex-shrink: 0;
+    }
+    .sidebar-header { padding: 0 20px 20px; border-bottom: 2px solid #eee; }
+    .sidebar-title { color: #667eea; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+    .current-company { background: #f0f4ff; padding: 12px 15px; border-radius: 8px; color: #333; font-size: 0.9rem; font-weight: 600; word-break: break-word; }
+    .sidebar-section { margin-top: 20px; }
+    .sidebar-section-title { padding: 10px 20px; color: #999; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-link { display: block; padding: 12px 20px; color: #666; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; font-weight: 500; }
+    .sidebar-link:hover { background: #f8f9fa; color: #667eea; border-left-color: #667eea; }
+    .sidebar-link.active { background: #f0f4ff; color: #667eea; border-left-color: #667eea; font-weight: 600; }
+    .sidebar-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+    .btn-sidebar { padding: 10px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+    .btn-switch { background: #667eea; color: white; }
+    .btn-switch:hover { background: #5568d3; }
+    .btn-logout { background: #eee; color: #333; }
+    .btn-logout:hover { background: #ddd; }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+    .header h1 { color: #667eea; font-size: 1.8rem; }
+
+    .section { margin-bottom: 32px; background: #f8f9fa; border-radius: 12px; padding: 24px; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #667eea; }
+
+    .type-list { margin-bottom: 12px; }
+    .type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .type-row input[type=text] {
+      width: 220px;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .type-row input[type=text]:focus { border-color: #667eea; outline: none; }
+    .type-row .remove-btn { color: #dc3545; background: none; border: none; cursor: pointer; font-size: 18px; padding: 5px 8px; border-radius: 4px; }
+    .type-row .remove-btn:hover { background: #fce4ec; }
+    .default-label { color: #999; font-size: 12px; margin-left: 4px; font-style: italic; }
+
+    .add-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .add-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.3); }
+
+    .save-btn {
+      background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      float: right;
+      transition: all 0.2s;
+    }
+    .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(67,206,162,0.3); }
+
+    .employee-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .employee-table th, .employee-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    .employee-table th { background: #667eea; color: white; font-weight: 600; font-size: 13px; }
+    .employee-table th:first-child { border-radius: 6px 0 0 0; }
+    .employee-table th:last-child { border-radius: 0 6px 0 0; }
+    .employee-table input[type=text] {
+      width: 100%;
+      padding: 6px 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .employee-table input[type=text]:focus { border-color: #667eea; outline: none; }
+    .employee-table .inactive { color: #999; }
+    .employee-table .toggle-btn {
+      background: none;
+      border: 1px solid;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .employee-table .toggle-btn.active { color: #388e3c; border-color: #388e3c; background: #e8f5e9; }
+    .employee-table .toggle-btn.inactive { color: #dc3545; border-color: #dc3545; background: #fce4ec; }
+
+    .back-link { color: #667eea; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .back-link:hover { text-decoration: underline; }
+
+    @media (max-width: 1024px) { .sidebar { width: 250px; } .main-content { padding: 25px; } }
+    @media (max-width: 768px) { .wrapper { flex-direction: column; } .sidebar { width: 100%; position: relative; top: 0; } }
+  </style>
+  <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+  <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+  <div id="mobile-overlay" class="mobile-overlay"></div>
+  <div class="wrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Menu</div>
+        <div class="current-company" id="sidebarCompanyName">Loading...</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Navigation</div>
+        <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+        <a href="employee-management.html" class="sidebar-link">👥 Employees</a>
+        <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
+        <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+        <a href="attendance.html" class="sidebar-link">⏰ Attendance</a>
+        <a href="reports.html" class="sidebar-link">📊 Reports</a>
+        <a href="paye-reconciliation.html" class="sidebar-link">🧾 PAYE Reconciliation</a>
+        <a href="paye-config.html" class="sidebar-link active">⚙ PAYE Config</a>
+        <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
+        <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+      </div>
+      <div class="sidebar-actions">
+        <button class="btn-sidebar btn-switch" onclick="window.location.href='company-selection.html'">← Return to Dashboard</button>
+        <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="header">
+        <div>
+          <h1>⚙ PAYE Configuration</h1>
+          <a href="paye-reconciliation.html" class="back-link">← Back to PAYE Reconciliation</a>
+        </div>
+      </div>
+
+      <form id="payeConfigForm">
+        <div class="section">
+          <div class="section-title">Income Types</div>
+          <div id="incomeTypesList" class="type-list"></div>
+          <button type="button" class="add-btn" onclick="addIncomeType()">+ Add Income Type</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Deduction Types</div>
+          <div id="deductionTypesList" class="type-list"></div>
+          <button type="button" class="add-btn" onclick="addDeductionType()">+ Add Deduction Type</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Employees</div>
+          <table class="employee-table" id="employeeTable">
+            <thead>
+              <tr>
+                <th>Employee Code</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="employeeTableBody"></tbody>
+          </table>
+          <button type="button" class="add-btn" onclick="addEmployee()" style="margin-top: 16px;">+ Add Employee</button>
+        </div>
+
+        <div style="overflow: hidden; margin-top: 20px;">
+          <button type="submit" class="save-btn">💾 Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-nav">
+    <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+    <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+    <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+    <a href="paye-reconciliation.html" class="mobile-nav-item"><span class="mobile-nav-icon">🧾</span><span class="mobile-nav-label">PAYE Recon</span></a>
+  </nav>
+
+  <script src="js/data-access.js"></script>
+  <script src="js/permissions.js"></script>
+  <script src="js/audit.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let incomeTypes = [];
+    let deductionTypes = [];
+    let employees = [];
+    let currentCompanyId = null;
+
+    const defaultIncomeTypes = [
+      { key: 'basic_salary', label: 'Basic Salary', isDefault: true, isCustom: false }
+    ];
+    const defaultDeductionTypes = [
+      { key: 'paye', label: 'PAYE', isDefault: true, isCustom: false },
+      { key: 'uif', label: 'UIF', isDefault: true, isCustom: false }
+    ];
+
+    function init() {
+      const session = AUTH.getSession();
+      if (!session || !session.company_id) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentCompanyId = session.company_id;
+
+      const company = AUTH.getCompanyById(session.company_id);
+      const companyName = company ? company.name : 'Company';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+
+      fetchConfig();
+      fetchEmployees();
+    }
+
+    function fetchConfig() {
+      const stored = localStorage.getItem('paye_config_' + currentCompanyId);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          incomeTypes = data.incomeTypes && data.incomeTypes.length ? data.incomeTypes : [...defaultIncomeTypes];
+          deductionTypes = data.deductionTypes && data.deductionTypes.length ? data.deductionTypes : [...defaultDeductionTypes];
+        } catch (e) {
+          incomeTypes = [...defaultIncomeTypes];
+          deductionTypes = [...defaultDeductionTypes];
+        }
+      } else {
+        incomeTypes = [...defaultIncomeTypes];
+        deductionTypes = [...defaultDeductionTypes];
+      }
+      renderTypes();
+    }
+
+    function fetchEmployees() {
+      const stored = localStorage.getItem('employees_' + currentCompanyId);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          employees = parsed.map((emp, idx) => ({
+            id: emp.id || ('emp-' + idx),
+            employeeCode: emp.employee_number || emp.employeeCode || ('EMP' + String(idx + 1).padStart(3, '0')),
+            firstName: emp.first_name || emp.firstName || 'Employee',
+            lastName: emp.last_name || emp.lastName || (idx + 1).toString(),
+            isActive: emp.is_active !== undefined ? emp.is_active : (emp.isActive !== undefined ? emp.isActive : true)
+          }));
+        } catch (e) {
+          employees = [];
+        }
+      } else {
+        // Demo employees
+        employees = [
+          { id: 1, employeeCode: 'EMP001', firstName: 'John', lastName: 'Smith', isActive: true },
+          { id: 2, employeeCode: 'EMP002', firstName: 'Sarah', lastName: 'Johnson', isActive: true },
+          { id: 3, employeeCode: 'EMP003', firstName: 'Michael', lastName: 'Williams', isActive: true },
+          { id: 4, employeeCode: 'EMP004', firstName: 'Emma', lastName: 'Brown', isActive: true },
+          { id: 5, employeeCode: 'EMP005', firstName: 'David', lastName: 'Jones', isActive: true }
+        ];
+      }
+      renderEmployees();
+    }
+
+    function renderTypes() {
+      // Income Types
+      const incomeList = document.getElementById('incomeTypesList');
+      incomeList.innerHTML = '';
+      incomeTypes.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'type-row';
+        row.innerHTML = `<input type="text" value="${t.label}" ${t.isDefault ? 'readonly' : ''} onchange="incomeTypes[${idx}].label=this.value">` +
+          (t.isDefault ? '<span class="default-label">(default)</span>' : `<button type="button" class="remove-btn" onclick="removeIncomeType(${idx})">&times;</button>`);
+        incomeList.appendChild(row);
+      });
+
+      // Deduction Types
+      const deductionList = document.getElementById('deductionTypesList');
+      deductionList.innerHTML = '';
+      deductionTypes.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'type-row';
+        row.innerHTML = `<input type="text" value="${t.label}" ${t.isDefault ? 'readonly' : ''} onchange="deductionTypes[${idx}].label=this.value">` +
+          (t.isDefault ? '<span class="default-label">(default)</span>' : `<button type="button" class="remove-btn" onclick="removeDeductionType(${idx})">&times;</button>`);
+        deductionList.appendChild(row);
+      });
+    }
+
+    window.addIncomeType = function() {
+      const label = prompt('Enter new income type name:');
+      if (label) {
+        incomeTypes.push({ key: 'custom_' + Date.now(), label, isDefault: false, isCustom: true });
+        renderTypes();
+      }
+    };
+
+    window.addDeductionType = function() {
+      const label = prompt('Enter new deduction type name:');
+      if (label) {
+        deductionTypes.push({ key: 'custom_' + Date.now(), label, isDefault: false, isCustom: true });
+        renderTypes();
+      }
+    };
+
+    window.removeIncomeType = function(idx) {
+      if (!incomeTypes[idx].isDefault) incomeTypes.splice(idx, 1);
+      renderTypes();
+    };
+
+    window.removeDeductionType = function(idx) {
+      if (!deductionTypes[idx].isDefault) deductionTypes.splice(idx, 1);
+      renderTypes();
+    };
+
+    function renderEmployees() {
+      const tbody = document.getElementById('employeeTableBody');
+      tbody.innerHTML = '';
+
+      if (employees.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 5;
+        cell.style.cssText = 'text-align: center; padding: 30px; color: #999;';
+        cell.textContent = 'No employees yet. Add employees from the Employee Management page or add them here.';
+        return;
+      }
+
+      employees.forEach((emp, idx) => {
+        const row = tbody.insertRow();
+        row.className = emp.isActive ? '' : 'inactive';
+
+        row.insertCell().innerHTML = `<input type="text" value="${emp.employeeCode}" onchange="employees[${idx}].employeeCode=this.value">`;
+        row.insertCell().innerHTML = `<input type="text" value="${emp.firstName}" onchange="employees[${idx}].firstName=this.value">`;
+        row.insertCell().innerHTML = `<input type="text" value="${emp.lastName}" onchange="employees[${idx}].lastName=this.value">`;
+
+        let statusCell = row.insertCell();
+        statusCell.textContent = emp.isActive ? 'Active' : 'Inactive';
+        statusCell.style.color = emp.isActive ? '#388e3c' : '#dc3545';
+        statusCell.style.fontWeight = 'bold';
+
+        let actionCell = row.insertCell();
+        actionCell.innerHTML = `
+          <button type="button" class="toggle-btn ${emp.isActive ? 'active' : 'inactive'}" onclick="toggleEmployee(${idx})">
+            ${emp.isActive ? '✓ Active' : '✗ Inactive'}
+          </button>
+        `;
+      });
+    }
+
+    window.addEmployee = function() {
+      const empCode = prompt('Enter employee code:');
+      if (!empCode) return;
+      const firstName = prompt('Enter first name:');
+      if (!firstName) return;
+      const lastName = prompt('Enter last name:');
+      if (!lastName) return;
+
+      employees.push({
+        id: 'emp-' + Date.now(),
+        employeeCode: empCode,
+        firstName: firstName,
+        lastName: lastName,
+        isActive: true
+      });
+      renderEmployees();
+    };
+
+    window.toggleEmployee = function(idx) {
+      employees[idx].isActive = !employees[idx].isActive;
+      renderEmployees();
+    };
+
+    document.getElementById('payeConfigForm').onsubmit = function(e) {
+      e.preventDefault();
+
+      // Save PAYE config
+      localStorage.setItem('paye_config_' + currentCompanyId, JSON.stringify({
+        incomeTypes: incomeTypes,
+        deductionTypes: deductionTypes
+      }));
+
+      // Save employees back (synced with payroll employee format)
+      const empData = employees.map(emp => ({
+        id: emp.id,
+        employee_number: emp.employeeCode,
+        first_name: emp.firstName,
+        last_name: emp.lastName,
+        is_active: emp.isActive,
+        // Preserve existing fields
+        ...getExistingEmployeeData(emp.id)
+      }));
+
+      localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(empData));
+
+      alert('✅ Configuration saved successfully!');
+    };
+
+    function getExistingEmployeeData(empId) {
+      // Preserve existing employee fields that aren't edited here
+      const stored = localStorage.getItem('employees_' + currentCompanyId);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const existing = parsed.find(e => e.id === empId);
+          if (existing) {
+            // Return all fields except the ones we manage
+            const { id, employee_number, employeeCode, first_name, firstName, last_name, lastName, is_active, isActive, ...rest } = existing;
+            return rest;
+          }
+        } catch (e) { /* ignore */ }
+      }
+      return {};
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        AUTH.logout();
+      }
+    }
+
+    // Initialize
+    init();
+  </script>
+  <script src="js/mobile-utils.js"></script>
+</body>
+</html>

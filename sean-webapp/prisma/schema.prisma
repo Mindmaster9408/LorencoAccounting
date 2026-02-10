@@ -1,0 +1,420 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  sessions           Session[]
+  conversations      Conversation[]
+  knowledgeItems     KnowledgeItem[] @relation("submittedBy")
+  approvedItems      KnowledgeItem[] @relation("approvedBy")
+  auditLogs          AuditLog[]
+  bankTransactions   BankTransaction[]
+  allocationRules    AllocationRule[]
+  confirmedAllocations BankTransaction[] @relation("confirmedBy")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String    @default("Untitled")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       @default("user") // user | assistant
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model KnowledgeItem {
+  id                String   @id @default(cuid())
+  layer             String   // LEGAL | FIRM | CLIENT
+  scopeType         String   @default("GLOBAL") // GLOBAL | CLIENT
+  scopeClientId     String?  // only for CLIENT scope
+  title             String
+  slug              String
+  contentText       String
+  language          String   @default("EN") // AF | EN | MIXED
+  tags              String   @default("[]") // JSON array
+  primaryDomain     String   @default("OTHER") // VAT | INCOME_TAX | COMPANY_TAX | PAYROLL | CAPITAL_GAINS_TAX | WITHHOLDING_TAX | ACCOUNTING_GENERAL | OTHER
+  secondaryDomains  String   @default("[]") // JSON array of domain strings
+  status            String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  kbVersion         Int      @default(1)
+  citationId        String   @unique // KB:LEGAL:slug:v1
+  supersededById    String?  // nullable FK to newer version
+  sourceType        String?  // "user" | "website" | null (for manual submissions)
+  sourceUrl         String?  // URL if sourceType=website
+  sourceSection     String?  // heading/section where content came from
+  submittedByUserId String?
+  submittedBy       User?    @relation("submittedBy", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  approvedByUserId  String?
+  approvedBy        User?    @relation("approvedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  approvedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status])
+  @@index([layer])
+  @@index([scopeType])
+  @@index([slug])
+  @@index([primaryDomain])
+  @@index([sourceType])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actionType  String   // LOGIN | LOGOUT | MESSAGE_SEND | KB_SUBMIT | KB_APPROVE | KB_REJECT | REASON_QUERY | LLM_BOOTSTRAP | ALLOCATION_LEARN | ALLOCATION_REINFORCE
+  entityType  String? // Conversation | Message | KnowledgeItem | AllocationRule | BankTransaction | None
+  entityId    String?
+  detailsJson String? // JSON string with additional details
+  createdAt   DateTime @default(now())
+
+  @@index([actionType])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Bank Transaction for allocation learning
+model BankTransaction {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime
+  description       String   // Display description
+  rawDescription    String   // Original bank description
+  amount            Float
+  isDebit           Boolean  @default(true)
+  suggestedCategory String?  // Sean's suggestion
+  suggestedConfidence Float?
+  confirmedCategory String?  // User's confirmed category
+  confirmedByUserId String?
+  confirmedBy       User?    @relation("confirmedBy", fields: [confirmedByUserId], references: [id], onDelete: SetNull)
+  feedback          String?  // User's explanation for correction (Teach Sean)
+  processed         Boolean  @default(false)
+  // Multi-tenant support
+  clientId          String?  // Optional client/company ID
+  client            Client?  @relation("clientTransactions", fields: [clientId], references: [id], onDelete: SetNull)
+  bankAccount       String?  // Bank account identifier
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([confirmedCategory])
+  @@index([processed])
+  @@index([date])
+  @@index([clientId])
+}
+
+// Learned allocation rules
+model AllocationRule {
+  id                String   @id @default(cuid())
+  pattern           String   // Original description that created this rule
+  normalizedPattern String   // Lowercase, simplified for matching
+  category          String   // The allocation category code
+  confidence        Float    @default(0.7)
+  learnedFromCount  Int      @default(1) // How many times this was confirmed
+  createdByUserId   String?
+  createdBy         User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  // Multi-tenant support
+  clientId          String?  // Optional client ID for client-specific rules
+  client            Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  isGlobal          Boolean  @default(true) // If true, applies to all clients
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([normalizedPattern])
+  @@index([category])
+  @@index([confidence])
+  @@index([clientId])
+  @@index([isGlobal])
+}
+
+// Client/Company for multi-tenant allocation rules
+model Client {
+  id                String   @id @default(cuid())
+  name              String
+  code              String   @unique // Short code for API calls
+  description       String?
+  isActive          Boolean  @default(true)
+
+  // ============================================
+  // COMPANY PROFILE - "Teach Sean about this company"
+  // This helps Sean understand what the company does
+  // ============================================
+  industryId        String?  // Link to industry type
+  industry          Industry? @relation(fields: [industryId], references: [id])
+  businessType      String?  // PTY_LTD | CC | SOLE_PROP | TRUST | NPC | PARTNERSHIP
+  vatRegistered     Boolean  @default(false)
+  vatNumber         String?
+  companyRegNumber  String?
+
+  // What does this company do? (free text for Sean to understand)
+  businessDescription String? // e.g., "Sells computer parts and repairs laptops"
+  mainProducts      String?  // JSON array: ["computer parts", "laptop repairs", "IT support"]
+  mainServices      String?  // JSON array: ["IT consulting", "network setup"]
+  mainExpenseTypes  String?  // JSON array: what they typically spend on
+  mainIncomeTypes   String?  // JSON array: how they earn money
+
+  // Financial year
+  financialYearEnd  String?  // "02" for February, "12" for December
+
+  // Contact (for reference only, not shared)
+  contactPerson     String?
+  contactEmail      String?
+  contactPhone      String?
+
+  // ============================================
+  // PRIVACY & DATA ISOLATION
+  // ============================================
+  dataIsolationLevel String @default("STRICT") // STRICT | INDUSTRY_LEARNING
+  // STRICT = No data leaves this client, ever
+  // INDUSTRY_LEARNING = Anonymized patterns can improve industry knowledge
+
+  // Default allocation settings per client
+  defaultMinConfidence Float @default(0.8)
+  autoAllocateEnabled  Boolean @default(true)
+
+  // Relationships
+  allocationRules   AllocationRule[]
+  bankTransactions  BankTransaction[] @relation("clientTransactions")
+  customCategories  ClientCategory[]
+  companyNotes      CompanyNote[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@index([industryId])
+  @@index([businessType])
+}
+
+// ============================================
+// INDUSTRY TYPES - Anonymized learning across companies
+// Sean learns patterns by industry WITHOUT knowing which company
+// ============================================
+model Industry {
+  id                String   @id @default(cuid())
+  code              String   @unique // e.g., "IT_SERVICES", "RETAIL", "CONSTRUCTION"
+  name              String   // e.g., "IT Services & Consulting"
+  description       String?
+
+  // Parent industry for hierarchy (e.g., "RETAIL" -> "RETAIL_CLOTHING")
+  parentId          String?
+  parent            Industry? @relation("IndustryHierarchy", fields: [parentId], references: [id])
+  children          Industry[] @relation("IndustryHierarchy")
+
+  // Expected allocation patterns for this industry (learned over time)
+  // These are ANONYMIZED - no company names, just patterns
+  typicalExpenses   String   @default("[]") // JSON: [{"category": "STOCK_PURCHASES", "percentage": 40}, ...]
+  typicalIncome     String   @default("[]") // JSON: [{"category": "REVENUE", "percentage": 95}, ...]
+  commonVendors     String   @default("[]") // JSON: ["makro", "incredible connection"] - generic vendors
+
+  // How many companies have contributed to learning (anonymized count)
+  learningContributors Int   @default(0)
+
+  // Relationships
+  clients           Client[]
+  industryPatterns  IndustryPattern[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([code])
+  @@index([parentId])
+}
+
+// ============================================
+// INDUSTRY PATTERNS - Anonymized allocation patterns
+// Learned from ALL companies in an industry (no company names!)
+// ============================================
+model IndustryPattern {
+  id                String   @id @default(cuid())
+  industryId        String
+  industry          Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  // Pattern details (ANONYMIZED - no company reference)
+  normalizedPattern String   // e.g., "makro wholesale"
+  suggestedCategory String   // e.g., "STOCK_PURCHASES"
+  confidence        Float    @default(0.5)
+
+  // How many times this pattern was seen across the industry
+  // (we count occurrences, not companies, for privacy)
+  occurrenceCount   Int      @default(1)
+
+  // Last updated (no company info, just timestamp)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([industryId, normalizedPattern])
+  @@index([industryId])
+  @@index([normalizedPattern])
+  @@index([suggestedCategory])
+}
+
+// ============================================
+// COMPANY NOTES - Internal notes about company
+// (Never shared, for internal reference only)
+// ============================================
+model CompanyNote {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  noteType    String   // PROFILE | ALLOCATION_HINT | WARNING | GENERAL
+  content     String   // The note content
+  createdBy   String?  // User who created the note
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([noteType])
+}
+
+// ============================================
+// PRIVACY AUDIT LOG - Track all data access
+// For compliance and security
+// ============================================
+model PrivacyAuditLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  clientId        String?  // Which client's data was accessed
+  actionType      String   // VIEW | EXPORT | SHARE | DELETE | ANONYMIZE
+  dataType        String   // TRANSACTION | ALLOCATION | PROFILE | REPORT
+  description     String?
+  ipAddress       String?
+  userAgent       String?
+
+  // Was any data anonymized or aggregated?
+  wasAnonymized   Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+// Custom categories per client (extends base categories)
+model ClientCategory {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  code        String   // Category code
+  label       String   // Display label
+  keywords    String   @default("[]") // JSON array of keywords
+  parentCode  String?  // Maps to base category if needed
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([clientId, code])
+  @@index([clientId])
+}
+
+// Allowed emails for login (dynamic allowlist)
+model AllowedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String   @default("USER") // USER | ADMIN
+  addedBy   String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// Sean Agent Status and Configuration
+model SeanAgent {
+  id                  String   @id @default(cuid())
+  name                String   @default("Sean") // Agent name
+  status              String   @default("INACTIVE") // ACTIVE | INACTIVE | PAUSED
+  authorizedActions   String   @default("[]") // JSON array: ["ALLOCATE", "RESPOND", "LEARN"]
+
+  // Auto-allocation settings
+  autoAllocateEnabled Boolean  @default(false)
+  autoAllocateInterval Int     @default(60) // Minutes between auto-allocation runs
+  autoAllocateMinConfidence Float @default(0.8) // Minimum confidence for auto-allocation
+  autoAllocateLastRun DateTime?
+  autoAllocateNextRun DateTime?
+
+  // API fallback settings
+  llmFallbackEnabled  Boolean  @default(true) // Call LLM when no match found
+  llmFallbackProvider String?  // claude | openai | grok
+
+  // Stats
+  totalAllocations    Int      @default(0)
+  totalLLMCalls       Int      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status])
+}
+
+// Auto-allocation job runs
+model AllocationJobRun {
+  id                  String   @id @default(cuid())
+  agentId             String
+  status              String   @default("RUNNING") // RUNNING | COMPLETED | FAILED
+  startedAt           DateTime @default(now())
+  completedAt         DateTime?
+
+  // Results
+  transactionsProcessed Int    @default(0)
+  autoAllocated       Int      @default(0)
+  llmAllocated        Int      @default(0)
+  needsReview         Int      @default(0)
+  errors              Int      @default(0)
+
+  detailsJson         String?  // JSON with full details
+  errorMessage        String?
+
+  @@index([agentId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Cached LLM allocation responses (bootstrap for allocations)
+model AllocationLLMCache {
+  id                  String   @id @default(cuid())
+  normalizedPattern   String   @unique // Normalized description
+  suggestedCategory   String
+  reasoning           String?  // LLM's reasoning
+  provider            String   // claude | openai | grok
+  confidence          Float    @default(0.7)
+  usedCount           Int      @default(1)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([normalizedPattern])
+  @@index([suggestedCategory])
+}

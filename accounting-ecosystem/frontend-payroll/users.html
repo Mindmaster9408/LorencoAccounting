@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Lorenco Paytime</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* MAIN CONTENT */
+        .main-content { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .page-header h1 { color: #667eea; font-size: 1.8rem; }
+        .company-badge { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* ACCESS DENIED */
+        .access-denied {
+            text-align: center; padding: 60px 20px;
+        }
+        .access-denied-icon { font-size: 4rem; margin-bottom: 20px; }
+        .access-denied h2 { color: #dc3545; margin-bottom: 10px; }
+        .access-denied p { color: #666; margin-bottom: 20px; }
+
+        /* USER CARDS */
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .user-card {
+            background: #f8f9fa; border-radius: 12px; padding: 20px;
+            transition: all 0.3s; border: 2px solid transparent; position: relative;
+        }
+        .user-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102,126,234,0.15); }
+        .user-card.inactive { opacity: 0.6; }
+        .user-name { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 3px; }
+        .user-email { font-size: 0.9rem; color: #667eea; font-weight: 500; margin-bottom: 10px; }
+        .user-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .user-detail-label { font-size: 0.75rem; color: #999; text-transform: uppercase; }
+        .user-detail-value { font-size: 0.85rem; color: #555; font-weight: 500; }
+        .role-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .role-business_owner { background: #e8f5e9; color: #2e7d32; }
+        .role-manager { background: #e3f2fd; color: #1565c0; }
+        .role-admin { background: #fce4ec; color: #c62828; }
+        .role-accountant { background: #fff3e0; color: #e65100; }
+        .status-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 10px;
+            font-size: 0.7rem; font-weight: 600; margin-left: 8px;
+        }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-inactive { background: #f8d7da; color: #721c24; }
+        .user-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e0e0; }
+        .current-user-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: #667eea; color: white; padding: 3px 10px; border-radius: 10px;
+            font-size: 0.7rem; font-weight: 600;
+        }
+
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; }
+        .empty-text { font-size: 1.2rem; color: #333; font-weight: 600; margin-bottom: 8px; }
+        .empty-sub { color: #999; font-size: 0.9rem; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 50px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 15px; padding: 30px; max-width: 550px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #667eea; }
+        .modal-header h3 { color: #667eea; margin: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .password-hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .user-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>User Management</h1>
+                    <p style="color: #999; margin-top: 5px;" id="companyName"></p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span class="company-badge" id="userCount">0 users</span>
+                    <button class="btn btn-primary" id="addUserBtn" data-permission="MANAGE_USERS" onclick="openAddUserModal()">+ Add User</button>
+                    <a href="company-selection.html" class="btn" style="background: #eee; color: #333; text-decoration: none;">← Back</a>
+                </div>
+            </div>
+
+            <!-- Access Denied View -->
+            <div id="accessDenied" style="display: none;">
+                <div class="access-denied">
+                    <div class="access-denied-icon">🔒</div>
+                    <h2>Access Denied</h2>
+                    <p>Only business owners, managers, and admins can manage users.</p>
+                    <button class="btn btn-primary" onclick="window.location.href='company-dashboard.html'">Back to Dashboard</button>
+                </div>
+            </div>
+
+            <!-- User List -->
+            <div id="userContent">
+                <div class="user-grid" id="userGrid">
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-icon">👤</div>
+                        <div class="empty-text">Loading users...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New User</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeModal('userModal')">Close</button>
+            </div>
+            <form onsubmit="saveUser(event)">
+                <input type="hidden" id="editUserId" value="">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="f-name" required placeholder="e.g. John Smith">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="f-email" required placeholder="e.g. john@company.com">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" id="f-password" placeholder="Min 6 characters">
+                        <div class="password-hint" id="passwordHint">Required for new users</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Role *</label>
+                        <select id="f-role" required>
+                            <option value="">Select a role</option>
+                            <option value="business_owner">Business Owner</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                            <option value="accountant">Accountant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="f-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn" style="background: #eee; color: #333;" onclick="closeModal('userModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let currentCompanyId = null;
+        let currentSession = null;
+        let companyUsers = [];
+        const ALLOWED_ROLES = ['super_admin', 'admin', 'manager', 'business_owner'];
+
+        window.addEventListener('load', function() {
+            if (!AUTH.isLoggedIn()) { window.location.href = 'login.html'; return; }
+            currentSession = AUTH.getSession();
+            currentCompanyId = currentSession.company_id;
+
+            // Check access
+            if (!ALLOWED_ROLES.includes(currentSession.role)) {
+                document.getElementById('userContent').style.display = 'none';
+                document.getElementById('addUserBtn').style.display = 'none';
+                document.getElementById('accessDenied').style.display = 'block';
+                return;
+            }
+
+            const company = AUTH.getCompanyById(currentCompanyId);
+            document.getElementById('companyName').textContent = company ? company.name : '';
+
+            loadUsers();
+        });
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) { AUTH.logout(); }
+        }
+
+        // ========== USER MANAGEMENT ==========
+        function loadUsers() {
+            companyUsers = [];
+
+            // Get users from in-memory USERS array
+            AUTH.USERS.forEach(u => {
+                if (u.company_id === currentCompanyId) {
+                    companyUsers.push({ ...u, source: 'memory' });
+                }
+            });
+
+            // Get users from localStorage registered_users
+            const registeredUsers = AUTH.getRegisteredUsers();
+            registeredUsers.forEach(u => {
+                if (u.company_id === currentCompanyId) {
+                    // Avoid duplicates (in case user exists in both)
+                    if (!companyUsers.find(cu => cu.email === u.email)) {
+                        companyUsers.push({ ...u, source: 'localStorage' });
+                    }
+                }
+            });
+
+            document.getElementById('userCount').textContent = companyUsers.length + ' user' + (companyUsers.length !== 1 ? 's' : '');
+            displayUsers();
+        }
+
+        function displayUsers() {
+            const grid = document.getElementById('userGrid');
+            if (companyUsers.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><div class="empty-icon">👤</div><div class="empty-text">No users found</div><div class="empty-sub">Add users to give team members access to this company.</div></div>';
+                return;
+            }
+
+            grid.innerHTML = companyUsers.map(user => {
+                const roleLabel = formatRole(user.role);
+                const roleClass = 'role-' + user.role;
+                const isCurrentUser = user.email === currentSession.email;
+                const isActive = user.active !== false;
+                const statusClass = isActive ? 'status-active' : 'status-inactive';
+                const statusLabel = isActive ? 'Active' : 'Inactive';
+
+                return '<div class="user-card ' + (!isActive ? 'inactive' : '') + '">' +
+                    (isCurrentUser ? '<span class="current-user-badge">You</span>' : '') +
+                    '<div class="user-name">' + (user.name || 'No Name') + '</div>' +
+                    '<div class="user-email">' + user.email + '</div>' +
+                    '<div class="user-details">' +
+                        '<div><div class="user-detail-label">Role</div><span class="role-badge ' + roleClass + '">' + roleLabel + '</span></div>' +
+                        '<div><div class="user-detail-label">Status</div><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></div>' +
+                    '</div>' +
+                    '<div class="user-actions">' +
+                        '<button class="btn btn-primary btn-sm" data-permission="MANAGE_USERS" onclick="editUser(\'' + user.id + '\')">Edit</button>' +
+                        (!isCurrentUser ?
+                            (isActive ?
+                                '<button class="btn btn-warning btn-sm" data-permission="MANAGE_USERS" onclick="toggleUserStatus(\'' + user.id + '\', false)">Deactivate</button>' :
+                                '<button class="btn btn-success btn-sm" data-permission="MANAGE_USERS" onclick="toggleUserStatus(\'' + user.id + '\', true)">Activate</button>'
+                            ) +
+                            '<button class="btn btn-danger btn-sm" data-permission="MANAGE_USERS" onclick="deleteUser(\'' + user.id + '\')">Remove</button>'
+                        : '') +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            Permissions.enforceUI();
+        }
+
+        function formatRole(role) {
+            const labels = {
+                'business_owner': 'Business Owner',
+                'manager': 'Manager',
+                'admin': 'Admin',
+                'accountant': 'Accountant',
+                'super_admin': 'Super Admin'
+            };
+            return labels[role] || role;
+        }
+
+        // ========== ADD / EDIT USER ==========
+        function openAddUserModal() {
+            document.getElementById('modalTitle').textContent = 'Add New User';
+            document.getElementById('editUserId').value = '';
+            document.getElementById('f-name').value = '';
+            document.getElementById('f-email').value = '';
+            document.getElementById('f-password').value = '';
+            document.getElementById('f-password').required = true;
+            document.getElementById('f-role').value = '';
+            document.getElementById('f-status').value = 'active';
+            document.getElementById('passwordHint').textContent = 'Required for new users';
+            document.getElementById('userModal').classList.add('show');
+        }
+
+        function editUser(userId) {
+            const user = companyUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('f-name').value = user.name || '';
+            document.getElementById('f-email').value = user.email || '';
+            document.getElementById('f-password').value = '';
+            document.getElementById('f-password').required = false;
+            document.getElementById('f-role').value = user.role || '';
+            document.getElementById('f-status').value = user.active !== false ? 'active' : 'inactive';
+            document.getElementById('passwordHint').textContent = 'Leave blank to keep current password';
+            document.getElementById('userModal').classList.add('show');
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editUserId').value;
+            const name = document.getElementById('f-name').value.trim();
+            const email = document.getElementById('f-email').value.trim();
+            const password = document.getElementById('f-password').value;
+            const role = document.getElementById('f-role').value;
+            const active = document.getElementById('f-status').value === 'active';
+
+            if (!name || !email || !role) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            if (editId) {
+                // EDIT existing user
+                updateExistingUser(editId, name, email, password, role, active);
+            } else {
+                // ADD new user
+                if (!password || password.length < 6) {
+                    alert('Password must be at least 6 characters.');
+                    return;
+                }
+
+                // Check if email already exists
+                const existing = AUTH.findUserByEmail(email);
+                if (existing) {
+                    alert('A user with this email already exists.');
+                    return;
+                }
+
+                const newUser = {
+                    id: 'user-' + Math.random().toString(36).substr(2, 9),
+                    email: email,
+                    password: password,
+                    name: name,
+                    role: role,
+                    company_id: currentCompanyId,
+                    active: active
+                };
+
+                // Save to localStorage registered_users
+                const registeredUsers = AUTH.getRegisteredUsers();
+                registeredUsers.push(newUser);
+                localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+
+                // Also add to in-memory so AUTH.findUserByEmail works immediately
+                AUTH.USERS.push(newUser);
+            }
+
+            closeModal('userModal');
+            loadUsers();
+            if (editId) {
+                AuditTrail.logUpdate(currentCompanyId, 'user', 'Updated user "' + name + '" (' + email + ') - role: ' + role);
+            } else {
+                AuditTrail.logCreate(currentCompanyId, 'user', 'Created user "' + name + '" (' + email + ') - role: ' + role);
+            }
+            alert(editId ? 'User updated successfully!' : 'User added successfully!');
+        }
+
+        function updateExistingUser(userId, name, email, password, role, active) {
+            // Update in in-memory USERS
+            const memIdx = AUTH.USERS.findIndex(u => u.id === userId);
+            if (memIdx !== -1) {
+                AUTH.USERS[memIdx].name = name;
+                AUTH.USERS[memIdx].email = email;
+                AUTH.USERS[memIdx].role = role;
+                AUTH.USERS[memIdx].active = active;
+                if (password) AUTH.USERS[memIdx].password = password;
+            }
+
+            // Update in localStorage registered_users
+            const registeredUsers = AUTH.getRegisteredUsers();
+            const regIdx = registeredUsers.findIndex(u => u.id === userId);
+            if (regIdx !== -1) {
+                registeredUsers[regIdx].name = name;
+                registeredUsers[regIdx].email = email;
+                registeredUsers[regIdx].role = role;
+                registeredUsers[regIdx].active = active;
+                if (password) registeredUsers[regIdx].password = password;
+                localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+            }
+
+            // If editing self, update session
+            if (userId === currentSession.user_id || email === currentSession.email) {
+                currentSession.name = name;
+                currentSession.email = email;
+                currentSession.role = role;
+                localStorage.setItem('session', JSON.stringify(currentSession));
+            }
+        }
+
+        function toggleUserStatus(userId, active) {
+            if (!Permissions.require('MANAGE_USERS')) return;
+            const user = companyUsers.find(u => u.id === userId);
+            if (!user) return;
+            const action = active ? 'activate' : 'deactivate';
+            if (!confirm('Are you sure you want to ' + action + ' ' + user.name + '?')) return;
+
+            updateExistingUser(userId, user.name, user.email, null, user.role, active);
+            AuditTrail.logUpdate(currentCompanyId, 'user', (active ? 'Activated' : 'Deactivated') + ' user "' + user.name + '" (' + user.email + ')');
+            loadUsers();
+        }
+
+        function deleteUser(userId) {
+            if (!Permissions.require('MANAGE_USERS')) return;
+            const user = companyUsers.find(u => u.id === userId);
+            if (!user) return;
+            if (!confirm('Remove ' + user.name + ' (' + user.email + ') from this company?\n\nThis cannot be undone.')) return;
+
+            // Remove from in-memory USERS
+            const memIdx = AUTH.USERS.findIndex(u => u.id === userId);
+            if (memIdx !== -1) AUTH.USERS.splice(memIdx, 1);
+
+            // Remove from localStorage
+            const registeredUsers = AUTH.getRegisteredUsers();
+            const filtered = registeredUsers.filter(u => u.id !== userId);
+            localStorage.setItem('registered_users', JSON.stringify(filtered));
+
+            AuditTrail.logDelete(currentCompanyId, 'user', 'Deleted user "' + user.name + '" (' + user.email + ')');
+            loadUsers();
+            alert(user.name + ' has been removed.');
+        }
+
+        // ========== MODAL HELPERS ==========
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

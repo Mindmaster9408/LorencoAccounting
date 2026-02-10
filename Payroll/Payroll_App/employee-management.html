@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Employee Management - Lorenco Paytime</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .sidebar-title {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .current-company {
+            background: #f0f4ff;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: #333;
+            font-size: 0.9rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .sidebar-section {
+            margin-top: 20px;
+        }
+
+        .sidebar-section-title {
+            padding: 10px 20px;
+            color: #999;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover {
+            background: #f8f9fa;
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+
+        .sidebar-link.active {
+            background: #f0f4ff;
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 600;
+        }
+
+        .company-carousel {
+            margin-top: 15px;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .carousel-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .carousel-companies {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .carousel-company {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .carousel-company:hover {
+            background: #eee;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .sidebar-actions {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-sidebar {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-switch {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-switch:hover {
+            background: #5568d3;
+        }
+
+        .btn-logout {
+            background: #eee;
+            color: #333;
+        }
+
+        .btn-logout:hover {
+            background: #ddd;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .page-header h1 {
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+        .page-header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .search-box {
+            padding: 10px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 250px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .employee-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .employee-table th,
+        .employee-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .employee-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .employee-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #5568d3;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 600px;
+            width: 90%;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 50px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        label.required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .success-msg, .error-msg {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 250px;
+            }
+
+            .main-content {
+                padding: 25px;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: relative;
+                top: 0;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .page-header-right {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .page-header-right > * {
+                width: 100%;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .employee-table {
+                font-size: 12px;
+            }
+
+            .employee-table th,
+            .employee-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="css/mobile-responsive.css">
+</head>
+<body>
+    <button id="mobile-hamburger" class="mobile-hamburger"><span style="font-size:20px;">&#9776;</span></button>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Menu</div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Navigation</div>
+                <a href="company-dashboard.html" class="sidebar-link">📊 Dashboard</a>
+                <a href="employee-management.html" class="sidebar-link active">👥 Employees</a>
+                <a href="payruns.html" class="sidebar-link">💵 Pay Runs</a>
+                <a href="payroll-items.html" class="sidebar-link">📋 Payroll Items</a>
+                <a href="attendance.html" class="sidebar-link">&#x23F0; Attendance</a>
+                <a href="reports.html" class="sidebar-link">📊 Reports</a>
+                <a href="paye-reconciliation.html" class="sidebar-link">🧾 PAYE Reconciliation</a>
+                <a href="historical-import.html" class="sidebar-link">📥 Historical Import</a>
+                <a href="company-details.html" class="sidebar-link">🏢 Company Details</a>
+            </div>
+
+            <div class="company-carousel">
+                <div class="carousel-title">Switch Company</div>
+                <div class="carousel-container">
+                    <div class="carousel-companies" id="companies-carousel">
+                        <!-- Companies will load here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn-sidebar btn-switch" onclick="goToDashboard()">← Return to Dashboard</button>
+                <button class="btn-sidebar btn-logout" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>👥 Employee Management</h1>
+                    <p style="color: #667eea; font-weight: 600; margin-top: 5px;" id="company-name-header"></p>
+                </div>
+                <div class="page-header-right">
+                    <button class="btn" data-permission="EDIT_EMPLOYEES" onclick="openBulkUploadModal()">Upload CSV/Excel</button>
+                    <button class="btn btn-success" data-permission="EDIT_EMPLOYEES" onclick="openAddEmployeeModal()">+ Add Employee</button>
+                </div>
+            </div>
+
+            <table class="employee-table" id="employee-table">
+                <thead>
+                    <tr>
+                        <th>Employee #</th>
+                        <th>Name</th>
+                        <th>ID Number</th>
+                        <th>Position</th>
+                        <th>Department</th>
+                        <th>Payment Method</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="employee-list">
+                    <tr>
+                        <td colspan="7" class="empty-message">Loading employees...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Employee Modal -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Employee</h2>
+                <button class="close-btn" onclick="closeEmployeeModal()">Close</button>
+            </div>
+
+            <div id="modalSuccess" class="success-msg"></div>
+            <div id="modalError" class="error-msg"></div>
+
+            <form id="employeeForm" onsubmit="saveEmployee(event)">
+                <input type="hidden" id="employeeId">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="required">Employee Number</label>
+                        <input type="text" id="employee_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">First Name</label>
+                        <input type="text" id="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Last Name</label>
+                        <input type="text" id="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ID Number</label>
+                        <input type="text" id="id_number" maxlength="13">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>Job Title</label>
+                        <input type="text" id="job_title">
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="department">
+                    </div>
+                    <div class="form-group">
+                        <label>Position</label>
+                        <input type="text" id="position">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Payment Method</label>
+                        <select id="payment_method" required>
+                            <option value="EFT">EFT</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <input type="text" id="bank_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Holder</label>
+                        <input type="text" id="account_holder">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="account_number">
+                    </div>
+                    <div class="form-group">
+                        <label>Branch Code</label>
+                        <input type="text" id="branch_code">
+                    </div>
+                    <div class="form-group">
+                        <label>Date Appointed</label>
+                        <input type="date" id="date_appointed">
+                    </div>
+                    <div class="form-group">
+                        <label>Medical Aid Members</label>
+                        <input type="number" id="medical_aid_members" min="0" max="20" step="1" placeholder="0 = none">
+                    </div>
+                    <div class="form-group">
+                        <label>Tax Directive (%)</label>
+                        <input type="number" id="tax_directive" min="0" max="100" step="0.01" placeholder="0 = standard PAYE">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="modal">
+        <div class="modal-content" style="max-width:900px;">
+            <div class="modal-header">
+                <h2 id="bulkModalTitle">Bulk Employee Upload</h2>
+                <button class="close-btn" onclick="closeBulkUpload()">Close</button>
+            </div>
+
+            <!-- Step 1: File Upload -->
+            <div id="bulkStep1">
+                <div id="empDropZone" style="border:3px dashed #ccc; border-radius:15px; padding:40px; text-align:center; cursor:pointer; transition:all 0.3s; margin-bottom:20px;">
+                    <div style="font-size:3rem;">📁</div>
+                    <p style="margin:10px 0; font-weight:600; color:#333;">Drag and drop your CSV or Excel file here</p>
+                    <p style="color:#999;">or</p>
+                    <input type="file" id="empFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                    <button class="btn" onclick="document.getElementById('empFileInput').click()" style="margin-top:10px;">Browse Files</button>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadEmployeeTemplate()" style="margin-bottom:20px;">Download Template</button>
+                <div style="background:#f8f9fa; border-radius:10px; padding:20px;">
+                    <h4 style="margin-bottom:10px; color:#333;">Expected Columns</h4>
+                    <table class="employee-table" style="margin-top:5px; font-size:13px;">
+                        <thead>
+                            <tr><th>Field</th><th>Accepted Names</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Employee Number</td><td>employee_number, emp_number, EmpNo</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>First Name</td><td>first_name, FirstName, fname, Name</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>Last Name</td><td>last_name, LastName, Surname</td><td style="color:#dc3545; font-weight:600;">Yes</td></tr>
+                            <tr><td>ID Number</td><td>id_number, IDNumber, sa_id</td><td>No</td></tr>
+                            <tr><td>Email, Phone, Job Title, Department, Position, Payment Method, Bank Details, Date Appointed</td><td>Various</td><td>No</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 2: Column Mapping -->
+            <div id="bulkStep2" style="display:none;">
+                <div id="columnMappingArea" style="margin-bottom:20px;"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="resetBulkUpload()">Back</button>
+                    <button class="btn btn-success" onclick="applyMappingAndPreview()">Preview Import</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Preview & Validate -->
+            <div id="bulkStep3" style="display:none;">
+                <div id="validationSummary" style="margin-bottom:15px;"></div>
+                <div id="empPreviewArea" style="margin-bottom:15px;"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="goToStep2()">Back</button>
+                    <button class="btn btn-success" id="confirmImportBtn" onclick="confirmEmployeeImport()">Import Employees</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="js/bulk-import-utils.js"></script>
+    <script src="js/data-access.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let employees = [];
+        let currentCompanyId = null;
+
+        // Check authentication
+        window.addEventListener('load', function() {
+            const session = AUTH.getSession();
+            if (!session || !session.company_id) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentCompanyId = session.company_id;
+            loadPageData();
+        });
+
+        function loadPageData() {
+            const session = AUTH.getSession();
+            const company = AUTH.getCompanyById(session.company_id);
+
+            // Set company info
+            if (company) {
+                document.getElementById('company-name-header').textContent = company.name;
+            }
+
+            // Load sidebar
+            loadCompaniesCarousel();
+            loadEmployeesFromStorage();
+            displayEmployees();
+        }
+
+        function loadCompaniesCarousel() {
+            const session = AUTH.getSession();
+            const companies = AUTH.getCompaniesForUser(session);
+            const carousel = document.getElementById('companies-carousel');
+            carousel.innerHTML = '';
+
+            if (companies.length === 0) {
+                carousel.innerHTML = '<div style="padding: 10px; color: #999; text-align: center; font-size: 12px;">No companies available</div>';
+            } else {
+                companies.forEach(company => {
+                    const div = document.createElement('div');
+                    div.className = 'carousel-company';
+                    div.textContent = company.name;
+                    if (company.id === session.company_id) {
+                        div.style.background = '#667eea';
+                        div.style.color = 'white';
+                        div.style.fontWeight = 'bold';
+                    }
+                    div.onclick = () => switchToCompany(company.id);
+                    carousel.appendChild(div);
+                });
+            }
+
+            // Add Company button for business_owner and accountant
+            if (session.role === 'business_owner' || session.role === 'accountant') {
+                var addBtn = document.createElement('div');
+                addBtn.className = 'carousel-company';
+                addBtn.style.cssText = 'background:#e8f5e9; color:#28a745; font-weight:600; text-align:center; border:1px dashed #28a745; cursor:pointer;';
+                addBtn.textContent = '+ Add Company';
+                addBtn.onclick = function() { openAddCompanyModal(); };
+                carousel.appendChild(addBtn);
+            }
+        }
+
+        function switchToCompany(company_id) {
+            const session = AUTH.getSession();
+            session.company_id = company_id;
+            localStorage.setItem('session', JSON.stringify(session));
+            location.reload();
+        }
+
+        function loadEmployeesFromStorage() {
+            const stored = localStorage.getItem('employees_' + currentCompanyId);
+            if (stored) {
+                try {
+                    employees = JSON.parse(stored);
+                } catch (e) {
+                    employees = [];
+                }
+            }
+        }
+
+        function displayEmployees() {
+            let html = '';
+            if (employees.length === 0) {
+                html = '<tr><td colspan="7" class="empty-message">No employees yet. Click "Add Employee" to get started.</td></tr>';
+            } else {
+                employees.forEach(emp => {
+                    html += `
+                        <tr>
+                            <td><strong>${emp.employee_number}</strong></td>
+                            <td>${emp.first_name} ${emp.last_name}</td>
+                            <td>${emp.id_number || '-'}</td>
+                            <td>${emp.position || '-'}</td>
+                            <td>${emp.department || '-'}</td>
+                            <td>${emp.payment_method || 'EFT'}</td>
+                            <td>
+                                <button class="btn-small btn-edit" onclick="editEmployee('${emp.id}')">Edit</button>
+                                <button class="btn-small btn-delete" data-permission="DELETE_EMPLOYEES" onclick="deleteEmployee('${emp.id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('employee-list').innerHTML = html;
+            Permissions.enforceUI();
+        }
+
+        function openAddEmployeeModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Employee';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeeModal').classList.add('show');
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').classList.remove('show');
+            document.getElementById('modalSuccess').style.display = 'none';
+            document.getElementById('modalError').style.display = 'none';
+        }
+
+        function editEmployee(id) {
+            const emp = employees.find(e => e.id === id);
+            if (emp) {
+                document.getElementById('modalTitle').textContent = 'Edit Employee';
+                document.getElementById('employeeId').value = emp.id;
+                document.getElementById('employee_number').value = emp.employee_number || '';
+                document.getElementById('first_name').value = emp.first_name || '';
+                document.getElementById('last_name').value = emp.last_name || '';
+                document.getElementById('id_number').value = emp.id_number || '';
+                document.getElementById('email').value = emp.email || '';
+                document.getElementById('phone').value = emp.phone || '';
+                document.getElementById('job_title').value = emp.job_title || '';
+                document.getElementById('department').value = emp.department || '';
+                document.getElementById('position').value = emp.position || '';
+                document.getElementById('payment_method').value = emp.payment_method || 'EFT';
+                document.getElementById('bank_name').value = emp.bank_name || '';
+                document.getElementById('account_holder').value = emp.account_holder || '';
+                document.getElementById('account_number').value = emp.account_number || '';
+                document.getElementById('branch_code').value = emp.branch_code || '';
+                document.getElementById('date_appointed').value = emp.date_appointed || '';
+                document.getElementById('medical_aid_members').value = emp.medical_aid_members || '';
+                document.getElementById('tax_directive').value = emp.tax_directive || '';
+                document.getElementById('employeeModal').classList.add('show');
+            }
+        }
+
+        function saveEmployee(event) {
+            event.preventDefault();
+
+            const successDiv = document.getElementById('modalSuccess');
+            const errorDiv = document.getElementById('modalError');
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            const employeeId = document.getElementById('employeeId').value;
+            const isEdit = employeeId !== '';
+
+            const newEmployee = {
+                id: employeeId || 'emp-' + Math.random().toString(36).substr(2, 9),
+                employee_number: document.getElementById('employee_number').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                id_number: document.getElementById('id_number').value || null,
+                email: document.getElementById('email').value || null,
+                phone: document.getElementById('phone').value || null,
+                job_title: document.getElementById('job_title').value || null,
+                department: document.getElementById('department').value || null,
+                position: document.getElementById('position').value || null,
+                payment_method: document.getElementById('payment_method').value,
+                bank_name: document.getElementById('bank_name').value || null,
+                account_holder: document.getElementById('account_holder').value || null,
+                account_number: document.getElementById('account_number').value || null,
+                branch_code: document.getElementById('branch_code').value || null,
+                date_appointed: document.getElementById('date_appointed').value || null,
+                medical_aid_members: parseInt(document.getElementById('medical_aid_members').value) || 0,
+                tax_directive: parseFloat(document.getElementById('tax_directive').value) || 0
+            };
+
+            if (isEdit) {
+                const index = employees.findIndex(e => e.id === employeeId);
+                if (index !== -1) {
+                    employees[index] = newEmployee;
+                }
+            } else {
+                employees.push(newEmployee);
+            }
+
+            // Store in localStorage
+            localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+
+            // Audit log
+            if (isEdit) {
+                AuditTrail.logUpdate(currentCompanyId, 'employee', 'Updated employee ' + newEmployee.first_name + ' ' + newEmployee.last_name + ' (' + newEmployee.employee_number + ')');
+            } else {
+                AuditTrail.logCreate(currentCompanyId, 'employee', 'Created employee ' + newEmployee.first_name + ' ' + newEmployee.last_name + ' (' + newEmployee.employee_number + ')');
+            }
+
+            successDiv.textContent = isEdit ? 'Employee updated successfully!' : 'Employee added successfully!';
+            successDiv.style.display = 'block';
+
+            setTimeout(() => {
+                closeEmployeeModal();
+                displayEmployees();
+            }, 1500);
+        }
+
+        function deleteEmployee(id) {
+            if (!Permissions.require('DELETE_EMPLOYEES')) return;
+            var emp = employees.find(function(e) { return e.id === id; });
+            if (confirm('Are you sure you want to delete this employee?')) {
+                employees = employees.filter(e => e.id !== id);
+                localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+                AuditTrail.logDelete(currentCompanyId, 'employee', 'Deleted employee ' + (emp ? emp.first_name + ' ' + emp.last_name + ' (' + emp.employee_number + ')' : id));
+                displayEmployees();
+            }
+        }
+
+        function goToDashboard() {
+            window.location.href = 'company-selection.html';
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AUTH.logout();
+            }
+        }
+
+        // ========== BULK UPLOAD ==========
+
+        var bulkImportData = null;
+        var bulkParsedData = null;
+
+        var EMPLOYEE_FIELD_ALIASES = {
+            'employee_number': ['employee_number', 'emp_number', 'EmpNo', 'EmployeeNumber', 'emp_no', 'empno', 'emp_id', 'Employee Number', 'Employee_Number', 'staff_number', 'StaffNo'],
+            'first_name': ['first_name', 'FirstName', 'fname', 'Name', 'first', 'First Name', 'First_Name', 'given_name'],
+            'last_name': ['last_name', 'LastName', 'lname', 'Surname', 'surname', 'last', 'Last Name', 'Last_Name', 'family_name'],
+            'id_number': ['id_number', 'IDNumber', 'id_no', 'sa_id', 'ID Number', 'ID_Number', 'identity_number', 'rsa_id'],
+            'email': ['email', 'Email', 'email_address', 'EmailAddress', 'e_mail'],
+            'phone': ['phone', 'Phone', 'mobile', 'cell', 'telephone', 'phone_number', 'PhoneNumber', 'contact_number'],
+            'job_title': ['job_title', 'JobTitle', 'title', 'job', 'Job Title', 'Job_Title', 'designation'],
+            'department': ['department', 'Department', 'dept', 'Dept'],
+            'position': ['position', 'Position', 'pos'],
+            'payment_method': ['payment_method', 'PaymentMethod', 'payment', 'pay_method', 'Payment Method', 'Payment_Method'],
+            'bank_name': ['bank_name', 'BankName', 'bank', 'Bank Name', 'Bank_Name'],
+            'account_holder': ['account_holder', 'AccountHolder', 'Account Holder', 'Account_Holder'],
+            'account_number': ['account_number', 'AccountNumber', 'acc_number', 'Account Number', 'Account_Number'],
+            'branch_code': ['branch_code', 'BranchCode', 'branch', 'Branch Code', 'Branch_Code'],
+            'date_appointed': ['date_appointed', 'DateAppointed', 'start_date', 'StartDate', 'hire_date', 'Date Appointed', 'Date_Appointed', 'appointment_date']
+        };
+
+        // Setup drag-drop on page load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                BulkImportUtils.setupDragDrop('empDropZone', 'empFileInput', handleEmployeeFile);
+            }, 100);
+        });
+
+        function openBulkUploadModal() {
+            resetBulkUpload();
+            document.getElementById('bulkUploadModal').classList.add('show');
+        }
+
+        function closeBulkUpload() {
+            document.getElementById('bulkUploadModal').classList.remove('show');
+            resetBulkUpload();
+        }
+
+        function resetBulkUpload() {
+            bulkImportData = null;
+            bulkParsedData = null;
+            document.getElementById('bulkStep1').style.display = 'block';
+            document.getElementById('bulkStep2').style.display = 'none';
+            document.getElementById('bulkStep3').style.display = 'none';
+            document.getElementById('empFileInput').value = '';
+        }
+
+        function goToStep2() {
+            document.getElementById('bulkStep3').style.display = 'none';
+            document.getElementById('bulkStep2').style.display = 'block';
+        }
+
+        function handleEmployeeFile(file) {
+            if (typeof XLSX === 'undefined') {
+                alert('File parser not loaded. Please refresh the page and try again.');
+                return;
+            }
+            BulkImportUtils.parseFile(file, function(data, error) {
+                if (error) {
+                    alert(error);
+                    return;
+                }
+                bulkImportData = data;
+                var headers = Object.keys(data[0]);
+                var autoMapping = BulkImportUtils.autoMapColumns(headers, EMPLOYEE_FIELD_ALIASES);
+                BulkImportUtils.renderColumnMappingUI('columnMappingArea', headers, EMPLOYEE_FIELD_ALIASES, autoMapping, ['employee_number', 'first_name', 'last_name']);
+
+                document.getElementById('bulkStep1').style.display = 'none';
+                document.getElementById('bulkStep2').style.display = 'block';
+            });
+        }
+
+        function applyMappingAndPreview() {
+            var mapping = BulkImportUtils.readColumnMapping(EMPLOYEE_FIELD_ALIASES);
+
+            // Check required mappings
+            if (!mapping.employee_number || !mapping.first_name || !mapping.last_name) {
+                alert('Please map the required fields: Employee Number, First Name, and Last Name.');
+                return;
+            }
+
+            var existingNumbers = {};
+            employees.forEach(function(e) {
+                existingNumbers[e.employee_number.toUpperCase()] = true;
+            });
+
+            var valid = [];
+            var errors = [];
+            var seenNumbers = {};
+
+            bulkImportData.forEach(function(row, idx) {
+                var empNum = String(BulkImportUtils.getMappedValue(row, 'employee_number', mapping) || '').trim();
+                var firstName = String(BulkImportUtils.getMappedValue(row, 'first_name', mapping) || '').trim();
+                var lastName = String(BulkImportUtils.getMappedValue(row, 'last_name', mapping) || '').trim();
+
+                var rowErrors = [];
+                if (!empNum) rowErrors.push('Missing employee number');
+                if (!firstName) rowErrors.push('Missing first name');
+                if (!lastName) rowErrors.push('Missing last name');
+                if (empNum && existingNumbers[empNum.toUpperCase()]) rowErrors.push('Employee number already exists');
+                if (empNum && seenNumbers[empNum.toUpperCase()]) rowErrors.push('Duplicate in file');
+
+                var idNum = String(BulkImportUtils.getMappedValue(row, 'id_number', mapping) || '').trim();
+                if (idNum) {
+                    var idCheck = BulkImportUtils.validateSAId(idNum);
+                    if (!idCheck.valid) rowErrors.push('ID: ' + idCheck.message);
+                }
+
+                if (empNum) seenNumbers[empNum.toUpperCase()] = true;
+
+                var parsed = {
+                    employee_number: empNum,
+                    first_name: firstName,
+                    last_name: lastName,
+                    id_number: idNum || null,
+                    email: String(BulkImportUtils.getMappedValue(row, 'email', mapping) || '').trim() || null,
+                    phone: String(BulkImportUtils.getMappedValue(row, 'phone', mapping) || '').trim() || null,
+                    job_title: String(BulkImportUtils.getMappedValue(row, 'job_title', mapping) || '').trim() || null,
+                    department: String(BulkImportUtils.getMappedValue(row, 'department', mapping) || '').trim() || null,
+                    position: String(BulkImportUtils.getMappedValue(row, 'position', mapping) || '').trim() || null,
+                    payment_method: BulkImportUtils.normalizePaymentMethod(BulkImportUtils.getMappedValue(row, 'payment_method', mapping)),
+                    bank_name: String(BulkImportUtils.getMappedValue(row, 'bank_name', mapping) || '').trim() || null,
+                    account_holder: String(BulkImportUtils.getMappedValue(row, 'account_holder', mapping) || '').trim() || null,
+                    account_number: String(BulkImportUtils.getMappedValue(row, 'account_number', mapping) || '').trim() || null,
+                    branch_code: String(BulkImportUtils.getMappedValue(row, 'branch_code', mapping) || '').trim() || null,
+                    date_appointed: BulkImportUtils.normalizeDate(BulkImportUtils.getMappedValue(row, 'date_appointed', mapping)) || null,
+                    _row: idx + 1,
+                    _errors: rowErrors
+                };
+
+                if (rowErrors.length > 0) {
+                    errors.push(parsed);
+                } else {
+                    valid.push(parsed);
+                }
+            });
+
+            bulkParsedData = { valid: valid, errors: errors };
+
+            // Render summary
+            var summaryHtml = '<div style="display:flex; gap:15px; margin-bottom:15px;">';
+            summaryHtml += '<div style="padding:15px 20px; background:#d4edda; border-radius:8px; flex:1; text-align:center;"><strong style="font-size:1.5rem; color:#155724;">' + valid.length + '</strong><br><span style="color:#155724;">Ready to import</span></div>';
+            summaryHtml += '<div style="padding:15px 20px; background:' + (errors.length > 0 ? '#f8d7da' : '#e2e3e5') + '; border-radius:8px; flex:1; text-align:center;"><strong style="font-size:1.5rem; color:' + (errors.length > 0 ? '#721c24' : '#383d41') + ';">' + errors.length + '</strong><br><span style="color:' + (errors.length > 0 ? '#721c24' : '#383d41') + ';">Errors (will be skipped)</span></div>';
+            summaryHtml += '</div>';
+            document.getElementById('validationSummary').innerHTML = summaryHtml;
+
+            // Render preview table
+            var allRows = valid.concat(errors);
+            allRows.sort(function(a, b) { return a._row - b._row; });
+
+            var previewHtml = '<div style="overflow-x:auto; max-height:400px; overflow-y:auto;"><table class="employee-table" style="font-size:13px;">';
+            previewHtml += '<thead><tr style="background:linear-gradient(135deg, #667eea, #764ba2); color:white;"><th>Row</th><th>Emp #</th><th>First Name</th><th>Last Name</th><th>ID Number</th><th>Email</th><th>Payment</th><th>Status</th></tr></thead><tbody>';
+
+            allRows.slice(0, 50).forEach(function(row) {
+                var hasErrors = row._errors && row._errors.length > 0;
+                var bg = hasErrors ? '#f8d7da' : '';
+                previewHtml += '<tr style="background:' + bg + ';">';
+                previewHtml += '<td>' + row._row + '</td>';
+                previewHtml += '<td>' + (row.employee_number || '-') + '</td>';
+                previewHtml += '<td>' + (row.first_name || '-') + '</td>';
+                previewHtml += '<td>' + (row.last_name || '-') + '</td>';
+                previewHtml += '<td>' + (row.id_number || '-') + '</td>';
+                previewHtml += '<td>' + (row.email || '-') + '</td>';
+                previewHtml += '<td>' + (row.payment_method || '-') + '</td>';
+                if (hasErrors) {
+                    previewHtml += '<td style="color:#dc3545; font-weight:600;">' + row._errors.join(', ') + '</td>';
+                } else {
+                    previewHtml += '<td style="color:#28a745; font-weight:600;">Ready</td>';
+                }
+                previewHtml += '</tr>';
+            });
+
+            if (allRows.length > 50) {
+                previewHtml += '<tr><td colspan="8" style="text-align:center; color:#999;">... and ' + (allRows.length - 50) + ' more rows</td></tr>';
+            }
+
+            previewHtml += '</tbody></table></div>';
+            document.getElementById('empPreviewArea').innerHTML = previewHtml;
+
+            if (valid.length === 0) {
+                document.getElementById('confirmImportBtn').disabled = true;
+                document.getElementById('confirmImportBtn').style.opacity = '0.5';
+            } else {
+                document.getElementById('confirmImportBtn').disabled = false;
+                document.getElementById('confirmImportBtn').style.opacity = '1';
+            }
+
+            document.getElementById('bulkStep2').style.display = 'none';
+            document.getElementById('bulkStep3').style.display = 'block';
+        }
+
+        function confirmEmployeeImport() {
+            if (!bulkParsedData || bulkParsedData.valid.length === 0) return;
+
+            var imported = 0;
+            bulkParsedData.valid.forEach(function(row) {
+                var emp = {
+                    id: BulkImportUtils.generateId('emp'),
+                    employee_number: row.employee_number,
+                    first_name: row.first_name,
+                    last_name: row.last_name,
+                    id_number: row.id_number,
+                    email: row.email,
+                    phone: row.phone,
+                    job_title: row.job_title,
+                    department: row.department,
+                    position: row.position,
+                    payment_method: row.payment_method,
+                    bank_name: row.bank_name,
+                    account_holder: row.account_holder,
+                    account_number: row.account_number,
+                    branch_code: row.branch_code,
+                    date_appointed: row.date_appointed
+                };
+                employees.push(emp);
+                imported++;
+            });
+
+            localStorage.setItem('employees_' + currentCompanyId, JSON.stringify(employees));
+            BulkImportUtils.logAudit(currentCompanyId, 'BULK_IMPORT', 'Imported ' + imported + ' employees from CSV/Excel');
+
+            closeBulkUpload();
+            displayEmployees();
+            alert('Successfully imported ' + imported + ' employees!' + (bulkParsedData.errors.length > 0 ? '\n' + bulkParsedData.errors.length + ' rows were skipped due to errors.' : ''));
+        }
+
+        function downloadEmployeeTemplate() {
+            BulkImportUtils.downloadCSVTemplate(
+                'employee_import_template.csv',
+                ['employee_number', 'first_name', 'last_name', 'id_number', 'email', 'phone', 'job_title', 'department', 'position', 'payment_method', 'bank_name', 'account_holder', 'account_number', 'branch_code', 'date_appointed'],
+                [
+                    ['EMP001', 'John', 'Smith', '9001015009087', 'john@example.com', '0821234567', 'Manager', 'Sales', 'Sales Manager', 'EFT', 'ABSA', 'John Smith', '4012345678', '632005', '2024-01-15'],
+                    ['EMP002', 'Jane', 'Doe', '9502024001089', 'jane@example.com', '0839876543', 'Accountant', 'Finance', 'Senior Accountant', 'EFT', 'FNB', 'Jane Doe', '6234567890', '250655', '2023-06-01']
+                ]
+            );
+        }
+
+        // ---- Add Company Modal ----
+        function openAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'flex';
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('addCompanyError').style.display = 'none';
+        }
+
+        function closeAddCompanyModal() {
+            document.getElementById('addCompanyModal').style.display = 'none';
+        }
+
+        function submitAddCompany() {
+            var name = document.getElementById('newCompanyName').value.trim();
+            var email = document.getElementById('newCompanyEmail').value.trim();
+            var errorDiv = document.getElementById('addCompanyError');
+
+            if (!name) {
+                errorDiv.textContent = 'Please enter a company name';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            var session = AUTH.getSession();
+            var result = AUTH.createCompany({ name: name, email: email });
+            if (!result.success) {
+                errorDiv.textContent = 'Failed to create company';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            AUTH.addCompanyToUser(session.user_id, result.company.id);
+            AUTH.refreshSessionCompanyIds(result.company.id);
+
+            // Switch to the new company
+            session = AUTH.getSession();
+            session.company_id = result.company.id;
+            localStorage.setItem('session', JSON.stringify(session));
+
+            closeAddCompanyModal();
+            location.reload();
+        }
+    </script>
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:15px; padding:30px; max-width:450px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#667eea; margin:0;">Add New Company</h2>
+                <span style="font-size:1.5rem; cursor:pointer; color:#999;" onclick="closeAddCompanyModal()">&times;</span>
+            </div>
+            <div id="addCompanyError" style="display:none; background:#fee; color:#c33; padding:10px; border-radius:8px; margin-bottom:15px; border-left:4px solid #c33;"></div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Name *</label>
+                <input type="text" id="newCompanyName" placeholder="Enter company name" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#333; margin-bottom:5px;">Company Email</label>
+                <input type="email" id="newCompanyEmail" placeholder="Enter company email" style="width:100%; padding:12px; border:2px solid #eee; border-radius:8px; font-size:1rem;">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeAddCompanyModal()" style="flex:1; padding:12px; background:#999; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button onclick="submitAddCompany()" style="flex:1; padding:12px; background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Create Company</button>
+            </div>
+        </div>
+    </div>
+    <nav class="mobile-bottom-nav">
+        <a href="company-dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">Dashboard</span></a>
+        <a href="employee-management.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128101;</span><span class="mobile-nav-label">Employees</span></a>
+        <a href="payruns.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128181;</span><span class="mobile-nav-label">Pay Runs</span></a>
+        <a href="reports.html" class="mobile-nav-item"><span class="mobile-nav-icon">&#128203;</span><span class="mobile-nav-label">Reports</span></a>
+    </nav>
+    <script src="js/mobile-utils.js"></script>
+</body>
+</html>
