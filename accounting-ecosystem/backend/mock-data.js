@@ -304,6 +304,59 @@ const attendance = [
   { id: 12, company_id: 1, employee_id: 8,  date: '2024-08-02', status: 'half_day', clock_in: '08:00', clock_out: '12:00', hours_worked: 4,   overtime_hours: 0,   notes: 'Sick — went home early' },
 ];
 
+// ─── Till Devices (POS) ──────────────────────────────────────────────────────
+const tills = [
+  { id: 1, company_id: 1, till_name: 'Till 1 - Main', location: 'Front Counter', is_active: true, created_at: '2024-01-20T00:00:00.000Z' },
+  { id: 2, company_id: 1, till_name: 'Till 2 - Express', location: 'Express Lane', is_active: true, created_at: '2024-01-20T00:00:00.000Z' },
+];
+
+// ─── Till Sessions (POS) ─────────────────────────────────────────────────────
+const tillSessions = [
+  { id: 1, company_id: 1, till_id: 1, cashier_id: 1, opening_amount: 500, closing_amount: null, expected_amount: null, difference: null, status: 'open', opened_at: new Date().toISOString(), closed_at: null, notes: null, created_at: new Date().toISOString() },
+];
+
+// ─── Daily Discounts (POS) ───────────────────────────────────────────────────
+const dailyDiscounts = [];
+
+// ─── POS Settings ────────────────────────────────────────────────────────────
+const posSettings = [
+  { id: 1, company_id: 1, receipt_header: 'The Infinite Legacy (Pty) Ltd', receipt_footer: 'Thank you for your purchase!', vat_number: '9876543210', default_vat_rate: 15, currency: 'ZAR', allow_negative_stock: false, require_customer: false, auto_print_receipt: true, low_stock_threshold: 10, created_at: '2024-01-20T00:00:00.000Z' },
+];
+
+// ─── Receipt Settings (POS) ──────────────────────────────────────────────────
+const receiptSettings = [
+  { id: 1, company_id: 1, paper_size: '80mm', show_logo: true, show_vat_breakdown: true, show_barcode: true, header_text: 'The Infinite Legacy', footer_text: 'Thank you for your purchase!', created_at: '2024-01-20T00:00:00.000Z' },
+];
+
+// ─── Printers (POS) ──────────────────────────────────────────────────────────
+const printers = [
+  { id: 1, company_id: 1, name: 'Main Receipt Printer', type: 'thermal', connection: 'usb', ip_address: null, port: null, is_default: true, is_active: true, created_at: '2024-01-20T00:00:00.000Z' },
+];
+
+// ─── Leave Records (Payroll) ─────────────────────────────────────────────────
+const leaveRecords = [
+  { id: 1, company_id: 1, employee_id: 11, leave_type: 'annual', start_date: '2024-08-01', end_date: '2024-08-05', days: 5, status: 'approved', notes: 'Annual leave', created_at: '2024-07-25T00:00:00.000Z' },
+  { id: 2, company_id: 1, employee_id: 8,  leave_type: 'sick', start_date: '2024-08-02', end_date: '2024-08-02', days: 0.5, status: 'approved', notes: 'Sick half day', created_at: '2024-08-02T12:00:00.000Z' },
+];
+
+// ─── Employee Notes (Payroll) ────────────────────────────────────────────────
+const employeeNotes = [
+  { id: 1, company_id: 1, employee_id: 1, note: 'Salary review scheduled for September', created_by: 2, created_at: '2024-07-15T00:00:00.000Z' },
+  { id: 2, company_id: 1, employee_id: 5, note: 'Warning issued for late attendance', created_by: 2, created_at: '2024-07-20T00:00:00.000Z' },
+];
+
+// ─── Historical Records (Payroll) ────────────────────────────────────────────
+const historicalRecords = [];
+const historicalImportLog = [];
+
+// ─── Narratives (Payroll) ────────────────────────────────────────────────────
+const narratives = [];
+
+// ─── Payroll Runs ────────────────────────────────────────────────────────────
+const payrollRuns = [
+  { id: 1, company_id: 1, period_id: 1, run_date: '2024-06-20', status: 'completed', total_gross: 46500, total_net: 40702, total_paye: 4833, total_uif_ee: 392.12, total_uif_er: 392.12, employee_count: 3, created_by: 2, created_at: '2024-06-20T00:00:00.000Z' },
+];
+
 // ─── Audit Log ───────────────────────────────────────────────────────────────
 const auditLog = [
   { id: 1, company_id: 1, user_id: 1, user_email: 'pos@test.com', module: 'pos', action_type: 'CREATE', entity_type: 'sale', entity_id: '1', field_name: null, old_value: null, new_value: '{"receipt_number":"RC-20240601-A1B2","total_amount":59.96}', ip_address: '127.0.0.1', user_agent: 'Mozilla/5.0', metadata: '{}', created_at: '2024-06-01T09:15:00.000Z' },
@@ -447,6 +500,10 @@ async function initMockData() {
   console.log(`     Payslips:     ${payrollTransactions.length}`);
   console.log(`     Attendance:   ${attendance.length}`);
   console.log(`     Payroll Items: ${payrollItemsMaster.length}`);
+  console.log(`     Tills:        ${tills.length}`);
+  console.log(`     Sessions:     ${tillSessions.length}`);
+  console.log(`     Leave Recs:   ${leaveRecords.length}`);
+  console.log(`     Payroll Runs: ${payrollRuns.length}`);
   console.log(`     Audit Entries: ${auditLog.length}`);
   console.log(`     Accounts (COA): ${chartOfAccounts.length}`);
   console.log(`     Journals:      ${journalEntries.length}`);
@@ -529,6 +586,22 @@ module.exports = {
   payslipItems,
   attendance,
   auditLog,
+
+  // POS extras
+  tills,
+  tillSessions,
+  dailyDiscounts,
+  posSettings,
+  receiptSettings,
+  printers,
+
+  // Payroll extras
+  leaveRecords,
+  employeeNotes,
+  historicalRecords,
+  historicalImportLog,
+  narratives,
+  payrollRuns,
 
   // Accounting module
   chartOfAccounts,

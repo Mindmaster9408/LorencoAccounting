@@ -458,4 +458,349 @@ router.get('/inventory/adjustments', requirePermission('INVENTORY.VIEW'), (req, 
   res.json({ adjustments: results });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TILL SESSIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/sessions', (req, res) => {
+  const { status } = req.query;
+  let results = mock.tillSessions.filter(s => s.company_id === req.companyId);
+  if (status) results = results.filter(s => s.status === status);
+  results = results.map(s => {
+    const till = mock.tills.find(t => t.id === s.till_id);
+    return { ...s, till_name: till ? till.till_name : 'Unknown Till' };
+  });
+  res.json({ sessions: results });
+});
+
+router.post('/sessions/open', (req, res) => {
+  const { till_id, opening_amount } = req.body;
+  // Check for existing open session
+  const existing = mock.tillSessions.find(s => s.company_id === req.companyId && s.cashier_id === req.user.userId && s.status === 'open');
+  if (existing) return res.status(400).json({ error: 'You already have an open session', session: existing });
+
+  const session = {
+    id: mock.nextId(), company_id: req.companyId, till_id: till_id || 1,
+    cashier_id: req.user.userId, opening_amount: opening_amount || 0,
+    closing_amount: null, expected_amount: null, difference: null,
+    status: 'open', opened_at: new Date().toISOString(), closed_at: null, notes: null,
+    created_at: new Date().toISOString(),
+  };
+  mock.tillSessions.push(session);
+  res.status(201).json({ session });
+});
+
+router.get('/sessions/current', (req, res) => {
+  const session = mock.tillSessions.find(s => s.company_id === req.companyId && s.cashier_id === req.user.userId && s.status === 'open');
+  if (!session) return res.json({ session: null });
+  const sessionSales = mock.sales.filter(s => s.till_session_id === session.id && s.company_id === req.companyId);
+  const till = mock.tills.find(t => t.id === session.till_id);
+  res.json({ session: { ...session, till_name: till ? till.till_name : 'Unknown', sales_count: sessionSales.length, sales_total: sessionSales.reduce((sum, s) => sum + (s.status === 'completed' ? s.total_amount : 0), 0) } });
+});
+
+router.get('/sessions/pending-cashup', (req, res) => {
+  const pending = mock.tillSessions.filter(s => s.company_id === req.companyId && (s.status === 'closed' || s.status === 'pending_cashup'));
+  res.json({ sessions: pending });
+});
+
+router.post('/sessions/:id/close', (req, res) => {
+  const idx = mock.tillSessions.findIndex(s => s.id === parseInt(req.params.id) && s.company_id === req.companyId);
+  if (idx === -1) return res.status(404).json({ error: 'Session not found' });
+  const { closing_amount, notes } = req.body;
+
+  const sessionSales = mock.sales.filter(s => s.till_session_id === mock.tillSessions[idx].id && s.status === 'completed');
+  const expected = mock.tillSessions[idx].opening_amount + sessionSales.reduce((sum, s) => sum + s.total_amount, 0);
+
+  mock.tillSessions[idx].closing_amount = closing_amount || 0;
+  mock.tillSessions[idx].expected_amount = expected;
+  mock.tillSessions[idx].difference = (closing_amount || 0) - expected;
+  mock.tillSessions[idx].status = 'closed';
+  mock.tillSessions[idx].closed_at = new Date().toISOString();
+  mock.tillSessions[idx].notes = notes || null;
+
+  res.json({ session: mock.tillSessions[idx] });
+});
+
+router.post('/sessions/:id/complete-cashup', (req, res) => {
+  const idx = mock.tillSessions.findIndex(s => s.id === parseInt(req.params.id) && s.company_id === req.companyId);
+  if (idx === -1) return res.status(404).json({ error: 'Session not found' });
+  const { counted_amount, notes } = req.body;
+
+  mock.tillSessions[idx].closing_amount = counted_amount || mock.tillSessions[idx].closing_amount;
+  mock.tillSessions[idx].status = 'completed';
+  if (notes) mock.tillSessions[idx].notes = notes;
+
+  res.json({ session: mock.tillSessions[idx] });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TILLS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/tills', (req, res) => {
+  const results = mock.tills.filter(t => t.company_id === req.companyId && t.is_active);
+  res.json({ tills: results });
+});
+
+router.post('/till/daily-reset', (req, res) => {
+  res.json({ success: true, message: 'Till daily counts reset' });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STOCK (alternate endpoint used by frontend)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/stock', (req, res) => {
+  const { low_stock_only, category } = req.query;
+  let results = mock.products.filter(p => p.company_id === req.companyId && p.is_active);
+  if (category) results = results.filter(p => p.category_id === parseInt(category));
+  if (low_stock_only === 'true') results = results.filter(p => p.stock_quantity <= p.reorder_level);
+
+  results = results.map(p => {
+    const cat = mock.categories.find(c => c.id === p.category_id);
+    return { ...p, categories: cat ? { name: cat.name } : null };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+
+  res.json({ products: results, inventory: results });
+});
+
+router.post('/stock/adjust', (req, res) => {
+  const { product_id, quantity_change, adjustment_type, reason, notes } = req.body;
+  if (!product_id || quantity_change === undefined) return res.status(400).json({ error: 'product_id and quantity_change required' });
+
+  const pIdx = mock.products.findIndex(p => p.id === parseInt(product_id) && p.company_id === req.companyId);
+  if (pIdx === -1) return res.status(404).json({ error: 'Product not found' });
+
+  const oldQty = mock.products[pIdx].stock_quantity;
+  const newQty = Math.max(0, oldQty + quantity_change);
+  mock.products[pIdx].stock_quantity = newQty;
+
+  const adjustment = {
+    id: mock.nextId(), company_id: req.companyId, product_id: parseInt(product_id),
+    adjusted_by: req.user.userId, quantity_before: oldQty, quantity_change, quantity_after: newQty,
+    reason: reason || adjustment_type || 'manual', notes: notes || null,
+    created_at: new Date().toISOString(),
+  };
+  mock.inventoryAdjustments.push(adjustment);
+  res.json({ adjustment, product: mock.products[pIdx] });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DAILY DISCOUNTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/daily-discounts', (req, res) => {
+  const { product_id, discount_percent, discount_amount, start_date, end_date, reason } = req.body;
+  const discount = {
+    id: mock.nextId(), company_id: req.companyId, product_id, discount_percent, discount_amount,
+    start_date: start_date || new Date().toISOString().split('T')[0],
+    end_date: end_date || new Date().toISOString().split('T')[0],
+    reason: reason || null, created_by: req.user.userId, is_active: true,
+    created_at: new Date().toISOString(),
+  };
+  mock.dailyDiscounts.push(discount);
+  res.status(201).json({ discount });
+});
+
+router.get('/daily-discounts', (req, res) => {
+  const results = mock.dailyDiscounts.filter(d => d.company_id === req.companyId && d.is_active);
+  res.json({ discounts: results });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POS SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/settings', (req, res) => {
+  const settings = mock.posSettings.find(s => s.company_id === req.companyId);
+  res.json({ settings: settings || {} });
+});
+
+router.put('/settings', (req, res) => {
+  let idx = mock.posSettings.findIndex(s => s.company_id === req.companyId);
+  if (idx === -1) {
+    mock.posSettings.push({ id: mock.nextId(), company_id: req.companyId, ...req.body, created_at: new Date().toISOString() });
+    idx = mock.posSettings.length - 1;
+  } else {
+    Object.assign(mock.posSettings[idx], req.body);
+  }
+  res.json({ settings: mock.posSettings[idx] });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRODUCTS — Extra endpoints
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/products/next-code/:prefix', (req, res) => {
+  const prefix = req.params.prefix || 'PRD';
+  const existing = mock.products.filter(p => p.company_id === req.companyId && p.sku && p.sku.startsWith(prefix));
+  const nextNum = existing.length + 1;
+  res.json({ code: `${prefix}-${String(nextNum).padStart(3, '0')}` });
+});
+
+router.get('/products/:id/stock-by-location', (req, res) => {
+  const product = mock.products.find(p => p.id === parseInt(req.params.id) && p.company_id === req.companyId);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+  res.json({ locations: [{ location_id: 1, location_name: 'Main Store', stock_quantity: product.stock_quantity }] });
+});
+
+router.put('/products/:id/stock-by-location', (req, res) => {
+  const pIdx = mock.products.findIndex(p => p.id === parseInt(req.params.id) && p.company_id === req.companyId);
+  if (pIdx === -1) return res.status(404).json({ error: 'Product not found' });
+  const { stock_quantity } = req.body;
+  if (stock_quantity !== undefined) mock.products[pIdx].stock_quantity = stock_quantity;
+  res.json({ success: true, product: mock.products[pIdx] });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SALES — Extra endpoints
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/sales/search', (req, res) => {
+  const { query, date_from, date_to } = req.query;
+  let results = mock.sales.filter(s => s.company_id === req.companyId);
+  if (date_from) results = results.filter(s => s.created_at >= date_from);
+  if (date_to) results = results.filter(s => s.created_at <= date_to);
+  if (query) {
+    const q = query.toLowerCase();
+    results = results.filter(s =>
+      (s.receipt_number && s.receipt_number.toLowerCase().includes(q)) ||
+      mock.saleItems.some(i => i.sale_id === s.id && i.product_name && i.product_name.toLowerCase().includes(q))
+    );
+  }
+  results = results.map(s => ({
+    ...s,
+    sale_items: mock.saleItems.filter(i => i.sale_id === s.id),
+    sale_payments: mock.salePayments.filter(p => p.sale_id === s.id),
+  })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  res.json({ sales: results, total: results.length });
+});
+
+router.post('/sales/split-payment', requirePermission('SALES.CREATE'), (req, res) => {
+  // Split payment is essentially the same as a regular sale with multiple payment methods
+  const { items, payments, customer_id, discount_amount, notes, till_session_id } = req.body;
+  if (!items || items.length === 0) return res.status(400).json({ error: 'At least one item is required' });
+  if (!payments || payments.length < 2) return res.status(400).json({ error: 'Split payment requires at least 2 payment methods' });
+
+  let subtotal = 0, vat_total = 0;
+  for (const item of items) {
+    const lineTotal = item.quantity * item.unit_price;
+    subtotal += lineTotal;
+    if (item.vat_rate) vat_total += lineTotal * (item.vat_rate / (100 + item.vat_rate));
+  }
+  const total_amount = subtotal - (discount_amount || 0);
+  const receiptNumber = `RC-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+  const sale = {
+    id: mock.nextId(), company_id: req.companyId, cashier_id: req.user.userId,
+    customer_id: customer_id || null, receipt_number: receiptNumber,
+    subtotal, discount_amount: discount_amount || 0, vat_amount: vat_total, total_amount,
+    status: 'completed', notes: notes || 'Split payment', till_session_id: till_session_id || null,
+    void_reason: null, voided_by: null, voided_at: null,
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  };
+  mock.sales.push(sale);
+
+  for (const item of items) {
+    mock.saleItems.push({
+      id: mock.nextId(), sale_id: sale.id, product_id: item.product_id,
+      product_name: item.product_name || item.name, quantity: item.quantity,
+      unit_price: item.unit_price, discount_amount: item.discount_amount || 0,
+      vat_rate: item.vat_rate || 15, line_total: item.quantity * item.unit_price - (item.discount_amount || 0),
+    });
+    if (item.product_id) {
+      const pIdx = mock.products.findIndex(p => p.id === item.product_id);
+      if (pIdx !== -1) mock.products[pIdx].stock_quantity = Math.max(0, mock.products[pIdx].stock_quantity - item.quantity);
+    }
+  }
+  for (const p of payments) {
+    mock.salePayments.push({
+      id: mock.nextId(), sale_id: sale.id, payment_method: p.payment_method || p.method, amount: p.amount, reference: p.reference || null,
+    });
+  }
+
+  res.status(201).json({ sale });
+});
+
+router.post('/sales/:id/return', requirePermission('SALES.CREATE'), (req, res) => {
+  const saleId = parseInt(req.params.id);
+  const sale = mock.sales.find(s => s.id === saleId && s.company_id === req.companyId);
+  if (!sale) return res.status(404).json({ error: 'Sale not found' });
+
+  const { items, reason } = req.body;
+  const returnItems = items || mock.saleItems.filter(i => i.sale_id === saleId);
+
+  let refund_total = 0;
+  for (const item of returnItems) {
+    refund_total += (item.quantity || 1) * (item.unit_price || 0);
+    // Restore stock
+    if (item.product_id) {
+      const pIdx = mock.products.findIndex(p => p.id === item.product_id);
+      if (pIdx !== -1) mock.products[pIdx].stock_quantity += (item.quantity || 1);
+    }
+  }
+
+  const returnSale = {
+    id: mock.nextId(), company_id: req.companyId, cashier_id: req.user.userId,
+    customer_id: sale.customer_id, receipt_number: `RET-${Date.now()}`,
+    subtotal: -refund_total, discount_amount: 0, vat_amount: 0, total_amount: -refund_total,
+    status: 'returned', notes: reason || 'Return', till_session_id: null,
+    original_sale_id: saleId, void_reason: null, voided_by: null, voided_at: null,
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  };
+  mock.sales.push(returnSale);
+  res.json({ return_sale: returnSale, refund_amount: refund_total });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/reports/:reportType', (req, res) => {
+  const { reportType } = req.params;
+  const { start_date, startDate, end_date, endDate } = req.query;
+  const from = start_date || startDate || '2024-01-01';
+  const to = end_date || endDate || new Date().toISOString().split('T')[0];
+
+  const companySales = mock.sales.filter(s => s.company_id === req.companyId && s.status === 'completed' && s.created_at >= from && s.created_at <= to + 'T23:59:59');
+
+  if (reportType === 'payment-methods') {
+    const methods = {};
+    for (const sale of companySales) {
+      const payments = mock.salePayments.filter(p => p.sale_id === sale.id);
+      for (const p of payments) {
+        const method = p.payment_method || 'unknown';
+        if (!methods[method]) methods[method] = { method, count: 0, total: 0 };
+        methods[method].count++;
+        methods[method].total += p.amount;
+      }
+    }
+    return res.json({ report: Object.values(methods), period: { from, to } });
+  }
+
+  if (reportType === 'gross-profit' || reportType === 'daily-summary') {
+    const totalRevenue = companySales.reduce((sum, s) => sum + s.total_amount, 0);
+    const totalCost = companySales.reduce((sum, s) => {
+      const items = mock.saleItems.filter(i => i.sale_id === s.id);
+      return sum + items.reduce((iSum, i) => {
+        const product = mock.products.find(p => p.id === i.product_id);
+        return iSum + (product ? product.cost_price * i.quantity : 0);
+      }, 0);
+    }, 0);
+    return res.json({ report: { total_revenue: totalRevenue, total_cost: totalCost, gross_profit: totalRevenue - totalCost, sales_count: companySales.length, period: { from, to } } });
+  }
+
+  // Default: sales summary
+  res.json({
+    report: {
+      total_sales: companySales.length,
+      total_revenue: companySales.reduce((sum, s) => sum + s.total_amount, 0),
+      total_vat: companySales.reduce((sum, s) => sum + s.vat_amount, 0),
+      total_discounts: companySales.reduce((sum, s) => sum + s.discount_amount, 0),
+      period: { from, to },
+    }
+  });
+});
+
 module.exports = router;

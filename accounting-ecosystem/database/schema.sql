@@ -623,7 +623,7 @@ CREATE TABLE IF NOT EXISTS journal_entries (
   date DATE NOT NULL,
   description TEXT NOT NULL,
   reference VARCHAR(255),
-  type VARCHAR(50) DEFAULT 'general' CHECK (type IN ('general', 'opening', 'closing', 'adjustment', 'reversal')),
+  type VARCHAR(50) DEFAULT 'general' CHECK (type IN ('general', 'opening', 'closing', 'adjustment', 'reversal', 'sales', 'purchase', 'payment', 'receipt')),
   status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'reversed')),
   total_debit DECIMAL(14,2) DEFAULT 0,
   total_credit DECIMAL(14,2) DEFAULT 0,
@@ -711,6 +711,84 @@ DO $$ BEGIN
     ALTER TABLE journal_entries ADD CONSTRAINT fk_journal_period FOREIGN KEY (period_id) REFERENCES financial_periods(id);
   END IF;
 END $$;
+
+-- ─── Customer Invoices (Trade Debtors) ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS customer_invoices (
+  id SERIAL PRIMARY KEY,
+  company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  invoice_number VARCHAR(50) NOT NULL,
+  date DATE NOT NULL,
+  due_date DATE,
+  status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'partial', 'overdue', 'cancelled')),
+  subtotal DECIMAL(14,2) DEFAULT 0,
+  vat_amount DECIMAL(14,2) DEFAULT 0,
+  total_amount DECIMAL(14,2) DEFAULT 0,
+  amount_paid DECIMAL(14,2) DEFAULT 0,
+  balance_due DECIMAL(14,2) DEFAULT 0,
+  notes TEXT,
+  journal_id INTEGER REFERENCES journal_entries(id),
+  payment_journal_id INTEGER REFERENCES journal_entries(id),
+  sale_id INTEGER REFERENCES sales(id),
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(company_id, invoice_number)
+);
+
+CREATE TABLE IF NOT EXISTS customer_invoice_lines (
+  id SERIAL PRIMARY KEY,
+  invoice_id INTEGER NOT NULL REFERENCES customer_invoices(id) ON DELETE CASCADE,
+  account_id INTEGER REFERENCES chart_of_accounts(id),
+  description VARCHAR(255) NOT NULL,
+  quantity DECIMAL(10,2) DEFAULT 1,
+  unit_price DECIMAL(14,2) DEFAULT 0,
+  vat_rate DECIMAL(5,2) DEFAULT 15,
+  line_total DECIMAL(14,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cust_inv_company ON customer_invoices(company_id);
+CREATE INDEX IF NOT EXISTS idx_cust_inv_customer ON customer_invoices(customer_id);
+
+-- ─── Supplier Invoices (Trade Creditors) ─────────────────────────────────
+CREATE TABLE IF NOT EXISTS supplier_invoices (
+  id SERIAL PRIMARY KEY,
+  company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+  invoice_number VARCHAR(50) NOT NULL,
+  supplier_ref VARCHAR(100),
+  date DATE NOT NULL,
+  due_date DATE,
+  status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'approved', 'paid', 'partial', 'overdue', 'cancelled')),
+  subtotal DECIMAL(14,2) DEFAULT 0,
+  vat_amount DECIMAL(14,2) DEFAULT 0,
+  total_amount DECIMAL(14,2) DEFAULT 0,
+  amount_paid DECIMAL(14,2) DEFAULT 0,
+  balance_due DECIMAL(14,2) DEFAULT 0,
+  notes TEXT,
+  journal_id INTEGER REFERENCES journal_entries(id),
+  payment_journal_id INTEGER REFERENCES journal_entries(id),
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(company_id, invoice_number)
+);
+
+CREATE TABLE IF NOT EXISTS supplier_invoice_lines (
+  id SERIAL PRIMARY KEY,
+  invoice_id INTEGER NOT NULL REFERENCES supplier_invoices(id) ON DELETE CASCADE,
+  account_id INTEGER REFERENCES chart_of_accounts(id),
+  description VARCHAR(255) NOT NULL,
+  quantity DECIMAL(10,2) DEFAULT 1,
+  unit_price DECIMAL(14,2) DEFAULT 0,
+  vat_rate DECIMAL(5,2) DEFAULT 15,
+  line_total DECIMAL(14,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_supp_inv_company ON supplier_invoices(company_id);
+CREATE INDEX IF NOT EXISTS idx_supp_inv_supplier ON supplier_invoices(supplier_id);
 
 -- ─── PAYE Reconciliation Tables ────────────────────────────────────────────
 
@@ -845,6 +923,10 @@ ALTER TABLE journal_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_periods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_invoice_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE supplier_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE supplier_invoice_lines ENABLE ROW LEVEL SECURITY;
 
 
 -- =============================================================================
@@ -878,6 +960,8 @@ CREATE TRIGGER update_journal_entries_updated_at BEFORE UPDATE ON journal_entrie
 CREATE TRIGGER update_bank_accounts_updated_at BEFORE UPDATE ON bank_accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bank_transactions_updated_at BEFORE UPDATE ON bank_transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_financial_periods_updated_at BEFORE UPDATE ON financial_periods FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_customer_invoices_updated_at BEFORE UPDATE ON customer_invoices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_supplier_invoices_updated_at BEFORE UPDATE ON supplier_invoices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 
 -- =============================================================================

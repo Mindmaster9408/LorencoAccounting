@@ -281,6 +281,133 @@ router.put('/transactions/:id', requirePermission('PAYROLL.CREATE'), (req, res) 
   res.json({ transaction: mock.payrollTransactions[idx] });
 });
 
+// ─── SPECIALIZED TRANSACTION ENDPOINTS ─────────────────────────────────────
+
+/**
+ * POST /api/payroll/transactions/inputs — Save current period inputs
+ */
+router.post('/transactions/inputs', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { employee_id, period, items } = req.body;
+  if (!employee_id || !period) return res.status(400).json({ error: 'employee_id and period are required' });
+
+  // Find or create transaction for this employee/period
+  let txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === parseInt(employee_id) && t.period_id === parseInt(period));
+  if (!txn) {
+    txn = {
+      id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period), employee_id: parseInt(employee_id),
+      basic_salary: 0, gross_pay: 0, net_pay: 0, total_earnings: 0, total_deductions: 0,
+      paye_tax: 0, uif_employee: 0, uif_employer: 0, status: 'draft', notes: null,
+      created_at: new Date().toISOString(),
+    };
+    mock.payrollTransactions.push(txn);
+  }
+
+  // Replace items
+  if (items && items.length > 0) {
+    // Remove old items for this txn
+    for (let i = mock.payslipItems.length - 1; i >= 0; i--) {
+      if (mock.payslipItems[i].transaction_id === txn.id) mock.payslipItems.splice(i, 1);
+    }
+    for (const item of items) {
+      mock.payslipItems.push({
+        id: mock.nextId(), transaction_id: txn.id,
+        item_code: item.code || item.item_code || 'CUSTOM',
+        item_name: item.name || item.item_name || 'Custom Item',
+        item_type: item.type || item.item_type || 'earning',
+        amount: item.amount || 0, is_taxable: item.is_taxable !== false,
+        is_recurring: item.is_recurring || false, notes: item.notes || null,
+      });
+    }
+  }
+
+  res.json({ transaction: txn, items: mock.payslipItems.filter(i => i.transaction_id === txn.id) });
+});
+
+/**
+ * POST /api/payroll/transactions/overtime — Save overtime entries
+ */
+router.post('/transactions/overtime', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { employee_id, period, hours, rate_multiplier, amount } = req.body;
+  if (!employee_id || !period) return res.status(400).json({ error: 'employee_id and period are required' });
+
+  let txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === parseInt(employee_id) && t.period_id === parseInt(period));
+  if (!txn) {
+    txn = { id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period), employee_id: parseInt(employee_id), basic_salary: 0, gross_pay: 0, net_pay: 0, total_earnings: 0, total_deductions: 0, paye_tax: 0, uif_employee: 0, uif_employer: 0, status: 'draft', notes: null, created_at: new Date().toISOString() };
+    mock.payrollTransactions.push(txn);
+  }
+
+  mock.payslipItems.push({
+    id: mock.nextId(), transaction_id: txn.id, item_code: 'OT_NORMAL', item_name: 'Overtime',
+    item_type: 'earning', amount: amount || 0, is_taxable: true, is_recurring: false,
+    notes: `${hours || 0} hours @ ${rate_multiplier || 1.5}x`,
+  });
+
+  res.json({ success: true, transaction_id: txn.id });
+});
+
+/**
+ * POST /api/payroll/transactions/short-time — Save short time entries
+ */
+router.post('/transactions/short-time', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { employee_id, period, hours, amount } = req.body;
+  if (!employee_id || !period) return res.status(400).json({ error: 'employee_id and period are required' });
+
+  let txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === parseInt(employee_id) && t.period_id === parseInt(period));
+  if (!txn) {
+    txn = { id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period), employee_id: parseInt(employee_id), basic_salary: 0, gross_pay: 0, net_pay: 0, total_earnings: 0, total_deductions: 0, paye_tax: 0, uif_employee: 0, uif_employer: 0, status: 'draft', notes: null, created_at: new Date().toISOString() };
+    mock.payrollTransactions.push(txn);
+  }
+
+  mock.payslipItems.push({
+    id: mock.nextId(), transaction_id: txn.id, item_code: 'SHORT_TIME', item_name: 'Short Time Deduction',
+    item_type: 'deduction', amount: amount || 0, is_taxable: true, is_recurring: false,
+    notes: `${hours || 0} hours short time`,
+  });
+
+  res.json({ success: true, transaction_id: txn.id });
+});
+
+/**
+ * POST /api/payroll/transactions/multi-rate — Save multi-rate entries
+ */
+router.post('/transactions/multi-rate', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { employee_id, period, rates } = req.body;
+  if (!employee_id || !period) return res.status(400).json({ error: 'employee_id and period are required' });
+
+  let txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === parseInt(employee_id) && t.period_id === parseInt(period));
+  if (!txn) {
+    txn = { id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period), employee_id: parseInt(employee_id), basic_salary: 0, gross_pay: 0, net_pay: 0, total_earnings: 0, total_deductions: 0, paye_tax: 0, uif_employee: 0, uif_employer: 0, status: 'draft', notes: null, created_at: new Date().toISOString() };
+    mock.payrollTransactions.push(txn);
+  }
+
+  if (rates && rates.length > 0) {
+    for (const rate of rates) {
+      mock.payslipItems.push({
+        id: mock.nextId(), transaction_id: txn.id, item_code: 'MULTI_RATE',
+        item_name: rate.description || 'Multi-rate Pay', item_type: 'earning',
+        amount: rate.amount || 0, is_taxable: true, is_recurring: false,
+        notes: `${rate.hours || 0}h @ R${rate.rate || 0}/h`,
+      });
+    }
+  }
+
+  res.json({ success: true, transaction_id: txn.id });
+});
+
+/**
+ * PUT /api/payroll/transactions/status — Update payslip status
+ */
+router.put('/transactions/status', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { employee_id, period, status } = req.body;
+  if (!employee_id || !period || !status) return res.status(400).json({ error: 'employee_id, period, and status are required' });
+
+  const txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === parseInt(employee_id) && t.period_id === parseInt(period));
+  if (!txn) return res.status(404).json({ error: 'Transaction not found' });
+
+  txn.status = status;
+  res.json({ transaction: txn });
+});
+
 /**
  * DELETE /api/payroll/transactions/:id
  */
@@ -434,6 +561,249 @@ router.get('/attendance/summary', requirePermission('ATTENDANCE.VIEW'), (req, re
   }
 
   res.json({ summary: Object.values(grouped) });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LEAVE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/attendance/leave', requirePermission('ATTENDANCE.RECORD'), (req, res) => {
+  const { employee_id, leave_type, start_date, end_date, days, notes } = req.body;
+  if (!employee_id || !leave_type || !start_date) {
+    return res.status(400).json({ error: 'employee_id, leave_type, and start_date are required' });
+  }
+
+  const leave = {
+    id: mock.nextId(), company_id: req.companyId, employee_id: parseInt(employee_id),
+    leave_type, start_date, end_date: end_date || start_date,
+    days: days || 1, status: 'approved', notes: notes || null,
+    created_at: new Date().toISOString(),
+  };
+  mock.leaveRecords.push(leave);
+
+  // Also create attendance entries for leave days
+  const att = {
+    id: mock.nextId(), company_id: req.companyId, employee_id: parseInt(employee_id),
+    date: start_date, status: 'leave', clock_in: null, clock_out: null,
+    hours_worked: 0, overtime_hours: 0, notes: `${leave_type} leave`,
+  };
+  mock.attendance.push(att);
+
+  res.json({ leave, attendance: att });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMPLOYEE NOTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/employees/:id/notes', requirePermission('PAYROLL.VIEW'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const notes = mock.employeeNotes.filter(n => n.company_id === req.companyId && n.employee_id === empId);
+  res.json({ notes });
+});
+
+router.post('/employees/:id/notes', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { note } = req.body;
+  if (!note) return res.status(400).json({ error: 'note is required' });
+
+  const record = {
+    id: mock.nextId(), company_id: req.companyId, employee_id: empId,
+    note, created_by: req.user.userId, created_at: new Date().toISOString(),
+  };
+  mock.employeeNotes.push(record);
+  res.json({ note: record });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HISTORICAL RECORDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/employees/:id/historical', requirePermission('PAYROLL.VIEW'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period } = req.query;
+  let records = mock.historicalRecords.filter(r => r.company_id === req.companyId && r.employee_id === empId);
+  if (period) records = records.filter(r => r.period === period);
+  res.json({ records });
+});
+
+router.post('/employees/:id/historical', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period, gross_pay, net_pay, paye, uif_ee, uif_er, data } = req.body;
+  if (!period) return res.status(400).json({ error: 'period is required' });
+
+  const record = {
+    id: mock.nextId(), company_id: req.companyId, employee_id: empId,
+    period, gross_pay: gross_pay || 0, net_pay: net_pay || 0,
+    paye: paye || 0, uif_ee: uif_ee || 0, uif_er: uif_er || 0,
+    data: data || {}, created_at: new Date().toISOString(),
+  };
+  mock.historicalRecords.push(record);
+
+  // Log import
+  mock.historicalImportLog.push({
+    id: mock.nextId(), company_id: req.companyId, employee_id: empId,
+    period, action: 'import', created_by: req.user.userId,
+    created_at: new Date().toISOString(),
+  });
+
+  res.json({ record });
+});
+
+router.delete('/employees/:id/historical', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period } = req.query;
+  if (!period) return res.status(400).json({ error: 'period query param is required' });
+
+  const idx = mock.historicalRecords.findIndex(r => r.company_id === req.companyId && r.employee_id === empId && r.period === period);
+  if (idx !== -1) mock.historicalRecords.splice(idx, 1);
+  res.json({ success: true });
+});
+
+router.get('/employees/historical-log', requirePermission('PAYROLL.VIEW'), (req, res) => {
+  const log = mock.historicalImportLog.filter(l => l.company_id === req.companyId);
+  res.json({ log });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NARRATIVES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/employees/:id/narrative', requirePermission('PAYROLL.VIEW'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period } = req.query;
+  let results = mock.narratives.filter(n => n.company_id === req.companyId && n.employee_id === empId);
+  if (period) results = results.filter(n => n.period === period);
+  res.json({ narratives: results, narrative: results[0] || null });
+});
+
+router.post('/employees/:id/narrative', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period, text, narrative } = req.body;
+  if (!period) return res.status(400).json({ error: 'period is required' });
+
+  // Upsert
+  const existing = mock.narratives.findIndex(n => n.company_id === req.companyId && n.employee_id === empId && n.period === period);
+  const record = {
+    id: existing !== -1 ? mock.narratives[existing].id : mock.nextId(),
+    company_id: req.companyId, employee_id: empId, period,
+    text: text || narrative || '', created_by: req.user.userId,
+    created_at: new Date().toISOString(),
+  };
+
+  if (existing !== -1) {
+    mock.narratives[existing] = record;
+  } else {
+    mock.narratives.push(record);
+  }
+
+  res.json({ narrative: record });
+});
+
+router.delete('/employees/:id/narrative', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { period } = req.query;
+  if (!period) return res.status(400).json({ error: 'period query param is required' });
+
+  const idx = mock.narratives.findIndex(n => n.company_id === req.companyId && n.employee_id === empId && n.period === period);
+  if (idx !== -1) mock.narratives.splice(idx, 1);
+  res.json({ success: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAYROLL PROCESSING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/payroll/run-payroll — Process payroll for a period
+ */
+router.post('/run-payroll', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const { period_id, employee_ids } = req.body;
+  if (!period_id) return res.status(400).json({ error: 'period_id is required' });
+
+  const period = mock.payrollPeriods.find(p => p.id === parseInt(period_id) && p.company_id === req.companyId);
+  if (!period) return res.status(404).json({ error: 'Period not found' });
+
+  const employees = employee_ids
+    ? mock.employees.filter(e => e.company_id === req.companyId && employee_ids.includes(e.id))
+    : mock.employees.filter(e => e.company_id === req.companyId && e.is_active);
+
+  const results = [];
+  let totalGross = 0, totalNet = 0, totalPaye = 0;
+
+  for (const emp of employees) {
+    // Simple PAYE calculation (SA 2024/2025 simplified brackets)
+    const annual = (emp.basic_salary || 0) * 12;
+    let paye = 0;
+    if (annual > 95750) paye = Math.max(0, (annual <= 237100 ? (annual - 95750) * 0.18 : annual <= 370500 ? 25434 + (annual - 237100) * 0.26 : annual <= 512800 ? 60108 + (annual - 370500) * 0.31 : annual <= 673000 ? 104222 + (annual - 512800) * 0.36 : annual <= 857900 ? 161892 + (annual - 673000) * 0.39 : annual <= 1817000 ? 234024 + (annual - 857900) * 0.41 : 627468 + (annual - 1817000) * 0.45)) / 12);
+    const uif_ee = Math.min((emp.basic_salary || 0) * 0.01, 177.12);
+    const gross_pay = emp.basic_salary || 0;
+    const net_pay = gross_pay - paye - uif_ee;
+
+    let txn = mock.payrollTransactions.find(t => t.company_id === req.companyId && t.employee_id === emp.id && t.period_id === parseInt(period_id));
+    if (!txn) {
+      txn = { id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period_id), employee_id: emp.id, basic_salary: emp.basic_salary || 0, gross_pay, net_pay, total_earnings: gross_pay, total_deductions: paye + uif_ee, paye_tax: paye, uif_employee: uif_ee, uif_employer: uif_ee, status: 'processing', notes: null, created_at: new Date().toISOString() };
+      mock.payrollTransactions.push(txn);
+    } else {
+      Object.assign(txn, { basic_salary: emp.basic_salary || 0, gross_pay, net_pay, total_earnings: gross_pay, total_deductions: paye + uif_ee, paye_tax: paye, uif_employee: uif_ee, uif_employer: uif_ee, status: 'processing' });
+    }
+
+    totalGross += gross_pay;
+    totalNet += net_pay;
+    totalPaye += paye;
+    results.push(txn);
+  }
+
+  // Create payroll run record
+  const run = {
+    id: mock.nextId(), company_id: req.companyId, period_id: parseInt(period_id),
+    run_date: new Date().toISOString().split('T')[0], status: 'completed',
+    total_gross: totalGross, total_net: totalNet, total_paye: totalPaye,
+    total_uif_ee: results.reduce((s, t) => s + t.uif_employee, 0),
+    total_uif_er: results.reduce((s, t) => s + t.uif_employer, 0),
+    employee_count: results.length, created_by: req.user.userId,
+    created_at: new Date().toISOString(),
+  };
+  mock.payrollRuns.push(run);
+
+  res.json({ run, transactions: results });
+});
+
+/**
+ * POST /api/payroll/calculate-payslip/:employeeId — Calculate single payslip
+ */
+router.post('/calculate-payslip/:employeeId', requirePermission('PAYROLL.CREATE'), (req, res) => {
+  const empId = parseInt(req.params.employeeId);
+  const emp = mock.employees.find(e => e.id === empId && e.company_id === req.companyId);
+  if (!emp) return res.status(404).json({ error: 'Employee not found' });
+
+  const { period_id } = req.body;
+  const annual = (emp.basic_salary || 0) * 12;
+  let paye = 0;
+  if (annual > 95750) paye = Math.max(0, (annual <= 237100 ? (annual - 95750) * 0.18 : annual <= 370500 ? 25434 + (annual - 237100) * 0.26 : annual <= 512800 ? 60108 + (annual - 370500) * 0.31 : annual <= 673000 ? 104222 + (annual - 512800) * 0.36 : annual <= 857900 ? 161892 + (annual - 673000) * 0.39 : annual <= 1817000 ? 234024 + (annual - 857900) * 0.41 : 627468 + (annual - 1817000) * 0.45)) / 12);
+  const uif_ee = Math.min((emp.basic_salary || 0) * 0.01, 177.12);
+  const gross_pay = emp.basic_salary || 0;
+  const net_pay = gross_pay - paye - uif_ee;
+
+  res.json({
+    payslip: {
+      employee_id: empId, employee_name: emp.full_name,
+      basic_salary: emp.basic_salary || 0, gross_pay, net_pay,
+      paye_tax: Math.round(paye * 100) / 100,
+      uif_employee: Math.round(uif_ee * 100) / 100,
+      uif_employer: Math.round(uif_ee * 100) / 100,
+      total_earnings: gross_pay,
+      total_deductions: Math.round((paye + uif_ee) * 100) / 100,
+    },
+  });
+});
+
+/**
+ * GET /api/payroll/payroll-runs — List payroll runs
+ */
+router.get('/payroll-runs', requirePermission('PAYROLL.VIEW'), (req, res) => {
+  const runs = mock.payrollRuns.filter(r => r.company_id === req.companyId);
+  res.json({ runs });
 });
 
 module.exports = router;

@@ -80,6 +80,59 @@ router.post('/', requirePermission('ATTENDANCE.RECORD'), async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LEAVE RECORDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/payroll/attendance/leave
+ * Save leave records for an employee
+ */
+router.post('/leave', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, records } = req.body;
+    if (!employee_id || !records || records.length === 0) {
+      return res.status(400).json({ error: 'employee_id and records array required' });
+    }
+
+    const leaveRecords = records.map(r => ({
+      company_id: req.companyId,
+      employee_id: parseInt(employee_id),
+      leave_type: r.leave_type || r.type || 'annual',
+      start_date: r.start_date,
+      end_date: r.end_date,
+      days_taken: parseFloat(r.days_taken || r.days) || 1,
+      status: r.status || 'pending',
+      reason: r.reason || null
+    }));
+
+    const { data, error } = await supabase.from('leave_records').insert(leaveRecords).select();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Update leave balances
+    for (const rec of leaveRecords) {
+      const year = new Date(rec.start_date).getFullYear();
+      const { data: bal } = await supabase.from('leave_balances')
+        .select('*')
+        .eq('company_id', req.companyId)
+        .eq('employee_id', rec.employee_id)
+        .eq('leave_type', rec.leave_type)
+        .eq('year', year)
+        .single();
+
+      if (bal) {
+        await supabase.from('leave_balances')
+          .update({ balance: parseFloat(bal.balance) - rec.days_taken, updated_at: new Date().toISOString() })
+          .eq('id', bal.id);
+      }
+    }
+
+    res.status(201).json({ data: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 /**
  * GET /api/payroll/attendance/summary
  * Attendance summary for a date range

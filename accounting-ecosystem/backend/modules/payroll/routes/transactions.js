@@ -43,6 +43,224 @@ router.get('/', requirePermission('PAYROLL.VIEW'), async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERIOD INPUTS (current inputs, overtime, short-time, multi-rate)
+// These must be before /:id to avoid param capture
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/payroll/transactions/inputs
+ * Save current period inputs for an employee
+ */
+router.post('/inputs', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, period_key, inputs } = req.body;
+    if (!employee_id || !period_key) {
+      return res.status(400).json({ error: 'employee_id and period_key required' });
+    }
+
+    // Find the period
+    const { data: period } = await supabase
+      .from('payroll_periods')
+      .select('id')
+      .eq('company_id', req.companyId)
+      .eq('period_key', period_key)
+      .single();
+
+    const periodId = period ? period.id : null;
+
+    // Delete existing inputs of type 'earning'/'deduction' for this employee+period
+    if (periodId) {
+      await supabase.from('period_inputs').delete()
+        .eq('company_id', req.companyId)
+        .eq('employee_id', employee_id)
+        .eq('period_id', periodId)
+        .in('input_type', ['earning', 'deduction']);
+    }
+
+    // Insert new inputs
+    if (inputs && inputs.length > 0 && periodId) {
+      const records = inputs.map(i => ({
+        company_id: req.companyId,
+        period_id: periodId,
+        employee_id: parseInt(employee_id),
+        input_type: i.type || i.input_type || 'earning',
+        description: i.description || i.name || '',
+        amount: parseFloat(i.amount) || 0,
+        is_taxable: i.is_taxable !== false
+      }));
+      const { error } = await supabase.from('period_inputs').insert(records);
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/payroll/transactions/overtime
+ * Save overtime entries for an employee in a period
+ */
+router.post('/overtime', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, period_key, entries } = req.body;
+    if (!employee_id || !period_key) {
+      return res.status(400).json({ error: 'employee_id and period_key required' });
+    }
+
+    const { data: period } = await supabase
+      .from('payroll_periods').select('id')
+      .eq('company_id', req.companyId).eq('period_key', period_key).single();
+
+    const periodId = period ? period.id : null;
+    if (!periodId) return res.status(404).json({ error: 'Period not found' });
+
+    // Delete existing overtime for this employee+period
+    await supabase.from('period_inputs').delete()
+      .eq('company_id', req.companyId).eq('employee_id', employee_id)
+      .eq('period_id', periodId).eq('input_type', 'overtime');
+
+    if (entries && entries.length > 0) {
+      const records = entries.map(e => ({
+        company_id: req.companyId, period_id: periodId,
+        employee_id: parseInt(employee_id), input_type: 'overtime',
+        description: e.description || 'Overtime',
+        amount: parseFloat(e.amount) || 0,
+        hours: parseFloat(e.hours) || 0,
+        rate: parseFloat(e.rate) || 0,
+        rate_multiplier: parseFloat(e.rate_multiplier) || 1.5,
+        is_taxable: true
+      }));
+      const { error } = await supabase.from('period_inputs').insert(records);
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/payroll/transactions/short-time
+ * Save short-time entries for an employee in a period
+ */
+router.post('/short-time', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, period_key, entries } = req.body;
+    if (!employee_id || !period_key) {
+      return res.status(400).json({ error: 'employee_id and period_key required' });
+    }
+
+    const { data: period } = await supabase
+      .from('payroll_periods').select('id')
+      .eq('company_id', req.companyId).eq('period_key', period_key).single();
+
+    const periodId = period ? period.id : null;
+    if (!periodId) return res.status(404).json({ error: 'Period not found' });
+
+    await supabase.from('period_inputs').delete()
+      .eq('company_id', req.companyId).eq('employee_id', employee_id)
+      .eq('period_id', periodId).eq('input_type', 'short_time');
+
+    if (entries && entries.length > 0) {
+      const records = entries.map(e => ({
+        company_id: req.companyId, period_id: periodId,
+        employee_id: parseInt(employee_id), input_type: 'short_time',
+        description: e.description || 'Short time',
+        amount: parseFloat(e.amount) || 0,
+        hours: parseFloat(e.hours) || 0,
+        rate: parseFloat(e.rate) || 0,
+        is_taxable: true
+      }));
+      const { error } = await supabase.from('period_inputs').insert(records);
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * POST /api/payroll/transactions/multi-rate
+ * Save multi-rate entries for an employee in a period
+ */
+router.post('/multi-rate', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, period_key, entries } = req.body;
+    if (!employee_id || !period_key) {
+      return res.status(400).json({ error: 'employee_id and period_key required' });
+    }
+
+    const { data: period } = await supabase
+      .from('payroll_periods').select('id')
+      .eq('company_id', req.companyId).eq('period_key', period_key).single();
+
+    const periodId = period ? period.id : null;
+    if (!periodId) return res.status(404).json({ error: 'Period not found' });
+
+    await supabase.from('period_inputs').delete()
+      .eq('company_id', req.companyId).eq('employee_id', employee_id)
+      .eq('period_id', periodId).eq('input_type', 'multi_rate');
+
+    if (entries && entries.length > 0) {
+      const records = entries.map(e => ({
+        company_id: req.companyId, period_id: periodId,
+        employee_id: parseInt(employee_id), input_type: 'multi_rate',
+        description: e.description || 'Multi-rate',
+        amount: parseFloat(e.amount) || 0,
+        hours: parseFloat(e.hours) || 0,
+        rate: parseFloat(e.rate) || 0,
+        rate_multiplier: parseFloat(e.rate_multiplier) || 1,
+        is_taxable: true
+      }));
+      const { error } = await supabase.from('period_inputs').insert(records);
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * PUT /api/payroll/transactions/status
+ * Update payslip status by employee+period
+ */
+router.put('/status', requirePermission('PAYROLL.CREATE'), async (req, res) => {
+  try {
+    const { employee_id, period_key, status } = req.body;
+    if (!employee_id || !period_key || !status) {
+      return res.status(400).json({ error: 'employee_id, period_key, and status required' });
+    }
+
+    const { data: period } = await supabase
+      .from('payroll_periods').select('id')
+      .eq('company_id', req.companyId).eq('period_key', period_key).single();
+
+    if (!period) return res.status(404).json({ error: 'Period not found' });
+
+    const { data, error } = await supabase
+      .from('payroll_transactions')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('company_id', req.companyId)
+      .eq('employee_id', employee_id)
+      .eq('period_id', period.id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ transaction: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 /**
  * GET /api/payroll/transactions/:id
  * Get a specific payroll transaction with all payslip items
