@@ -17,6 +17,9 @@
   ],
   "author": "Lorenco",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "bcrypt": "^5.1.1",

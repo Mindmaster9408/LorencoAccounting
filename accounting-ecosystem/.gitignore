@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
 
-# Environment
+# Environment (NEVER commit secrets)
 .env
 .env.local
 .env.*.local

@@ -17,13 +17,13 @@
  */
 
 // Load environment variables FIRST
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
 
 // ─── Mock Mode Detection ────────────────────────────────────────────────────
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
@@ -113,6 +113,7 @@ const allowedOrigins = [
   process.env.FRONTEND_POS_URL || 'http://localhost:5173',
   process.env.FRONTEND_PAYROLL_URL || 'http://localhost:5174',
   process.env.FRONTEND_ACCOUNTING_URL || 'http://localhost:5175',
+  process.env.APP_URL, // Production URL (e.g. https://your-app.zeabur.app)
   'http://localhost:3000', // Self (for serving static files)
 ].filter(Boolean);
 
@@ -125,6 +126,10 @@ app.use(cors({
     }
     // In development, allow all localhost origins
     if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    // In production, allow Zeabur domains
+    if (origin && (origin.endsWith('.zeabur.app') || origin.endsWith('.zeabur.com'))) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));

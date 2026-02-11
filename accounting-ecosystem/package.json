@@ -1,0 +1,18 @@
+{
+  "name": "accounting-ecosystem",
+  "version": "1.0.0",
+  "description": "Lorenco Accounting Ecosystem — POS, Payroll, Accounting, SEAN AI",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "cd backend && npx nodemon server.js",
+    "install:backend": "cd backend && npm install",
+    "postinstall": "cd backend && npm install"
+  },
+  "dependencies": {},
+  "author": "Lorenco",
+  "license": "MIT"
+}
