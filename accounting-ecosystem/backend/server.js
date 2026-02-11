@@ -454,6 +454,10 @@ async function start() {
 
     // 2. Ensure default company exists (Bug Fix #1)
     await ensureDefaultCompany();
+
+    // 3. Seed master admin if no users exist
+    const { seedMasterAdmin } = require('./config/seed');
+    await seedMasterAdmin(supabase);
   }
 
   // 3. Display module status
