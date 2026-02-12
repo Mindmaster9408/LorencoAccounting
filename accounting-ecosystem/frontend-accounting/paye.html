@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAYE Management - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #0066cc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            padding: 0 25px;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-item > a {
+            display: block;
+            padding: 16px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item > a:hover,
+        .nav-item > a.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            min-width: 220px;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown a {
+            display: block;
+            padding: 10px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .dropdown a:hover {
+            background: rgba(0,102,204,0.08);
+            color: #0066cc;
+        }
+        
+        .dropdown-header {
+            padding: 8px 20px 4px;
+            color: #9aa0a6;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 25px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #0066cc;
+        }
+        
+        .stat-card h3 {
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0066cc;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .subtext {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .report-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .control-group select,
+        .control-group input {
+            padding: 10px 14px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #0066cc;
+            border: 1px solid #0066cc;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 25px;
+        }
+        
+        .report-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .report-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .report-content {
+            padding: 30px;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .report-table th {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #e8eaed;
+            color: #666;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .report-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f3f4;
+            color: #202124;
+            font-size: 14px;
+        }
+        
+        .report-table tr:hover {
+            background: rgba(0,102,204,0.02);
+        }
+        
+        .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .grand-total {
+            font-weight: 700;
+            background: rgba(0,102,204,0.08);
+            border-top: 2px solid #0066cc;
+        }
+    </style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:Order msdt:dt="string">149800.000000000</mso:Order>
+<mso:ContentTypeId msdt:dt="string">0x010100FCE56FA388751B49A2E4121BC784923C</mso:ContentTypeId>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>PAYE Management</h1>
+            <p>Employee tax (PAYE), UIF, SDL management and submissions</p>
+        </div>
+        
+        <div class="card-grid">
+            <div class="stat-card">
+                <h3>Current Month PAYE</h3>
+                <div class="value">R 18,450.00</div>
+                <div class="subtext">January 2026</div>
+            </div>
+            <div class="stat-card">
+                <h3>Current Month UIF</h3>
+                <div class="value">R 2,150.00</div>
+                <div class="subtext">Employee + Employer</div>
+            </div>
+            <div class="stat-card">
+                <h3>Current Month SDL</h3>
+                <div class="value">R 675.00</div>
+                <div class="subtext">1% of Payroll</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Payable</h3>
+                <div class="value">R 21,275.00</div>
+                <div class="subtext">Due: 7 Feb 2026</div>
+            </div>
+        </div>
+        
+        <div class="report-controls">
+            <div class="control-group">
+                <label>Tax Period</label>
+                <select>
+                    <option>January 2026</option>
+                    <option>December 2025</option>
+                    <option>November 2025</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Report Type</label>
+                <select>
+                    <option>EMP201 Monthly</option>
+                    <option>EMP501 Annual</option>
+                    <option>IRP5/IT3(a)</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="generateReport()">Generate Report</button>
+            <button class="btn-secondary" onclick="exportPDF()">Export PDF</button>
+            <button class="btn-secondary" onclick="submitReturn()">Submit to SARS</button>
+            <button class="btn-secondary" onclick="window.location.href='paye-reconciliation.html'" style="background: #28a745;">PAYE Reconciliation</button>
+        </div>
+        
+        <div class="report-card">
+            <div class="report-header">
+                <h2>EMP201 - Employer Monthly Return</h2>
+                <p>January 2026 - Demo Company Ltd</p>
+            </div>
+            
+            <div class="report-content">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th class="amount">Gross Salary</th>
+                            <th class="amount">PAYE</th>
+                            <th class="amount">UIF Employee</th>
+                            <th class="amount">UIF Employer</th>
+                            <th class="amount">SDL</th>
+                            <th class="amount">Total Deductions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>John Smith</td>
+                            <td class="amount">R 25,000.00</td>
+                            <td class="amount">R 4,250.00</td>
+                            <td class="amount">R 250.00</td>
+                            <td class="amount">R 250.00</td>
+                            <td class="amount">R 250.00</td>
+                            <td class="amount">R 5,000.00</td>
+                        </tr>
+                        <tr>
+                            <td>Sarah Johnson</td>
+                            <td class="amount">R 22,000.00</td>
+                            <td class="amount">R 3,520.00</td>
+                            <td class="amount">R 220.00</td>
+                            <td class="amount">R 220.00</td>
+                            <td class="amount">R 220.00</td>
+                            <td class="amount">R 4,180.00</td>
+                        </tr>
+                        <tr>
+                            <td>Michael Brown</td>
+                            <td class="amount">R 18,500.00</td>
+                            <td class="amount">R 2,775.00</td>
+                            <td class="amount">R 185.00</td>
+                            <td class="amount">R 185.00</td>
+                            <td class="amount">R 185.00</td>
+                            <td class="amount">R 3,330.00</td>
+                        </tr>
+                        <tr>
+                            <td>Lisa Davis</td>
+                            <td class="amount">R 20,000.00</td>
+                            <td class="amount">R 3,200.00</td>
+                            <td class="amount">R 200.00</td>
+                            <td class="amount">R 200.00</td>
+                            <td class="amount">R 200.00</td>
+                            <td class="amount">R 3,800.00</td>
+                        </tr>
+                        <tr>
+                            <td>David Wilson</td>
+                            <td class="amount">R 16,000.00</td>
+                            <td class="amount">R 2,080.00</td>
+                            <td class="amount">R 160.00</td>
+                            <td class="amount">R 160.00</td>
+                            <td class="amount">R 160.00</td>
+                            <td class="amount">R 2,560.00</td>
+                        </tr>
+                        <tr>
+                            <td>Emma Taylor</td>
+                            <td class="amount">R 15,000.00</td>
+                            <td class="amount">R 1,875.00</td>
+                            <td class="amount">R 150.00</td>
+                            <td class="amount">R 150.00</td>
+                            <td class="amount">R 150.00</td>
+                            <td class="amount">R 2,325.00</td>
+                        </tr>
+                        <tr>
+                            <td>James Anderson</td>
+                            <td class="amount">R 12,500.00</td>
+                            <td class="amount">R 750.00</td>
+                            <td class="amount">R 125.00</td>
+                            <td class="amount">R 125.00</td>
+                            <td class="amount">R 125.00</td>
+                            <td class="amount">R 1,125.00</td>
+                        </tr>
+                        
+                        <tr class="grand-total">
+                            <td><strong>TOTAL</strong></td>
+                            <td class="amount"><strong>R 129,000.00</strong></td>
+                            <td class="amount"><strong>R 18,450.00</strong></td>
+                            <td class="amount"><strong>R 1,290.00</strong></td>
+                            <td class="amount"><strong>R 1,290.00</strong></td>
+                            <td class="amount"><strong>R 1,290.00</strong></td>
+                            <td class="amount"><strong>R 22,320.00</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-login for demo mode
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token) {
+            const mockUser = {
+                id: 1,
+                email: 'demo@lorenco.com',
+                firstName: 'Demo',
+                lastName: 'User',
+                role: 'admin',
+                companyId: 1,
+                companyName: 'Demo Company Ltd',
+                companyStatus: 'active'
+            };
+            
+            token = 'demo-token-' + Date.now();
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('demoMode', 'true');
+            user = mockUser;
+        }
+        
+        // Display user info
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        document.getElementById('userName').textContent = fullName || user.email || 'User';
+        document.getElementById('companyName').textContent = user.companyName || 'Demo Company Ltd';
+        
+        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        
+        function toggleUserMenu() {
+            const menu = confirm('Logout?');
+            if (menu) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+        }
+        
+        function generateReport() {
+            alert('Generating PAYE report...');
+        }
+        
+        function exportPDF() {
+            alert('Exporting to PDF...');
+        }
+        
+        function submitReturn() {
+            alert('This would submit the EMP201 to SARS eFiling system...');
+        }
+    </script>
+</body>
+</html>

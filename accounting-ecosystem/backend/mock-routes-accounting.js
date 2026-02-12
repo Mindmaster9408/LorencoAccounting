@@ -795,4 +795,110 @@ router.get('/reports/general-ledger', requirePermission('GL_REPORTS.VIEW'), (req
 });
 
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STUB ROUTES — New Lorenco Accounting features (VAT, PAYE, AI, etc.)
+// These return empty/default data for mock mode development.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── VAT Reconciliation ─────────────────────────────────────────────────────
+router.get('/vat-recon/periods', (req, res) => {
+  res.json({ periods: [], count: 0 });
+});
+
+router.get('/vat-recon/periods/:periodId', (req, res) => {
+  res.status(404).json({ error: 'Period not found' });
+});
+
+router.post('/vat-recon/periods', (req, res) => {
+  res.json({ period: { id: mock.nextId(), ...req.body, status: 'open' } });
+});
+
+router.get('/vat-recon/reconciliations/period/:periodId', (req, res) => {
+  res.json({ reconciliation: null });
+});
+
+router.post('/vat-recon/reconciliations/draft', (req, res) => {
+  res.json({ reconciliation: { id: mock.nextId(), status: 'draft', ...req.body } });
+});
+
+router.get('/vat-recon/submissions', (req, res) => {
+  res.json({ submissions: [], count: 0 });
+});
+
+router.get('/vat-recon/trial-balance', (req, res) => {
+  res.json({ rows: [], totals: { debit: 0, credit: 0 } });
+});
+
+// ─── PAYE ───────────────────────────────────────────────────────────────────
+router.get('/paye/config', (req, res) => {
+  res.json({ config: { incomeTypes: [], deductionTypes: [] } });
+});
+
+router.put('/paye/config', (req, res) => {
+  res.json({ config: req.body, message: 'Config updated' });
+});
+
+router.get('/paye/reconciliation/draft/:periodId', (req, res) => {
+  res.json({ reconciliation: null });
+});
+
+router.put('/paye/reconciliation/draft/:periodId', (req, res) => {
+  res.json({ reconciliation: { id: mock.nextId(), status: 'draft', ...req.body } });
+});
+
+// ─── AI Features ────────────────────────────────────────────────────────────
+router.get('/ai/settings', (req, res) => {
+  res.json({ settings: { enabled: false, mode: 'off', capabilities: {} } });
+});
+
+router.put('/ai/settings', (req, res) => {
+  res.json({ settings: req.body, message: 'AI settings updated' });
+});
+
+router.get('/ai/review-queue', (req, res) => {
+  res.json({ actions: [], count: 0 });
+});
+
+router.post('/ai/actions', (req, res) => {
+  res.json({ action: { id: mock.nextId(), status: 'pending', ...req.body } });
+});
+
+// ─── Audit Log ──────────────────────────────────────────────────────────────
+router.get('/audit', (req, res) => {
+  res.json({ entries: [], count: 0, page: 1, totalPages: 0 });
+});
+
+// ─── Company (Accounting-specific) ──────────────────────────────────────────
+router.get('/company/list', (req, res) => {
+  const companies = [{ id: req.companyId, name: 'Mock Company', tradingName: 'Mock Co', status: 'active' }];
+  res.json({ companies });
+});
+
+router.get('/company/:id', (req, res) => {
+  res.json({ company: { id: parseInt(req.params.id), name: 'Mock Company', tradingName: 'Mock Co', status: 'active', vatNumber: '', taxId: '' } });
+});
+
+router.put('/company/:id', (req, res) => {
+  res.json({ company: { id: parseInt(req.params.id), ...req.body }, message: 'Company updated' });
+});
+
+// ─── Employees (for PAYE) ───────────────────────────────────────────────────
+router.get('/employees', (req, res) => {
+  res.json({ employees: [], count: 0 });
+});
+
+router.put('/employees', (req, res) => {
+  res.json({ employees: req.body.employees || [], message: 'Employees updated' });
+});
+
+// ─── Integrations API ───────────────────────────────────────────────────────
+router.get('/integrations', (req, res) => {
+  res.json({ integrations: [], count: 0 });
+});
+
+router.post('/integrations', (req, res) => {
+  res.json({ integration: { id: mock.nextId(), ...req.body, apiKey: 'mock-api-key-' + Date.now() }, message: 'Integration created' });
+});
+
+
 module.exports = router;

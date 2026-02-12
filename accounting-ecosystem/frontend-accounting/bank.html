@@ -1,0 +1,3509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transactions - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <script src="js/ledger.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            height: 56px;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        
+        .nav-item {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item > a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .nav-item > a::after {
+            content: '▼';
+            font-size: 8px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover > a {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .nav-item:hover > a::after {
+            transform: rotate(-180deg);
+        }
+        
+        .nav-item > a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .nav-item > a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 260px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border: 1px solid #e8eaed;
+            border-radius: 0 0 12px 12px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-item:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #5f6368;
+            text-decoration: none;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.15s;
+        }
+        
+        .dropdown a::before {
+            content: '→';
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s;
+            color: #0066cc;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown a:hover {
+            background: linear-gradient(90deg, #e6f3ff 0%, #ffffff 100%);
+            color: #0066cc;
+            padding-left: 25px;
+        }
+        
+        .dropdown a:hover::before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .dropdown-header {
+            padding: 10px 20px 6px;
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #fafbfc;
+            letter-spacing: 0.5px;
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: #e8eaed;
+            margin: 4px 0;
+        }
+        
+        .navbar a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .navbar a:hover {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .navbar a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .navbar a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .main-content {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.4);
+        }
+        
+        .btn-secondary {
+            padding: 10px 20px;
+            background: white;
+            color: #5f6368;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .filter-bar {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #202124;
+            background: white;
+            min-width: 150px;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #c9a961;
+        }
+        
+        .bank-accounts-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            margin-bottom: 20px;
+        }
+        
+        .bank-accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .bank-account-card {
+            padding: 20px;
+            border: 2px solid #e8eaed;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bank-account-card:hover {
+            border-color: #0066cc;
+            box-shadow: 0 4px 12px rgba(0,102,204,0.15);
+        }
+        
+        .bank-account-card.active {
+            border-color: #0066cc;
+            background: linear-gradient(135deg, #e6f3ff 0%, #ffffff 100%);
+        }
+        
+        .account-name {
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .account-number {
+            font-size: 12px;
+            color: #9aa0a6;
+            margin-bottom: 12px;
+        }
+        
+        .account-balance {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .transactions-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #202124;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 8px 12px 8px 35px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 300px;
+        }
+        
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .transactions-table th:nth-child(1) { width: 40px; }  /* Checkbox */
+        .transactions-table th:nth-child(2) { width: 90px; }  /* Date */
+        .transactions-table th:nth-child(3) { width: auto; min-width: 180px; }  /* Description */
+        .transactions-table th:nth-child(4) { width: 95px; } /* Reference */
+        .transactions-table th:nth-child(5) { width: 105px; } /* Money In */
+        .transactions-table th:nth-child(6) { width: 105px; } /* Money Out */
+        .transactions-table th:nth-child(7) { width: 105px; } /* Balance */
+        .transactions-table th:nth-child(8) { width: 135px; } /* Transaction Type */
+        .transactions-table th:nth-child(9) { width: 150px; } /* Account */
+        .transactions-table th:nth-child(10) { width: 95px; } /* Status */
+        .transactions-table th:nth-child(11) { width: 55px; }  /* Upload */
+        .transactions-table th:nth-child(12) { width: 95px; } /* Attachments */
+        .transactions-table th:nth-child(13) { width: 85px; } /* Actions */
+        .transactions-table th:nth-child(14) { width: 85px; } /* AI */
+        
+        .transactions-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .transactions-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #5f6368;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .transactions-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #202124;
+            font-size: 13px;
+        }
+        
+        .transactions-table tbody tr {
+            transition: all 0.2s;
+        }
+        
+        .transactions-table tbody tr:hover {
+            background: #f0f8ff;
+        }
+        
+        .transaction-date {
+            color: #5f6368;
+            font-weight: 500;
+        }
+        
+        .transaction-description {
+            font-weight: 500;
+        }
+        
+        .transaction-reference {
+            color: #9aa0a6;
+            font-size: 12px;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .amount-in {
+            color: #34a853;
+        }
+        
+        .amount-out {
+            color: #ea4335;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-matched {
+            background: linear-gradient(135deg, #34a853 0%, #4caf50 100%);
+            color: white;
+        }
+        
+        .status-unmatched {
+            background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+            color: white;
+        }
+        
+        .status-reconciled {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+        }
+        
+        .action-btn {
+            padding: 6px 14px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: #5f6368;
+            font-weight: 500;
+        }
+        
+        .action-btn:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+
+        .action-btn.allocate-btn {
+            background: linear-gradient(135deg, #34a853 0%, #2d8a47 100%);
+            color: white;
+            border: none;
+        }
+
+        .action-btn.allocate-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(52, 168, 83, 0.3);
+            color: white;
+        }
+
+        .allocation-select:disabled {
+            background: #f5f5f5;
+            color: #9aa0a6;
+            cursor: not-allowed;
+        }
+
+        .status-badge.status-allocated {
+            background: #d1fae5;
+            color: #10b981;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0066cc;
+        }
+        
+        .bulk-actions {
+            background: #e6f3ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #0066cc;
+        }
+        
+        .bulk-actions.active {
+            display: flex;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination button.active {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .allocation-select {
+            padding: 6px 10px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #202124;
+            background: white;
+            min-width: 160px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .allocation-select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+        }
+        
+        .allocation-select:hover {
+            border-color: #0066cc;
+        }
+        
+        .upload-link {
+            color: #0066cc;
+            text-decoration: none;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 4px;
+            line-height: 1;
+        }
+        
+        .upload-link:hover {
+            color: #0099ff;
+            transform: scale(1.3);
+        }
+        
+        .upload-link.has-files {
+            color: #28a745;
+        }
+        
+        .upload-link .file-count {
+            font-size: 10px;
+            background: #0066cc;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            margin-left: 2px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .upload-link.has-files .file-count {
+            background: #28a745;
+        }
+        
+        .ai-btn {
+            padding: 6px 14px;
+            border: 1px solid #0066cc;
+            background: linear-gradient(135deg, #e6f3ff 0%, #ffffff 100%);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: #0066cc;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .ai-btn:hover {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .ai-btn.active {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .ai-suggestion-row {
+            display: none;
+            background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%);
+            border-left: 4px solid #0066cc;
+        }
+        
+        .ai-suggestion-row.show {
+            display: table-row;
+        }
+        
+        .ai-suggestion-content {
+            padding: 20px;
+        }
+        
+        .ai-suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #0066cc;
+        }
+        
+        .ai-suggestion-header::before {
+            content: '🤖';
+            font-size: 20px;
+        }
+        
+        .ai-decision {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+            margin-bottom: 15px;
+        }
+        
+        .ai-decision-title {
+            font-size: 12px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .ai-decision-value {
+            font-size: 14px;
+            color: #202124;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .ai-confidence {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #34a853 0%, #4caf50 100%);
+            color: white;
+        }
+        
+        .ai-override {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+        
+        .ai-override-title {
+            font-size: 13px;
+            color: #202124;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .override-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-group label {
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group textarea {
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #202124;
+            background: white;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+        }
+        
+        .override-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        
+        .tabs-container {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+            bottom: -2px;
+        }
+        
+        .tab:hover {
+            color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .tab.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+        }
+        
+        .tab-count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            background: #e8eaed;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .tab.active .tab-count {
+            background: rgba(0,102,204,0.15);
+            color: #0066cc;
+        }
+        
+        .transactions-table.readonly {
+            opacity: 0.85;
+        }
+        
+        .transactions-table.readonly tbody tr {
+            background: #f8f9fa;
+        }
+        
+        .transactions-table.readonly input,
+        .transactions-table.readonly select,
+        .transactions-table.readonly button {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        /* Attachment Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #0066cc;
+            background: #e6f3ff;
+        }
+        
+        .upload-area.drag-over {
+            border-color: #0066cc;
+            background: #e6f3ff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .attachments-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .attachment-item:hover {
+            background: #f8f9fa;
+            border-color: #0066cc;
+        }
+        
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .attachment-icon {
+            font-size: 24px;
+        }
+        
+        .attachment-details {
+            flex: 1;
+        }
+        
+        .attachment-name {
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 2px;
+        }
+        
+        .attachment-meta {
+            font-size: 11px;
+            color: #5f6368;
+        }
+        
+        .attachment-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .attachment-actions button {
+            padding: 6px 12px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .attachment-actions button:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .attachment-actions .delete-btn:hover {
+            border-color: #dc3545;
+            color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .no-attachments {
+            text-align: center;
+            padding: 40px 20px;
+            color: #5f6368;
+        }
+
+        /* CSV Import Modal Styles */
+        .import-modal {
+            max-width: 900px;
+        }
+
+        .import-steps {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .import-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #9aa0a6;
+        }
+
+        .import-step.active {
+            color: #0066cc;
+        }
+
+        .import-step.completed {
+            color: #34a853;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e8eaed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .import-step.active .step-number {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+
+        .import-step.completed .step-number {
+            background: #34a853;
+            color: white;
+        }
+
+        .import-content {
+            min-height: 300px;
+        }
+
+        .column-mapping {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mapping-item label {
+            min-width: 120px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .mapping-item select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        .preview-table th {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #5f6368;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        .preview-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #202124;
+        }
+
+        .preview-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .import-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+
+        .summary-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 5px;
+        }
+
+        .import-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .bank-format-select {
+            margin-bottom: 20px;
+        }
+
+        .bank-format-select label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .bank-format-select select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #e6f3ff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .file-info-icon {
+            font-size: 32px;
+        }
+
+        .file-info-details {
+            flex: 1;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            color: #202124;
+        }
+
+        .file-info-meta {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+        .file-info-remove {
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Bank Transactions</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="importStatement()">📥 Import Statement</button>
+                <button class="btn-secondary" onclick="bankRules()">⚙️ Bank Rules</button>
+                <button class="btn-primary" onclick="reconcile()">✓ Reconcile</button>
+            </div>
+        </div>
+        
+        <div class="bank-accounts-section">
+            <h2 style="margin-bottom: 15px; font-size: 16px; color: #202124;">Bank Accounts</h2>
+            <div class="bank-accounts-grid">
+                <div class="bank-account-card active" onclick="selectAccount(this)">
+                    <div class="account-name">Business Current Account</div>
+                    <div class="account-number">****1234</div>
+                    <div class="account-balance">R 45,230.50</div>
+                </div>
+                <div class="bank-account-card" onclick="selectAccount(this)">
+                    <div class="account-name">Savings Account</div>
+                    <div class="account-number">****5678</div>
+                    <div class="account-balance">R 120,450.00</div>
+                </div>
+                <div class="bank-account-card" onclick="selectAccount(this)">
+                    <div class="account-name">Petty Cash</div>
+                    <div class="account-number">CASH-001</div>
+                    <div class="account-balance">R 2,500.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Date From</label>
+                <input type="date" id="dateFrom" value="2026-01-01">
+            </div>
+            <div class="filter-group">
+                <label>Date To</label>
+                <input type="date" id="dateTo" value="2026-01-14">
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="statusFilter">
+                    <option value="">All Transactions</option>
+                    <option value="unmatched">Unmatched</option>
+                    <option value="matched">Matched</option>
+                    <option value="reconciled">Reconciled</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Type</label>
+                <select id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="in">Money In</option>
+                    <option value="out">Money Out</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="applyFilters()" style="margin-top: 18px;">Apply Filters</button>
+        </div>
+        
+        <div class="transactions-section">
+            <div class="tabs-container">
+                <button class="tab active" onclick="switchTab('new', event)">
+                    New Transactions<span class="tab-count" id="newCount">5</span>
+                </button>
+                <button class="tab" onclick="switchTab('reviewed', event)">
+                    Reviewed<span class="tab-count" id="reviewedCount">0</span>
+                </button>
+            </div>
+            
+            <div class="bulk-actions" id="bulkActions">
+                <span><strong id="selectedCount">0</strong> transactions selected</span>
+                <button class="action-btn" id="markReviewedBtn" onclick="markAsReviewed()">Mark as Reviewed</button>
+                <button class="action-btn" id="moveBackBtn" onclick="moveBackToNew()" style="display:none;">Move Back to New</button>
+                <button class="action-btn" onclick="bulkMatch()">Match Selected</button>
+                <button class="action-btn" onclick="bulkReconcile()">Reconcile Selected</button>
+                <button class="action-btn" onclick="bulkDelete()">Delete Selected</button>
+            </div>
+            
+            <div class="section-header">
+                <h2>Transactions</h2>
+                <div class="search-box">
+                    <input type="text" placeholder="Search transactions..." id="searchInput">
+                </div>
+            </div>
+            
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="checkbox" onclick="selectAll(this)"></th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Reference</th>
+                        <th>Money In</th>
+                        <th>Money Out</th>
+                        <th>Balance</th>
+                        <th>Transaction Type</th>
+                        <th>Account</th>
+                        <th>Status</th>
+                        <th>Upload</th>
+                        <th>Attachments</th>
+                        <th>Actions</th>
+                        <th id="aiHeader">AI</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">14 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Client Payment - ABC Corp</div>
+                            <div class="transaction-reference">INV-2026-001</div>
+                        </td>
+                        <td>PYMT123456</td>
+                        <td class="transaction-amount amount-in">R 15,500.00</td>
+                        <td>-</td>
+                        <td>R 45,230.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 1)">
+                                <option value="">Select Type...</option>
+                                <option value="customer" selected>Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="account">Account</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 1)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000" selected>4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-matched">Matched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink1" href="#" onclick="openUploadModal(1); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount1" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(1)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount1">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(1)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(1, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow1">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                                <div class="ai-decision"><em>Click to analyze...</em></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">13 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Office Supplies</div>
+                            <div class="transaction-reference">PO-456</div>
+                        </td>
+                        <td>DD789012</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 2,350.00</td>
+                        <td>R 29,730.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 2)">
+                                <option value="" selected>Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="account">Account</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 2)">
+                                <option value="" selected>Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-unmatched">Unmatched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink2" href="#" onclick="openUploadModal(2); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount2" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(2)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount2">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="allocateTransaction(2)">Allocate</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(2, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow2">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                                <div class="ai-decision"><em>Click to analyze...</em></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">12 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Salary Payment - John Doe</div>
+                            <div class="transaction-reference">SAL-001-2026</div>
+                        </td>
+                        <td>TRAN345678</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 18,500.00</td>
+                        <td>R 32,080.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 3)">
+                                <option value="">Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier" selected>Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 3)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000" selected>6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-reconciled">Reconciled</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink3" href="#" onclick="openUploadModal(3); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount3" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(3)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount3">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(3)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(3, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow3">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                                <div class="ai-decision"><em>Click to analyze...</em></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">11 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Service Revenue - XYZ Ltd</div>
+                            <div class="transaction-reference">INV-2026-002</div>
+                        </td>
+                        <td>PYMT987654</td>
+                        <td class="transaction-amount amount-in">R 32,000.00</td>
+                        <td>-</td>
+                        <td>R 50,580.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 4)">
+                                <option value="">Select Type...</option>
+                                <option value="customer" selected>Customer Payment</option>
+                                <option value="supplier">Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 4)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100" selected>4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100">6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-matched">Matched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink4" href="#" onclick="openUploadModal(4); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount4" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(4)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount4">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="viewTransaction(4)">View</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(4, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow4">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                                <div class="ai-decision"><em>Click to analyze...</em></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" onchange="updateBulkActions()"></td>
+                        <td class="transaction-date">10 Jan 2026</td>
+                        <td>
+                            <div class="transaction-description">Utility Bill - Electricity</div>
+                            <div class="transaction-reference"></div>
+                        </td>
+                        <td>DD456789</td>
+                        <td>-</td>
+                        <td class="transaction-amount amount-out">R 3,250.00</td>
+                        <td>R 18,580.50</td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAllocation(this, 5)">
+                                <option value="">Select Type...</option>
+                                <option value="customer">Customer Payment</option>
+                                <option value="supplier" selected>Supplier Payment</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="vat">VAT Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="allocation-select" onchange="updateAccount(this, 5)">
+                                <option value="">Select Account...</option>
+                                <optgroup label="Assets">
+                                    <option value="1000">1000 - Bank Current</option>
+                                    <option value="1100">1100 - Accounts Receivable</option>
+                                    <option value="1200">1200 - Inventory</option>
+                                </optgroup>
+                                <optgroup label="Liabilities">
+                                    <option value="2000">2000 - Accounts Payable</option>
+                                    <option value="2100">2100 - VAT Payable</option>
+                                </optgroup>
+                                <optgroup label="Income">
+                                    <option value="4000">4000 - Sales Revenue</option>
+                                    <option value="4100">4100 - Service Revenue</option>
+                                </optgroup>
+                                <optgroup label="Expenses">
+                                    <option value="5000">5000 - Cost of Sales</option>
+                                    <option value="6000">6000 - Operating Expenses</option>
+                                    <option value="6100" selected>6100 - Utilities</option>
+                                    <option value="6200">6200 - Office Supplies</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                        <td><span class="status-badge status-unmatched">Unmatched</span></td>
+                        <td>
+                            <a class="upload-link" id="uploadLink5" href="#" onclick="openUploadModal(5); return false;" title="Upload documents">
+                                📎<span class="file-count" id="fileCount5" style="display:none;">0</span>
+                            </a>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="showAttachments(5)" style="padding: 6px 12px;">
+                                📄 <span id="attachCount5">0</span>
+                            </button>
+                        </td>
+                        <td><button class="action-btn" onclick="allocateTransaction(5)">Allocate</button></td>
+                        <td class="ai-column">
+                            <button class="ai-btn" onclick="toggleAISuggestion(5, this)">
+                                <span>🤖</span> AI
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="ai-suggestion-row" id="aiRow5">
+                        <td colspan="14">
+                            <div class="ai-suggestion-content">
+                                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                                <div class="ai-decision"><em>Click to analyze...</em></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button disabled>← Previous</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>Next →</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        // Check authentication - Demo Mode
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // Auto-login for demo mode
+        if (!token) {
+            console.log('No token found. Creating demo session...');
+            const mockUser = {
+                id: 1,
+                email: 'demo@lorenco.com',
+                firstName: 'Demo',
+                lastName: 'User',
+                role: 'admin',
+                companyId: 1,
+                companyName: 'Business Current Account',
+                companyStatus: 'active'
+            };
+            
+            token = 'demo-token-' + Date.now();
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('demoMode', 'true');
+            user = mockUser;
+        }
+        
+        // Display user info (elements injected by navigation.js)
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        const userNameEl = document.getElementById('userName');
+        const companyNameEl = document.getElementById('companyName');
+        const userAvatarEl = document.getElementById('userAvatar');
+        if (userNameEl) userNameEl.textContent = fullName || user.email || 'User';
+        if (companyNameEl) companyNameEl.textContent = user.companyName || 'My Company';
+        
+        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
+        if (userAvatarEl) userAvatarEl.textContent = initial;
+        
+        // Sean AI is always enabled for demo
+        localStorage.setItem('seanAIEnabled', 'true');
+        
+        // Store uploaded files for each transaction
+        const transactionFiles = {};
+        
+        function openUploadModal(transactionId) {
+            // Show upload modal/page for this transaction
+            const fileCount = transactionFiles[transactionId] ? transactionFiles[transactionId].length : 0;
+            
+            const uploadOptions = `
+📎 Upload Documents for Transaction #${transactionId}
+
+Current files: ${fileCount}
+
+In the full version, this would open a dedicated upload page where you can:
+• Drag and drop files
+• Take photos of receipts
+• Scan documents
+• Link to cloud storage (Google Drive, Dropbox)
+
+Sean AI will automatically:
+• Extract invoice details
+• Match to suppliers/customers
+• Suggest account allocation
+• Detect duplicate documents
+
+Click OK to simulate uploading a file.`;
+
+            if (confirm(uploadOptions)) {
+                // Simulate adding a file
+                if (!transactionFiles[transactionId]) {
+                    transactionFiles[transactionId] = [];
+                }
+                
+                transactionFiles[transactionId].push({
+                    name: 'Invoice_' + Date.now() + '.pdf',
+                    size: 125000,
+                    type: 'application/pdf',
+                    uploadedAt: new Date()
+                });
+                
+                const fileCount = transactionFiles[transactionId].length;
+                
+                // Update the paperclip link
+                const uploadLink = document.getElementById(`uploadLink${transactionId}`);
+                const fileCountSpan = document.getElementById(`fileCount${transactionId}`);
+                if (uploadLink && fileCountSpan) {
+                    uploadLink.classList.add('has-files');
+                    fileCountSpan.textContent = fileCount;
+                    fileCountSpan.style.display = 'inline';
+                }
+                
+                // Update attachment count
+                const attachCount = document.getElementById(`attachCount${transactionId}`);
+                if (attachCount) {
+                    attachCount.textContent = fileCount;
+                }
+                
+                alert(`✅ Document uploaded successfully!\n\nSean AI is analyzing the document...`);
+            }
+        }
+
+        function selectAccount(card) {
+            // Remove active from all cards
+            document.querySelectorAll('.bank-account-card').forEach(c => c.classList.remove('active'));
+            // Add active to clicked card
+            card.classList.add('active');
+            
+            // Get account name
+            const accountName = card.querySelector('.account-name').textContent;
+            console.log('Selected account:', accountName);
+            
+            // In real implementation, this would reload transactions for the selected account
+            alert(`Switched to ${accountName}\n\nIn the full version, transactions would reload for this account.`);
+        }
+        
+        function selectAll(checkbox) {
+            document.querySelectorAll('.transactions-table tbody .checkbox').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (checked.length > 0) {
+                bulkActions.classList.add('active');
+                selectedCount.textContent = checked.length;
+            } else {
+                bulkActions.classList.remove('active');
+            }
+        }
+        
+        function applyFilters() {
+            alert('Filters applied! This would filter the transactions based on selected criteria.');
+        }
+        
+        function importStatement() {
+            document.getElementById('importModal').classList.add('show');
+            resetImportWizard();
+        }
+
+        // ===================================
+        // CSV IMPORT FUNCTIONS
+        // ===================================
+
+        let importData = {
+            file: null,
+            rows: [],
+            headers: [],
+            mapping: {},
+            bankFormat: 'custom'
+        };
+
+        const bankFormats = {
+            'fnb': {
+                name: 'FNB (First National Bank)',
+                mapping: { date: 0, description: 1, amount: 2, balance: 3 },
+                dateFormat: 'DD/MM/YYYY'
+            },
+            'standard': {
+                name: 'Standard Bank',
+                mapping: { date: 0, description: 2, debit: 3, credit: 4, balance: 5 },
+                dateFormat: 'YYYY/MM/DD'
+            },
+            'absa': {
+                name: 'ABSA',
+                mapping: { date: 0, description: 1, amount: 2, balance: 3 },
+                dateFormat: 'DD/MM/YYYY'
+            },
+            'nedbank': {
+                name: 'Nedbank',
+                mapping: { date: 0, description: 1, debit: 2, credit: 3, balance: 4 },
+                dateFormat: 'DD/MM/YYYY'
+            },
+            'capitec': {
+                name: 'Capitec Bank',
+                mapping: { date: 0, description: 1, amount: 2, balance: 3 },
+                dateFormat: 'YYYY-MM-DD'
+            },
+            'custom': {
+                name: 'Custom / Other',
+                mapping: {},
+                dateFormat: 'YYYY-MM-DD'
+            }
+        };
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+            resetImportWizard();
+        }
+
+        function resetImportWizard() {
+            importData = { file: null, rows: [], headers: [], mapping: {}, bankFormat: 'custom' };
+            document.getElementById('importStep1').style.display = 'block';
+            document.getElementById('importStep2').style.display = 'none';
+            document.getElementById('importStep3').style.display = 'none';
+            updateStepIndicators(1);
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('csvFileInfo').style.display = 'none';
+            document.getElementById('csvUploadArea').style.display = 'block';
+        }
+
+        function updateStepIndicators(step) {
+            document.querySelectorAll('.import-step').forEach((el, index) => {
+                el.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    el.classList.add('completed');
+                } else if (index + 1 === step) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        function triggerCsvUpload() {
+            document.getElementById('csvFileInput').click();
+        }
+
+        function handleCsvFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file.');
+                return;
+            }
+
+            importData.file = file;
+
+            // Show file info
+            document.getElementById('csvUploadArea').style.display = 'none';
+            document.getElementById('csvFileInfo').style.display = 'flex';
+            document.getElementById('csvFileName').textContent = file.name;
+            document.getElementById('csvFileMeta').textContent = formatFileSize(file.size) + ' • CSV File';
+
+            // Parse CSV
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                parseCSV(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(content) {
+            const lines = content.split(/\r?\n/).filter(line => line.trim());
+            if (lines.length < 2) {
+                alert('CSV file appears to be empty or has no data rows.');
+                return;
+            }
+
+            // Detect delimiter
+            const firstLine = lines[0];
+            const delimiter = firstLine.includes(';') ? ';' : ',';
+
+            // Parse headers
+            importData.headers = parseCSVLine(firstLine, delimiter);
+
+            // Parse data rows
+            importData.rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i], delimiter);
+                if (row.length > 0 && row.some(cell => cell.trim())) {
+                    importData.rows.push(row);
+                }
+            }
+
+            console.log('Parsed CSV:', importData.headers, importData.rows.length + ' rows');
+        }
+
+        function parseCSVLine(line, delimiter) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === delimiter && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+
+            return result;
+        }
+
+        function removeCsvFile() {
+            importData.file = null;
+            importData.rows = [];
+            importData.headers = [];
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('csvFileInfo').style.display = 'none';
+            document.getElementById('csvUploadArea').style.display = 'block';
+        }
+
+        function goToStep2() {
+            if (!importData.file || importData.rows.length === 0) {
+                alert('Please upload a CSV file first.');
+                return;
+            }
+
+            document.getElementById('importStep1').style.display = 'none';
+            document.getElementById('importStep2').style.display = 'block';
+            updateStepIndicators(2);
+
+            // Populate column mapping dropdowns
+            populateColumnMappings();
+
+            // Show preview
+            renderMappingPreview();
+        }
+
+        function populateColumnMappings() {
+            const selects = ['mapDate', 'mapDescription', 'mapDebit', 'mapCredit', 'mapAmount', 'mapBalance', 'mapReference'];
+            const headers = importData.headers;
+
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">-- Select Column --</option>';
+                headers.forEach((header, index) => {
+                    select.innerHTML += `<option value="${index}">${header}</option>`;
+                });
+            });
+
+            // Apply bank format if selected
+            applyBankFormat();
+        }
+
+        function onBankFormatChange() {
+            importData.bankFormat = document.getElementById('bankFormatSelect').value;
+            applyBankFormat();
+            renderMappingPreview();
+        }
+
+        function applyBankFormat() {
+            const format = bankFormats[importData.bankFormat];
+            if (!format || importData.bankFormat === 'custom') return;
+
+            const mapping = format.mapping;
+
+            if (mapping.date !== undefined) document.getElementById('mapDate').value = mapping.date;
+            if (mapping.description !== undefined) document.getElementById('mapDescription').value = mapping.description;
+            if (mapping.debit !== undefined) document.getElementById('mapDebit').value = mapping.debit;
+            if (mapping.credit !== undefined) document.getElementById('mapCredit').value = mapping.credit;
+            if (mapping.amount !== undefined) document.getElementById('mapAmount').value = mapping.amount;
+            if (mapping.balance !== undefined) document.getElementById('mapBalance').value = mapping.balance;
+        }
+
+        function renderMappingPreview() {
+            const tbody = document.getElementById('mappingPreviewBody');
+            const previewRows = importData.rows.slice(0, 5);
+
+            const dateCol = document.getElementById('mapDate').value;
+            const descCol = document.getElementById('mapDescription').value;
+            const debitCol = document.getElementById('mapDebit').value;
+            const creditCol = document.getElementById('mapCredit').value;
+            const amountCol = document.getElementById('mapAmount').value;
+            const balanceCol = document.getElementById('mapBalance').value;
+
+            tbody.innerHTML = previewRows.map(row => {
+                const date = dateCol !== '' ? row[dateCol] || '-' : '-';
+                const desc = descCol !== '' ? row[descCol] || '-' : '-';
+
+                let moneyIn = '-', moneyOut = '-';
+
+                if (amountCol !== '') {
+                    const amount = parseFloat((row[amountCol] || '0').replace(/[^0-9.-]/g, ''));
+                    if (amount > 0) moneyIn = 'R ' + amount.toFixed(2);
+                    else if (amount < 0) moneyOut = 'R ' + Math.abs(amount).toFixed(2);
+                } else {
+                    if (creditCol !== '') {
+                        const credit = parseFloat((row[creditCol] || '0').replace(/[^0-9.-]/g, ''));
+                        if (credit > 0) moneyIn = 'R ' + credit.toFixed(2);
+                    }
+                    if (debitCol !== '') {
+                        const debit = parseFloat((row[debitCol] || '0').replace(/[^0-9.-]/g, ''));
+                        if (debit > 0) moneyOut = 'R ' + debit.toFixed(2);
+                    }
+                }
+
+                const balance = balanceCol !== '' ? row[balanceCol] || '-' : '-';
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${desc}</td>
+                        <td style="color: #34a853;">${moneyIn}</td>
+                        <td style="color: #ea4335;">${moneyOut}</td>
+                        <td>${balance}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function goBackToStep1() {
+            document.getElementById('importStep2').style.display = 'none';
+            document.getElementById('importStep1').style.display = 'block';
+            updateStepIndicators(1);
+        }
+
+        function goToStep3() {
+            // Validate mapping
+            const dateCol = document.getElementById('mapDate').value;
+            const descCol = document.getElementById('mapDescription').value;
+            const amountCol = document.getElementById('mapAmount').value;
+            const debitCol = document.getElementById('mapDebit').value;
+            const creditCol = document.getElementById('mapCredit').value;
+
+            if (dateCol === '' || descCol === '') {
+                alert('Please map at least Date and Description columns.');
+                return;
+            }
+
+            if (amountCol === '' && (debitCol === '' && creditCol === '')) {
+                alert('Please map either Amount column or Debit/Credit columns.');
+                return;
+            }
+
+            // Save mapping
+            importData.mapping = {
+                date: dateCol,
+                description: descCol,
+                debit: debitCol,
+                credit: creditCol,
+                amount: amountCol,
+                balance: document.getElementById('mapBalance').value,
+                reference: document.getElementById('mapReference').value
+            };
+
+            document.getElementById('importStep2').style.display = 'none';
+            document.getElementById('importStep3').style.display = 'block';
+            updateStepIndicators(3);
+
+            // Show import summary
+            renderImportSummary();
+        }
+
+        function renderImportSummary() {
+            const rows = importData.rows;
+            const mapping = importData.mapping;
+
+            let totalIn = 0, totalOut = 0, transactionCount = rows.length;
+
+            rows.forEach(row => {
+                if (mapping.amount !== '') {
+                    const amount = parseFloat((row[mapping.amount] || '0').replace(/[^0-9.-]/g, ''));
+                    if (amount > 0) totalIn += amount;
+                    else totalOut += Math.abs(amount);
+                } else {
+                    if (mapping.credit !== '') {
+                        totalIn += parseFloat((row[mapping.credit] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    }
+                    if (mapping.debit !== '') {
+                        totalOut += parseFloat((row[mapping.debit] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    }
+                }
+            });
+
+            document.getElementById('summaryTransactions').textContent = transactionCount;
+            document.getElementById('summaryMoneyIn').textContent = 'R ' + totalIn.toLocaleString('en-ZA', { minimumFractionDigits: 2 });
+            document.getElementById('summaryMoneyOut').textContent = 'R ' + totalOut.toLocaleString('en-ZA', { minimumFractionDigits: 2 });
+            document.getElementById('summaryNet').textContent = 'R ' + (totalIn - totalOut).toLocaleString('en-ZA', { minimumFractionDigits: 2 });
+        }
+
+        function goBackToStep2() {
+            document.getElementById('importStep3').style.display = 'none';
+            document.getElementById('importStep2').style.display = 'block';
+            updateStepIndicators(2);
+        }
+
+        function completeImport() {
+            const skipDuplicates = document.getElementById('skipDuplicates').checked;
+            const autoCategories = document.getElementById('autoCategories').checked;
+
+            // In production, this would send to the API
+            alert(`Import Complete!\n\n${importData.rows.length} transactions imported successfully.\n\nOptions:\n- Skip Duplicates: ${skipDuplicates ? 'Yes' : 'No'}\n- Auto-categorize: ${autoCategories ? 'Yes' : 'No'}\n\nIn production, this would POST to: /api/bank/import`);
+
+            closeImportModal();
+
+            // Optionally reload page to show new transactions
+            // location.reload();
+        }
+
+        // CSV drag and drop
+        const csvUploadArea = document.getElementById('csvUploadArea');
+        if (csvUploadArea) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                csvUploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                csvUploadArea.addEventListener(eventName, () => csvUploadArea.classList.add('drag-over'));
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                csvUploadArea.addEventListener(eventName, () => csvUploadArea.classList.remove('drag-over'));
+            });
+
+            csvUploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const fileInput = document.getElementById('csvFileInput');
+                    fileInput.files = files;
+                    handleCsvFile({ target: fileInput });
+                }
+            });
+        }
+        
+        function bankRules() {
+            alert('Bank rules configuration - Set up automatic categorization rules');
+        }
+        
+        function reconcile() {
+            alert('Start bank reconciliation process');
+        }
+        
+        function viewTransaction(id) {
+            alert('View transaction details for ID: ' + id);
+        }
+
+        // ===================================
+        // ALLOCATION TRACKING
+        // ===================================
+
+        // Store allocations in memory (and localStorage for persistence)
+        let transactionAllocations = JSON.parse(localStorage.getItem('lorenco_bank_allocations') || '{}');
+
+        function saveAllocationsToStorage() {
+            localStorage.setItem('lorenco_bank_allocations', JSON.stringify(transactionAllocations));
+        }
+
+        function getTransactionData(id) {
+            // Get transaction data from the row
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            let targetRow = null;
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('.checkbox');
+                if (checkbox && checkbox.dataset.txnId === 'txn-' + id) {
+                    targetRow = row;
+                }
+            });
+
+            // Also try to find by index
+            if (!targetRow) {
+                targetRow = rows[id - 1];
+            }
+
+            if (!targetRow) return null;
+
+            const dateCell = targetRow.querySelector('.transaction-date');
+            const descCell = targetRow.querySelector('.transaction-description');
+            const moneyInCell = targetRow.querySelector('.amount-in');
+            const moneyOutCell = targetRow.querySelector('.amount-out');
+
+            let amount = 0;
+            if (moneyInCell) {
+                const text = moneyInCell.textContent.replace(/[R,\s]/g, '');
+                amount = parseFloat(text) || 0;
+            } else if (moneyOutCell) {
+                const text = moneyOutCell.textContent.replace(/[R,\s]/g, '');
+                amount = -(parseFloat(text) || 0);
+            }
+
+            // Parse date (format: "14 Jan 2026")
+            const dateText = dateCell ? dateCell.textContent.trim() : '';
+            let date = new Date().toISOString().split('T')[0];
+            if (dateText) {
+                const parts = dateText.split(' ');
+                if (parts.length === 3) {
+                    const months = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+                                     Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+                    const day = parts[0].padStart(2, '0');
+                    const month = months[parts[1]] || '01';
+                    const year = parts[2];
+                    date = `${year}-${month}-${day}`;
+                }
+            }
+
+            return {
+                id: id,
+                date: date,
+                description: descCell ? descCell.textContent.trim() : 'Bank Transaction',
+                amount: amount,
+                row: targetRow
+            };
+        }
+
+        function updateAllocation(select, id) {
+            const type = select.value;
+            console.log(`Transaction ${id} type set to: ${type}`);
+
+            if (!transactionAllocations[id]) {
+                transactionAllocations[id] = {};
+            }
+            transactionAllocations[id].type = type;
+            saveAllocationsToStorage();
+
+            // Update UI - show account selector based on type
+            const row = select.closest('tr');
+            if (row) {
+                updateAccountOptions(row, type, id);
+            }
+        }
+
+        function updateAccountOptions(row, type, id) {
+            const accountSelect = row.querySelectorAll('.allocation-select')[1];
+            if (!accountSelect) return;
+
+            // Get all accounts from ledger
+            const accounts = LedgerSystem.getAllAccounts();
+
+            // Build options based on type
+            let html = '<option value="">Select Account...</option>';
+
+            if (type === 'customer') {
+                html += '<optgroup label="Income">';
+                accounts.filter(a => a.type === 'income').forEach(a => {
+                    html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                });
+                html += '</optgroup>';
+                html += '<optgroup label="Assets">';
+                accounts.filter(a => a.code === '1100').forEach(a => {
+                    html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                });
+                html += '</optgroup>';
+            } else if (type === 'supplier') {
+                html += '<optgroup label="Expenses">';
+                accounts.filter(a => a.type === 'expense').forEach(a => {
+                    html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                });
+                html += '</optgroup>';
+                html += '<optgroup label="Liabilities">';
+                accounts.filter(a => a.code === '2000').forEach(a => {
+                    html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                });
+                html += '</optgroup>';
+            } else if (type === 'vat') {
+                html += '<optgroup label="VAT Accounts">';
+                html += '<option value="2300">2300 - VAT Payable</option>';
+                html += '<option value="2310">2310 - VAT Input (Claimable)</option>';
+                html += '</optgroup>';
+            } else if (type === 'transfer') {
+                html += '<optgroup label="Bank Accounts">';
+                accounts.filter(a => a.code.startsWith('10')).forEach(a => {
+                    html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                });
+                html += '</optgroup>';
+            } else {
+                // Show all accounts grouped by type
+                const groups = {
+                    'Assets': accounts.filter(a => a.type === 'asset'),
+                    'Liabilities': accounts.filter(a => a.type === 'liability'),
+                    'Equity': accounts.filter(a => a.type === 'equity'),
+                    'Income': accounts.filter(a => a.type === 'income'),
+                    'Expenses': accounts.filter(a => a.type === 'expense')
+                };
+
+                Object.entries(groups).forEach(([group, accts]) => {
+                    if (accts.length > 0) {
+                        html += `<optgroup label="${group}">`;
+                        accts.forEach(a => {
+                            html += `<option value="${a.code}">${a.code} - ${a.name}</option>`;
+                        });
+                        html += '</optgroup>';
+                    }
+                });
+            }
+
+            accountSelect.innerHTML = html;
+        }
+
+        function updateAccount(select, id) {
+            const accountCode = select.value;
+            const accountText = select.options[select.selectedIndex].text;
+            console.log(`Transaction ${id} account set to: ${accountCode} - ${accountText}`);
+
+            if (!transactionAllocations[id]) {
+                transactionAllocations[id] = {};
+            }
+            transactionAllocations[id].accountCode = accountCode;
+            transactionAllocations[id].accountName = accountText;
+            saveAllocationsToStorage();
+
+            // Check if VAT applicable and show indicator
+            if (accountCode) {
+                const account = LedgerSystem.getAccount(accountCode);
+                if (account && account.vatApplicable) {
+                    console.log(`Account ${accountCode} is VAT applicable`);
+                }
+            }
+        }
+
+        function allocateTransaction(id) {
+            const allocation = transactionAllocations[id];
+
+            if (!allocation || !allocation.accountCode) {
+                alert('Please select an account before allocating.');
+                return;
+            }
+
+            const txnData = getTransactionData(id);
+            if (!txnData) {
+                alert('Could not find transaction data.');
+                return;
+            }
+
+            // Check if VAT should be auto-calculated
+            const account = LedgerSystem.getAccount(allocation.accountCode);
+            const includeVat = account && account.vatApplicable;
+
+            // Show confirmation with VAT breakdown
+            let message = `Allocate transaction to ${allocation.accountName}?\n\n`;
+            message += `Amount: R ${Math.abs(txnData.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}\n`;
+            message += `Date: ${txnData.date}\n`;
+            message += `Description: ${txnData.description}\n\n`;
+
+            if (includeVat) {
+                const vatCalc = LedgerSystem.calculateVatFromInclusive(Math.abs(txnData.amount));
+                message += `VAT will be auto-calculated:\n`;
+                message += `  Exclusive: R ${vatCalc.exclusive.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}\n`;
+                message += `  VAT (15%): R ${vatCalc.vat.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}\n`;
+            }
+
+            if (!confirm(message)) {
+                return;
+            }
+
+            try {
+                // Post to ledger
+                const journal = LedgerSystem.postBankAllocation({
+                    date: txnData.date,
+                    description: txnData.description,
+                    amount: txnData.amount,
+                    accountCode: allocation.accountCode,
+                    includeVat: includeVat,
+                    bankAccountCode: '1000'
+                });
+
+                // Update status in UI
+                const row = txnData.row;
+                if (row) {
+                    const statusCell = row.querySelector('.status-badge');
+                    if (statusCell) {
+                        statusCell.className = 'status-badge status-matched';
+                        statusCell.textContent = 'Allocated';
+                    }
+
+                    // Disable the selects
+                    row.querySelectorAll('.allocation-select').forEach(sel => {
+                        sel.disabled = true;
+                    });
+                }
+
+                // Mark allocation as posted
+                transactionAllocations[id].posted = true;
+                transactionAllocations[id].journalRef = journal.reference;
+                saveAllocationsToStorage();
+
+                alert(`Transaction allocated successfully!\n\nJournal Reference: ${journal.reference}\n\nThis has been posted to the General Ledger and will appear in reports.`);
+
+            } catch (error) {
+                alert('Error posting allocation: ' + error.message);
+                console.error('Allocation error:', error);
+            }
+        }
+
+        // Add allocate buttons to action cells
+        function addAllocateButtons() {
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            rows.forEach((row, index) => {
+                const actionCell = row.querySelector('td:has(.action-btn)');
+                if (actionCell && !actionCell.querySelector('.allocate-btn')) {
+                    const viewBtn = actionCell.querySelector('.action-btn');
+                    if (viewBtn) {
+                        const allocateBtn = document.createElement('button');
+                        allocateBtn.className = 'action-btn allocate-btn';
+                        allocateBtn.style.marginLeft = '5px';
+                        allocateBtn.style.background = 'linear-gradient(135deg, #34a853 0%, #2d8a47 100%)';
+                        allocateBtn.style.color = 'white';
+                        allocateBtn.textContent = 'Post';
+                        allocateBtn.onclick = () => allocateTransaction(index + 1);
+                        actionCell.appendChild(allocateBtn);
+                    }
+                }
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add allocate buttons after a short delay
+            setTimeout(addAllocateButtons, 100);
+        });
+        
+        // ===================================
+        // SEAN AI FUNCTIONS
+        // ===================================
+        
+        // Sean AI learning data (persisted in localStorage)
+        let seanLearning = JSON.parse(localStorage.getItem('lorenco_sean_learning') || '{}');
+        
+        function saveSeanLearning() {
+            localStorage.setItem('lorenco_sean_learning', JSON.stringify(seanLearning));
+        }
+        
+        // Sean AI pattern matching rules for bank transaction classification
+        function seanAnalyzeTransaction(txnData) {
+            const desc = (txnData.description || '').toLowerCase();
+            const amount = txnData.amount || 0;
+            const accounts = LedgerSystem ? LedgerSystem.getAllAccounts() : [];
+            
+            // Check Sean's learned overrides first
+            for (const [key, learning] of Object.entries(seanLearning)) {
+                if (desc.includes(key.toLowerCase())) {
+                    const matchedAccount = accounts.find(a => a.code === learning.accountCode);
+                    return {
+                        type: learning.type,
+                        accountCode: learning.accountCode,
+                        accountName: matchedAccount ? `${matchedAccount.code} - ${matchedAccount.name}` : learning.accountCode,
+                        reason: `Learned from your previous override: "${learning.explanation}"`,
+                        confidence: 92,
+                        source: 'learned'
+                    };
+                }
+            }
+            
+            // Pattern matching rules
+            const patterns = [
+                // Customer payments (money in)
+                { match: /inv[- ]|invoice|payment.*rec|receipt|customer|client/i, type: 'customer', code: '4000', name: '4000 - Sales Revenue', reason: 'Pattern matched: customer payment reference', confidence: 88 },
+                { match: /service.*rev|consulting|professional/i, type: 'customer', code: '4100', name: '4100 - Service Revenue', reason: 'Pattern matched: service revenue', confidence: 85 },
+                // Supplier payments (money out)
+                { match: /supplier|vendor|purchase|po[- ]\d|p\/o/i, type: 'supplier', code: '2000', name: '2000 - Accounts Payable', reason: 'Pattern matched: supplier payment', confidence: 87 },
+                { match: /office.*suppl|stationery|paper/i, type: 'supplier', code: '6200', name: '6200 - Office Supplies', reason: 'Pattern matched: office supplies expense', confidence: 90 },
+                // Utilities
+                { match: /electric|water|municipal|eskom|city.*power/i, type: 'supplier', code: '6100', name: '6100 - Utilities', reason: 'Pattern matched: utility payment', confidence: 91 },
+                // Rent
+                { match: /rent|lease|landlord|property/i, type: 'supplier', code: '6300', name: '6300 - Rent', reason: 'Pattern matched: rent payment', confidence: 93 },
+                // Salaries
+                { match: /salary|salaries|wage|payroll|nett.*pay/i, type: 'supplier', code: '6400', name: '6400 - Salaries', reason: 'Pattern matched: salary/payroll payment', confidence: 94 },
+                // VAT
+                { match: /sars|vat.*pay|tax.*pay/i, type: 'vat', code: '2100', name: '2100 - VAT Payable', reason: 'Pattern matched: SARS / VAT payment', confidence: 95 },
+                // Bank charges
+                { match: /bank.*charge|service.*fee|monthly.*fee|transaction.*fee/i, type: 'account', code: '6500', name: '6500 - Bank Charges', reason: 'Pattern matched: bank charges', confidence: 96 },
+                // Insurance
+                { match: /insurance|premium|cover/i, type: 'supplier', code: '6600', name: '6600 - Insurance', reason: 'Pattern matched: insurance payment', confidence: 89 },
+                // Transfers
+                { match: /transfer|tfr|interaccount|own.*account/i, type: 'transfer', code: '1000', name: '1000 - Bank Current', reason: 'Pattern matched: inter-account transfer', confidence: 82 },
+                // Cost of sales
+                { match: /stock|inventory|goods|merchandise|product/i, type: 'supplier', code: '5000', name: '5000 - Cost of Sales', reason: 'Pattern matched: inventory/stock purchase', confidence: 84 },
+            ];
+            
+            for (const pattern of patterns) {
+                if (pattern.match.test(desc)) {
+                    // Adjust confidence based on amount direction matching
+                    let conf = pattern.confidence;
+                    if (amount > 0 && pattern.type === 'customer') conf = Math.min(conf + 5, 99);
+                    if (amount < 0 && pattern.type === 'supplier') conf = Math.min(conf + 3, 99);
+                    
+                    return {
+                        type: pattern.type,
+                        accountCode: pattern.code,
+                        accountName: pattern.name,
+                        reason: pattern.reason,
+                        confidence: conf,
+                        source: 'pattern'
+                    };
+                }
+            }
+            
+            // Default fallback based on money direction
+            if (amount > 0) {
+                return {
+                    type: 'customer',
+                    accountCode: '4000',
+                    accountName: '4000 - Sales Revenue',
+                    reason: 'Default suggestion: money received — likely customer payment',
+                    confidence: 45,
+                    source: 'default'
+                };
+            } else {
+                return {
+                    type: 'account',
+                    accountCode: '6000',
+                    accountName: '6000 - Operating Expenses',
+                    reason: 'Default suggestion: money paid out — likely operating expense',
+                    confidence: 40,
+                    source: 'default'
+                };
+            }
+        }
+        
+        function toggleAISuggestion(id, button) {
+            const row = document.getElementById('aiRow' + id);
+            
+            if (!row) {
+                alert('Error: AI suggestion row not found. Please refresh the page.');
+                return;
+            }
+            
+            const isVisible = row.classList.contains('show');
+            
+            // Close all other AI rows
+            document.querySelectorAll('.ai-suggestion-row').forEach(r => r.classList.remove('show'));
+            document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (!isVisible) {
+                // Get transaction data and run Sean AI analysis
+                const txnData = getTransactionData(id);
+                if (txnData) {
+                    const suggestion = seanAnalyzeTransaction(txnData);
+                    updateAISuggestionPanel(id, row, txnData, suggestion);
+                }
+                
+                row.classList.add('show');
+                button.classList.add('active');
+            }
+        }
+        
+        function updateAISuggestionPanel(id, row, txnData, suggestion) {
+            const content = row.querySelector('.ai-suggestion-content');
+            if (!content) return;
+            
+            const confClass = suggestion.confidence >= 80 ? 'high' : suggestion.confidence >= 60 ? 'medium' : 'low';
+            const confColor = confClass === 'high' ? '#27ae60' : confClass === 'medium' ? '#f39c12' : '#e74c3c';
+            const learnedBadge = suggestion.source === 'learned' ? ' <span style="background:#9b59b6;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">Learned</span>' : '';
+            
+            // Get all accounts for the override dropdowns  
+            const accounts = LedgerSystem ? LedgerSystem.getAllAccounts() : [];
+            const accountsByCategory = {};
+            accounts.forEach(a => {
+                const cat = a.category || a.type || 'Other';
+                if (!accountsByCategory[cat]) accountsByCategory[cat] = [];
+                accountsByCategory[cat].push(a);
+            });
+            
+            let accountOptions = '';
+            for (const [cat, accts] of Object.entries(accountsByCategory)) {
+                accountOptions += `<optgroup label="${cat.charAt(0).toUpperCase() + cat.slice(1)}">`;
+                accts.forEach(a => {
+                    const selected = a.code === suggestion.accountCode ? ' selected' : '';
+                    accountOptions += `<option value="${a.code}"${selected}>${a.code} - ${a.name}</option>`;
+                });
+                accountOptions += '</optgroup>';
+            }
+            
+            content.innerHTML = `
+                <div class="ai-suggestion-header">🤖 Sean AI Analysis</div>
+                
+                <div class="ai-decision">
+                    <div class="ai-decision-title">Sean's Decision${learnedBadge}</div>
+                    <div class="ai-decision-value">
+                        <strong>Transaction:</strong> ${txnData.description}<br>
+                        <strong>Amount:</strong> R ${Math.abs(txnData.amount).toLocaleString('en-ZA', {minimumFractionDigits: 2})}<br>
+                        <strong>Transaction Type:</strong> ${suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)} Payment<br>
+                        <strong>Account:</strong> ${suggestion.accountName}<br>
+                        <strong>Reason:</strong> ${suggestion.reason}
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <span class="ai-confidence" style="background:${confColor};">${suggestion.confidence}% Confidence</span>
+                    </div>
+                </div>
+                
+                <div style="margin: 12px 0; display: flex; gap: 8px;">
+                    <button class="btn-primary" style="background:#27ae60;border-color:#27ae60;" onclick="acceptAISuggestion(${id})">
+                        ✓ Accept Sean's Suggestion
+                    </button>
+                </div>
+                
+                <div class="ai-override">
+                    <div class="ai-override-title">Override Sean's Decision</div>
+                    <div class="override-form">
+                        <div class="form-group">
+                            <label>Transaction Type</label>
+                            <select class="allocation-select override-type" id="overrideType${id}">
+                                <option value="customer" ${suggestion.type === 'customer' ? 'selected' : ''}>Customer Payment</option>
+                                <option value="supplier" ${suggestion.type === 'supplier' ? 'selected' : ''}>Supplier Payment</option>
+                                <option value="transfer" ${suggestion.type === 'transfer' ? 'selected' : ''}>Transfer</option>
+                                <option value="vat" ${suggestion.type === 'vat' ? 'selected' : ''}>VAT Payment</option>
+                                <option value="account" ${suggestion.type === 'account' ? 'selected' : ''}>Account</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Account</label>
+                            <select class="allocation-select override-account" id="overrideAccount${id}">
+                                ${accountOptions}
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Tell Sean why this is different</label>
+                            <textarea id="overrideExplanation${id}" placeholder="Explain to Sean AI why the classification should be different..."></textarea>
+                        </div>
+                        <div class="override-actions">
+                            <button class="btn-secondary" onclick="cancelOverride(${id})">Cancel</button>
+                            <button class="btn-primary" onclick="saveOverride(${id})">Save & Teach Sean</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function acceptAISuggestion(id) {
+            const txnData = getTransactionData(id);
+            if (!txnData) return;
+            
+            const suggestion = seanAnalyzeTransaction(txnData);
+            
+            // Apply the suggestion to the transaction's allocation dropdowns
+            applyAllocationToRow(id, suggestion.type, suggestion.accountCode);
+            
+            // Close the AI panel
+            cancelOverride(id);
+            
+            // Show success feedback
+            const btn = document.querySelector(`button[onclick="toggleAISuggestion(${id}, this)"]`);
+            if (btn) {
+                btn.innerHTML = '<span>✓</span> AI';
+                btn.style.background = '#27ae60';
+                btn.style.borderColor = '#27ae60';
+                setTimeout(() => {
+                    btn.innerHTML = '<span>🤖</span> AI';
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            }
+        }
+        
+        function applyAllocationToRow(id, type, accountCode) {
+            const txnData = getTransactionData(id);
+            if (!txnData || !txnData.row) return;
+            
+            // Set the type dropdown
+            const selects = txnData.row.querySelectorAll('.allocation-select');
+            if (selects[0]) {
+                selects[0].value = type;
+                // Trigger the update
+                updateAllocation(selects[0], id);
+            }
+            
+            // After updateAllocation rebuilds the account options, set the account
+            setTimeout(() => {
+                const accountSelects = txnData.row.querySelectorAll('.allocation-select');
+                if (accountSelects[1]) {
+                    accountSelects[1].value = accountCode;
+                    updateAccount(accountSelects[1], id);
+                }
+            }, 50);
+        }
+        
+        function cancelOverride(id) {
+            const row = document.getElementById('aiRow' + id);
+            if (row) row.classList.remove('show');
+            document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.remove('active'));
+        }
+        
+        function saveOverride(id) {
+            const overrideType = document.getElementById('overrideType' + id);
+            const overrideAccount = document.getElementById('overrideAccount' + id);
+            const overrideExplanation = document.getElementById('overrideExplanation' + id);
+            
+            if (!overrideExplanation || !overrideExplanation.value.trim()) {
+                alert('Please explain to Sean why this classification is different so he can learn.');
+                return;
+            }
+            
+            const type = overrideType ? overrideType.value : '';
+            const accountCode = overrideAccount ? overrideAccount.value : '';
+            const accountText = overrideAccount ? overrideAccount.options[overrideAccount.selectedIndex].text : '';
+            const explanation = overrideExplanation.value.trim();
+            
+            // Get the transaction description as the learning key
+            const txnData = getTransactionData(id);
+            if (txnData) {
+                // Extract a meaningful keyword from the description for learning
+                const descWords = txnData.description.toLowerCase().split(/\s+/);
+                const meaningfulWords = descWords.filter(w => w.length > 3 && !['the', 'and', 'for', 'from', 'this', 'that', 'with'].includes(w));
+                const learningKey = meaningfulWords.slice(0, 3).join(' ') || txnData.description.substring(0, 20);
+                
+                // Save Sean's learning
+                seanLearning[learningKey] = {
+                    type: type,
+                    accountCode: accountCode,
+                    accountName: accountText,
+                    explanation: explanation,
+                    learnedAt: new Date().toISOString(),
+                    fromTransaction: txnData.description
+                };
+                saveSeanLearning();
+                
+                // Apply the override to the actual allocation
+                applyAllocationToRow(id, type, accountCode);
+            }
+            
+            // Close the panel
+            cancelOverride(id);
+            
+            // Visual feedback
+            const btn = document.querySelector(`button[onclick="toggleAISuggestion(${id}, this)"]`);
+            if (btn) {
+                btn.innerHTML = '<span>📚</span> Learned';
+                btn.style.background = '#9b59b6';
+                btn.style.borderColor = '#9b59b6';
+                setTimeout(() => {
+                    btn.innerHTML = '<span>🤖</span> AI';
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                }, 3000);
+            }
+            
+            alert(`Sean AI has learned from your correction!\n\nType: ${type}\nAccount: ${accountText}\nReason: "${explanation}"\n\nSean will use this knowledge for similar transactions in the future.`);
+        }
+        
+        function bulkMatch() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            alert(`Match ${count} selected transactions`);
+        }
+        
+        function bulkReconcile() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            alert(`Reconcile ${count} selected transactions`);
+        }
+        
+        function bulkDelete() {
+            const count = document.querySelectorAll('.transactions-table tbody .checkbox:checked').length;
+            if (confirm(`Delete ${count} selected transactions?`)) {
+                alert('Transactions deleted');
+            }
+        }
+        
+        // Transaction review management
+        let currentTab = 'new';
+        let reviewedTransactions = JSON.parse(localStorage.getItem('reviewedTransactions') || '[]');
+        
+        function switchTab(tab, evt) {
+            currentTab = tab;
+            
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (evt && evt.target) {
+                evt.target.classList.add('active');
+            } else {
+                // Fallback: highlight the matching tab
+                document.querySelectorAll('.tab').forEach(t => {
+                    if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active');
+                });
+            }
+            
+            // Get all transaction rows (not AI suggestion rows)
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            const table = document.querySelector('.transactions-table');
+            
+            // Update button visibility
+            const markReviewedBtn = document.getElementById('markReviewedBtn');
+            const moveBackBtn = document.getElementById('moveBackBtn');
+            
+            if (tab === 'new') {
+                markReviewedBtn.style.display = '';
+                moveBackBtn.style.display = 'none';
+                table.classList.remove('readonly');
+                
+                // Show only non-reviewed transactions
+                rows.forEach(row => {
+                    const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                    if (txnId && reviewedTransactions.includes(txnId)) {
+                        row.style.display = 'none';
+                        // Hide corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = 'none';
+                        }
+                    } else {
+                        row.style.display = '';
+                    }
+                });
+            } else {
+                markReviewedBtn.style.display = 'none';
+                moveBackBtn.style.display = '';
+                table.classList.add('readonly');
+                
+                // Show only reviewed transactions
+                rows.forEach(row => {
+                    const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                    if (txnId && reviewedTransactions.includes(txnId)) {
+                        row.style.display = '';
+                        // Show corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = '';
+                        }
+                    } else {
+                        row.style.display = 'none';
+                        // Hide corresponding AI row
+                        const aiRow = row.nextElementSibling;
+                        if (aiRow && aiRow.classList.contains('ai-suggestion-row')) {
+                            aiRow.style.display = 'none';
+                        }
+                    }
+                });
+            }
+            
+            updateCounts();
+            updateBulkActions(); // Reset selection
+        }
+        
+        function markAsReviewed() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            
+            if (checked.length === 0) {
+                alert('Please select at least one transaction to mark as reviewed.');
+                return;
+            }
+            
+            checked.forEach(cb => {
+                const txnId = cb.dataset.txnId;
+                if (txnId && !reviewedTransactions.includes(txnId)) {
+                    reviewedTransactions.push(txnId);
+                }
+                cb.checked = false;
+            });
+            
+            localStorage.setItem('reviewedTransactions', JSON.stringify(reviewedTransactions));
+            switchTab('new'); // Refresh the current view
+            
+            alert(`${checked.length} transaction(s) marked as reviewed and moved to Reviewed tab.`);
+        }
+        
+        function moveBackToNew() {
+            const checked = document.querySelectorAll('.transactions-table tbody .checkbox:checked');
+            
+            if (checked.length === 0) {
+                alert('Please select at least one transaction to move back.');
+                return;
+            }
+            
+            checked.forEach(cb => {
+                const txnId = cb.dataset.txnId;
+                const index = reviewedTransactions.indexOf(txnId);
+                if (index > -1) {
+                    reviewedTransactions.splice(index, 1);
+                }
+                cb.checked = false;
+            });
+            
+            localStorage.setItem('reviewedTransactions', JSON.stringify(reviewedTransactions));
+            switchTab('reviewed'); // Refresh the reviewed view
+            
+            alert(`${checked.length} transaction(s) moved back to New Transactions.`);
+        }
+        
+        function updateCounts() {
+            const allRows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            let newCount = 0;
+            let reviewedCount = 0;
+            
+            allRows.forEach(row => {
+                const txnId = row.querySelector('.checkbox')?.dataset?.txnId;
+                if (txnId) {
+                    if (reviewedTransactions.includes(txnId)) {
+                        reviewedCount++;
+                    } else {
+                        newCount++;
+                    }
+                }
+            });
+            
+            document.getElementById('newCount').textContent = newCount;
+            document.getElementById('reviewedCount').textContent = reviewedCount;
+        }
+        
+        // Initialize transaction IDs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            rows.forEach((row, index) => {
+                const checkbox = row.querySelector('.checkbox');
+                if (checkbox && !checkbox.dataset.txnId) {
+                    checkbox.dataset.txnId = 'txn-' + (index + 1);
+                }
+            });
+            updateCounts();
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.transactions-table tbody tr:not(.ai-suggestion-row)');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+        
+        // ===================================
+        // ATTACHMENT FUNCTIONS
+        // ===================================
+        
+        let currentTransactionId = null;
+        
+        function showAttachments(transactionId) {
+            currentTransactionId = transactionId;
+            document.getElementById('attachmentModal').classList.add('show');
+            loadAttachments(transactionId);
+        }
+        
+        function closeAttachmentsModal() {
+            document.getElementById('attachmentModal').classList.remove('show');
+            currentTransactionId = null;
+        }
+        
+        async function loadAttachments(transactionId) {
+            // For demo, show sample attachments
+            const attachmentsListEl = document.getElementById('attachmentsList');
+            
+            // Demo data - in production this would fetch from API
+            const demoAttachments = transactionId === 1 ? [
+                {
+                    id: 1,
+                    original_filename: 'invoice_abc_corp.pdf',
+                    file_size: 245678,
+                    created_at: '2026-01-14T10:30:00',
+                    first_name: 'Demo',
+                    last_name: 'User'
+                },
+                {
+                    id: 2,
+                    original_filename: 'receipt.jpg',
+                    file_size: 125890,
+                    created_at: '2026-01-14T11:15:00',
+                    first_name: 'Demo',
+                    last_name: 'User'
+                }
+            ] : [];
+            
+            if (demoAttachments.length === 0) {
+                attachmentsListEl.innerHTML = '<div class="no-attachments">No attachments yet. Upload files to get started.</div>';
+            } else {
+                attachmentsListEl.innerHTML = demoAttachments.map(att => `
+                    <div class="attachment-item">
+                        <div class="attachment-info">
+                            <div class="attachment-icon">${getFileIcon(att.original_filename)}</div>
+                            <div class="attachment-details">
+                                <div class="attachment-name">${att.original_filename}</div>
+                                <div class="attachment-meta">
+                                    ${formatFileSize(att.file_size)} • Uploaded by ${att.first_name} ${att.last_name} • ${formatDate(att.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="attachment-actions">
+                            <button onclick="downloadAttachment(${att.id})">Download</button>
+                            <button class="delete-btn" onclick="deleteAttachment(${att.id})">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Update count badge
+            const countEl = document.getElementById(`attachCount${transactionId}`);
+            if (countEl) {
+                countEl.textContent = demoAttachments.length;
+            }
+        }
+        
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝',
+                'docx': '📝',
+                'xls': '📊',
+                'xlsx': '📊',
+                'csv': '📊',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️',
+                'gif': '🖼️',
+                'txt': '📝'
+            };
+            return icons[ext] || '📎';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+        
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 
+                                  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                  'text/csv', 'text/plain'];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Allowed types: images, PDF, DOC, XLS, CSV, TXT');
+                return;
+            }
+            
+            // In demo mode, just show success message
+            alert(`File "${file.name}" uploaded successfully!\n\nIn production, this would upload to: /api/bank/transactions/${currentTransactionId}/attachments`);
+            
+            // Reload attachments
+            loadAttachments(currentTransactionId);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        function downloadAttachment(attachmentId) {
+            alert(`Downloading attachment ${attachmentId}...\n\nIn production, this would download from: /api/bank/attachments/${attachmentId}/download`);
+        }
+        
+        function deleteAttachment(attachmentId) {
+            if (confirm('Are you sure you want to delete this attachment?')) {
+                alert(`Attachment ${attachmentId} deleted!\n\nIn production, this would call: DELETE /api/bank/attachments/${attachmentId}`);
+                loadAttachments(currentTransactionId);
+            }
+        }
+        
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('drag-over');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('drag-over');
+            });
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const fileInput = document.getElementById('fileInput');
+                fileInput.files = files;
+                handleFileUpload({ target: fileInput });
+            }
+        });
+    </script>
+    
+    <!-- CSV Import Modal -->
+    <div id="importModal" class="modal-overlay" onclick="if(event.target === this) closeImportModal()">
+        <div class="modal import-modal">
+            <div class="modal-header">
+                <h2>Import Bank Statement</h2>
+                <button class="modal-close" onclick="closeImportModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Step Indicators -->
+                <div class="import-steps">
+                    <div class="import-step active">
+                        <span class="step-number">1</span>
+                        <span>Upload File</span>
+                    </div>
+                    <div class="import-step">
+                        <span class="step-number">2</span>
+                        <span>Map Columns</span>
+                    </div>
+                    <div class="import-step">
+                        <span class="step-number">3</span>
+                        <span>Confirm Import</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Upload -->
+                <div id="importStep1" class="import-content">
+                    <div class="bank-format-select">
+                        <label>Bank Format (Optional)</label>
+                        <select id="bankFormatSelect" onchange="onBankFormatChange()">
+                            <option value="custom">Custom / Other Bank</option>
+                            <option value="fnb">FNB (First National Bank)</option>
+                            <option value="standard">Standard Bank</option>
+                            <option value="absa">ABSA</option>
+                            <option value="nedbank">Nedbank</option>
+                            <option value="capitec">Capitec Bank</option>
+                        </select>
+                        <small style="color: #5f6368; display: block; margin-top: 5px;">Select your bank to auto-map columns, or choose Custom to manually map.</small>
+                    </div>
+
+                    <div id="csvUploadArea" class="upload-area" onclick="triggerCsvUpload()">
+                        <div class="upload-icon">📄</div>
+                        <div><strong>Click to upload</strong> or drag and drop</div>
+                        <div style="font-size: 12px; color: #5f6368; margin-top: 5px;">
+                            CSV files only (exported from your bank)
+                        </div>
+                    </div>
+                    <input type="file" id="csvFileInput" style="display: none;" onchange="handleCsvFile(event)" accept=".csv">
+
+                    <div id="csvFileInfo" class="file-info" style="display: none;">
+                        <div class="file-info-icon">📄</div>
+                        <div class="file-info-details">
+                            <div class="file-info-name" id="csvFileName"></div>
+                            <div class="file-info-meta" id="csvFileMeta"></div>
+                        </div>
+                        <span class="file-info-remove" onclick="removeCsvFile()" title="Remove file">×</span>
+                    </div>
+
+                    <div class="import-actions">
+                        <button class="btn-secondary" onclick="closeImportModal()">Cancel</button>
+                        <button class="btn-primary" onclick="goToStep2()">Next: Map Columns →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Column Mapping -->
+                <div id="importStep2" class="import-content" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Map CSV Columns to Transaction Fields</h3>
+                    <p style="color: #5f6368; margin-bottom: 20px;">Match your CSV columns to the correct transaction fields. Preview updates as you change mappings.</p>
+
+                    <div class="column-mapping">
+                        <div class="mapping-item">
+                            <label>Date *</label>
+                            <select id="mapDate" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Description *</label>
+                            <select id="mapDescription" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Amount (single)</label>
+                            <select id="mapAmount" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Reference</label>
+                            <select id="mapReference" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Debit (Money Out)</label>
+                            <select id="mapDebit" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Credit (Money In)</label>
+                            <select id="mapCredit" onchange="renderMappingPreview()"></select>
+                        </div>
+                        <div class="mapping-item">
+                            <label>Balance</label>
+                            <select id="mapBalance" onchange="renderMappingPreview()"></select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 10px;">Preview (first 5 rows)</h4>
+                    <div style="overflow-x: auto;">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Money In</th>
+                                    <th>Money Out</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mappingPreviewBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="import-actions">
+                        <button class="btn-secondary" onclick="goBackToStep1()">← Back</button>
+                        <button class="btn-primary" onclick="goToStep3()">Next: Confirm Import →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Confirm -->
+                <div id="importStep3" class="import-content" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Ready to Import</h3>
+
+                    <div class="import-summary">
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-value" id="summaryTransactions">0</div>
+                                <div class="summary-label">Transactions</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" style="color: #34a853;" id="summaryMoneyIn">R 0.00</div>
+                                <div class="summary-label">Total Money In</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" style="color: #ea4335;" id="summaryMoneyOut">R 0.00</div>
+                                <div class="summary-label">Total Money Out</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="summaryNet">R 0.00</div>
+                                <div class="summary-label">Net Change</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">Import Options</h4>
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer;">
+                            <input type="checkbox" id="skipDuplicates" checked style="width: 18px; height: 18px;">
+                            <span>Skip duplicate transactions (based on date, description, and amount)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="autoCategories" checked style="width: 18px; height: 18px;">
+                            <span>Auto-categorize transactions using Sean AI</span>
+                        </label>
+                    </div>
+
+                    <div class="import-actions">
+                        <button class="btn-secondary" onclick="goBackToStep2()">← Back</button>
+                        <button class="btn-primary" onclick="completeImport()">Import Transactions</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attachment Modal -->
+    <div id="attachmentModal" class="modal-overlay" onclick="if(event.target === this) closeAttachmentsModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📎 Attachments</h2>
+                <button class="modal-close" onclick="closeAttachmentsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="uploadArea" class="upload-area" onclick="triggerFileUpload()">
+                    <div class="upload-icon">📤</div>
+                    <div><strong>Click to upload</strong> or drag and drop</div>
+                    <div style="font-size: 12px; color: #5f6368; margin-top: 5px;">
+                        Images, PDF, DOC, XLS, CSV, TXT (Max 10MB)
+                    </div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileUpload(event)" 
+                       accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                
+                <div id="attachmentsList"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

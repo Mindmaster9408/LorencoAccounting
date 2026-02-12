@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal Entries - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <script src="js/ledger.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+        .main-content { padding: 30px; max-width: 1400px; margin: 0 auto; }
+        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header h1 { font-size: 24px; color: #202124; }
+        .page-header p { color: #5f6368; margin-top: 4px; }
+        .btn-primary {
+            padding: 10px 20px; background: linear-gradient(135deg, #0066cc, #0099ff);
+            color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.3); transition: all 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .stat-card h3 { color: #9aa0a6; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #0066cc; }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-bar select, .filter-bar input {
+            padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px;
+        }
+        .section {
+            background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed; overflow: hidden; margin-bottom: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #f8f9fa; padding: 14px 16px; text-align: left; font-weight: 600;
+            color: #5f6368; font-size: 13px; border-bottom: 2px solid #e8eaed;
+        }
+        td { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        tr:hover { background: #f0f8ff; }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-posted { background: #e8f5e9; color: #2e7d32; }
+        .badge-draft { background: #fff3e0; color: #e65100; }
+        .badge-reversed { background: #fce4ec; color: #c62828; }
+        .source-badge { background: #e3f2fd; color: #1565c0; font-size: 10px; padding: 2px 8px; border-radius: 8px; }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; padding: 30px; width: 700px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+        }
+        .line-items { margin: 15px 0; }
+        .line-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .line-item input, .line-item select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+        .btn-remove { background: #ef5350; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-secondary { padding: 10px 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .balance-check { padding: 10px; border-radius: 6px; margin-top: 10px; font-weight: 600; font-size: 13px; text-align: right; }
+        .balanced { background: #e8f5e9; color: #2e7d32; }
+        .unbalanced { background: #fce4ec; color: #c62828; }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Journal Entries</h1>
+                <p>Record and manage double-entry journal transactions</p>
+            </div>
+            <button class="btn-primary" onclick="showNewJournalModal()">+ New Journal Entry</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Journals</h3>
+                <div class="value" id="totalJournals">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Posted</h3>
+                <div class="value" id="postedJournals">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Draft</h3>
+                <div class="value" id="draftJournals">0</div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <select id="filterStatus" onchange="renderJournals()">
+                <option value="">All Status</option>
+                <option value="posted">Posted</option>
+                <option value="draft">Draft</option>
+            </select>
+            <select id="filterSource" onchange="renderJournals()">
+                <option value="">All Sources</option>
+                <option value="MANUAL">Manual</option>
+                <option value="BANK">Bank</option>
+                <option value="POS">POS</option>
+                <option value="AI">AI</option>
+            </select>
+            <input type="text" id="searchJournals" placeholder="Search journals..." oninput="renderJournals()">
+        </div>
+
+        <div class="section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Description</th>
+                        <th>Debit</th>
+                        <th>Credit</th>
+                        <th>Status</th>
+                        <th>Source</th>
+                        <th>Lines</th>
+                    </tr>
+                </thead>
+                <tbody id="journalsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="journalModal">
+        <div class="modal">
+            <h2>New Journal Entry</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="jnlDate">
+                </div>
+                <div class="form-group">
+                    <label>Reference</label>
+                    <input type="text" id="jnlRef" placeholder="JNL-001">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="jnlDesc" placeholder="Journal description">
+                </div>
+            </div>
+            
+            <h3 style="margin: 15px 0 10px; font-size: 14px;">Line Items</h3>
+            <div class="line-items">
+                <div class="line-item" style="font-weight: 600; font-size: 12px; color: #5f6368;">
+                    <span>Account</span><span>Description</span><span>Debit (R)</span><span>Credit (R)</span><span></span>
+                </div>
+                <div id="journalLines"></div>
+            </div>
+            <button class="btn-secondary" onclick="addJournalLine()" style="font-size: 12px; padding: 6px 12px;">+ Add Line</button>
+            
+            <div class="balance-check" id="balanceCheck">Debits: R 0.00 | Credits: R 0.00</div>
+            
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeJournalModal()">Cancel</button>
+                <button class="btn-primary" onclick="postJournal()">Post Journal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lineCount = 0;
+
+        function renderJournals() {
+            const journals = LedgerSystem.getJournals();
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterSource = document.getElementById('filterSource').value;
+            const search = document.getElementById('searchJournals').value.toLowerCase();
+
+            let filtered = journals;
+            if (filterStatus) filtered = filtered.filter(j => j.status === filterStatus);
+            if (filterSource) filtered = filtered.filter(j => j.sourceType === filterSource);
+            if (search) filtered = filtered.filter(j => 
+                (j.description || '').toLowerCase().includes(search) || 
+                (j.reference || '').toLowerCase().includes(search)
+            );
+
+            // Sort by date descending
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const tbody = document.getElementById('journalsBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">No journal entries found. Click "+ New Journal Entry" to create one.</td></tr>';
+            } else {
+                tbody.innerHTML = filtered.map(j => {
+                    const totalDebit = (j.lines || []).reduce((s, l) => s + (l.debit || 0), 0);
+                    const totalCredit = (j.lines || []).reduce((s, l) => s + (l.credit || 0), 0);
+                    return `<tr>
+                        <td>${j.date}</td>
+                        <td><strong>${j.reference || '—'}</strong></td>
+                        <td>${j.description}</td>
+                        <td style="text-align: right;">R ${totalDebit.toFixed(2)}</td>
+                        <td style="text-align: right;">R ${totalCredit.toFixed(2)}</td>
+                        <td><span class="badge badge-${j.status}">${j.status}</span></td>
+                        <td><span class="source-badge">${j.sourceType || 'MANUAL'}</span></td>
+                        <td>${(j.lines || []).length}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Stats
+            document.getElementById('totalJournals').textContent = journals.length;
+            document.getElementById('postedJournals').textContent = journals.filter(j => j.status === 'posted').length;
+            document.getElementById('draftJournals').textContent = journals.filter(j => j.status === 'draft').length;
+        }
+
+        function showNewJournalModal() {
+            document.getElementById('journalModal').classList.add('show');
+            document.getElementById('jnlDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('jnlRef').value = 'JNL-' + String(LedgerSystem.getJournals().length + 1).padStart(3, '0');
+            document.getElementById('journalLines').innerHTML = '';
+            lineCount = 0;
+            addJournalLine();
+            addJournalLine();
+        }
+
+        function closeJournalModal() {
+            document.getElementById('journalModal').classList.remove('show');
+        }
+
+        function addJournalLine() {
+            lineCount++;
+            const accounts = LedgerSystem.getAllAccounts();
+            const options = accounts.map(a => `<option value="${a.code}">${a.code} - ${a.name}</option>`).join('');
+            const html = `<div class="line-item" id="line${lineCount}">
+                <select onchange="updateBalance()"><option value="">Select account...</option>${options}</select>
+                <input type="text" placeholder="Line description">
+                <input type="number" step="0.01" min="0" placeholder="0.00" onchange="updateBalance()" class="debit-input">
+                <input type="number" step="0.01" min="0" placeholder="0.00" onchange="updateBalance()" class="credit-input">
+                <button class="btn-remove" onclick="removeLine(${lineCount})">✕</button>
+            </div>`;
+            document.getElementById('journalLines').insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeLine(id) {
+            const el = document.getElementById('line' + id);
+            if (el) el.remove();
+            updateBalance();
+        }
+
+        function updateBalance() {
+            const debits = Array.from(document.querySelectorAll('.debit-input')).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+            const credits = Array.from(document.querySelectorAll('.credit-input')).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+            const el = document.getElementById('balanceCheck');
+            el.textContent = `Debits: R ${debits.toFixed(2)} | Credits: R ${credits.toFixed(2)} | ${Math.abs(debits - credits) < 0.01 ? '✓ Balanced' : '✗ Unbalanced: R ' + Math.abs(debits - credits).toFixed(2)}`;
+            el.className = 'balance-check ' + (Math.abs(debits - credits) < 0.01 ? 'balanced' : 'unbalanced');
+        }
+
+        function postJournal() {
+            const date = document.getElementById('jnlDate').value;
+            const reference = document.getElementById('jnlRef').value;
+            const description = document.getElementById('jnlDesc').value;
+            if (!date || !description) { alert('Please fill in date and description'); return; }
+
+            const lineEls = document.querySelectorAll('#journalLines .line-item');
+            const lines = [];
+            lineEls.forEach(el => {
+                const account = el.querySelector('select').value;
+                const desc = el.querySelectorAll('input')[0].value;
+                const debit = parseFloat(el.querySelectorAll('input')[1].value) || 0;
+                const credit = parseFloat(el.querySelectorAll('input')[2].value) || 0;
+                if (account && (debit > 0 || credit > 0)) {
+                    lines.push({ accountCode: account, description: desc, debit, credit });
+                }
+            });
+
+            if (lines.length < 2) { alert('A journal entry needs at least 2 lines'); return; }
+
+            try {
+                LedgerSystem.postJournal({ date, reference, description, sourceType: 'MANUAL', lines });
+                alert('Journal posted successfully!');
+                closeJournalModal();
+                renderJournals();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        renderJournals();
+    </script>
+</body>
+</html>

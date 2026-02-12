@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+  <meta charset="UTF-8">
+  <title>Company Management - Lorenco Accounting</title>
+  <script src="js/navigation.js"></script>
+  <script src="js/ledger.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; background: #f8f9fa; }
+
+    .content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+    .page-header { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .page-header h1 { font-size: 22px; color: #333; margin-bottom: 5px; }
+    .page-header p { color: #666; font-size: 13px; }
+
+    .company-switcher { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .company-switcher h2 { font-size: 16px; color: #333; margin-bottom: 15px; }
+    .company-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .company-card { border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; }
+    .company-card:hover { border-color: #0066cc; background: #f8f9ff; }
+    .company-card.active { border-color: #0066cc; background: #e3f2fd; }
+    .company-card .company-name { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 5px; }
+    .company-card .company-reg { font-size: 12px; color: #666; }
+    .company-card .company-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-top: 8px; }
+    .company-card .status-active { background: #c8e6c9; color: #2e7d32; }
+    .company-card .status-inactive { background: #ffcdd2; color: #c62828; }
+    .add-company-btn { border: 2px dashed #ccc; border-radius: 8px; padding: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #666; font-size: 14px; transition: all 0.2s; }
+    .add-company-btn:hover { border-color: #0066cc; color: #0066cc; background: #f8f9ff; }
+
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+
+    .settings-section { background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .settings-section h2 { font-size: 16px; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #333; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 2px rgba(0,102,204,0.1); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group small { color: #888; font-size: 11px; display: block; margin-top: 3px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-primary { background: #0066cc; color: white; }
+    .btn-primary:hover { background: #0052a3; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+
+    .button-row { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+    .tax-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .logo-upload { display: flex; align-items: center; gap: 15px; }
+    .logo-preview { width: 80px; height: 80px; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; overflow: hidden; }
+    .logo-preview img { max-width: 100%; max-height: 100%; }
+    .logo-preview .no-logo { color: #999; font-size: 11px; text-align: center; }
+
+    .alert { padding: 12px 15px; border-radius: 4px; margin-bottom: 15px; }
+    .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+    /* Teach Sean Section */
+    .teach-sean-section { background: #fff; padding: 20px; margin-top: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .teach-sean-section h2 { font-size: 18px; color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+    .teach-sean-section h2 .ai-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .teach-sean-section .section-desc { color: #666; font-size: 13px; margin-bottom: 20px; }
+
+    .sean-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .sean-grid { grid-template-columns: 1fr; } }
+
+    .sean-panel { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+    .sean-panel-header { background: #f8f9fa; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; }
+    .sean-panel-header h3 { font-size: 14px; color: #333; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .sean-panel-header .icon { font-size: 16px; }
+    .sean-panel-body { padding: 15px; min-height: 200px; max-height: 400px; overflow-y: auto; }
+
+    .knowledge-item { background: #f8f9fa; border: 1px solid #e8e8e8; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+    .knowledge-item:last-child { margin-bottom: 0; }
+    .knowledge-item .category { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+    .knowledge-item .category.cat-general { background: #e8f5e9; color: #2e7d32; }
+    .knowledge-item .category.cat-process { background: #fff3e0; color: #e65100; }
+    .knowledge-item .category.cat-preference { background: #fce4ec; color: #c2185b; }
+    .knowledge-item .category.cat-rule { background: #ede7f6; color: #512da8; }
+    .knowledge-item .content { font-size: 13px; color: #333; line-height: 1.5; }
+    .knowledge-item .meta { font-size: 11px; color: #888; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .knowledge-item .delete-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 3px; }
+    .knowledge-item .delete-btn:hover { background: #fee; }
+
+    .no-knowledge { color: #999; font-size: 13px; text-align: center; padding: 40px 20px; }
+    .no-knowledge .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+
+    .add-knowledge-form { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; }
+    .add-knowledge-form .form-row-inline { display: flex; gap: 10px; margin-bottom: 10px; }
+    .add-knowledge-form .form-row-inline select { width: 150px; }
+    .add-knowledge-form .form-row-inline textarea { flex: 1; min-height: 60px; resize: vertical; }
+    .add-knowledge-form .add-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .add-knowledge-form .add-btn:hover { opacity: 0.9; }
+
+    /* Integrations Section */
+    .integrations-section { background: #fff; padding: 20px; margin-top: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .integrations-section h2 { font-size: 18px; color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+    .integrations-section h2 .integration-badge { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .integrations-section .section-desc { color: #666; font-size: 13px; margin-bottom: 20px; }
+
+    .integrations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+    .integration-card { border: 2px solid #e0e0e0; border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+    .integration-card:hover { border-color: #00b894; box-shadow: 0 4px 12px rgba(0,184,148,0.15); }
+    .integration-card.connected { border-color: #00b894; background: linear-gradient(to bottom, #f0fff4 0%, #ffffff 100%); }
+
+    .integration-header { padding: 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e8e8e8; }
+    .integration-logo { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; }
+    .integration-logo.checkout-charlie { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; }
+    .integration-logo.bank-feed { background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); color: white; }
+    .integration-logo.sars { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; }
+
+    .integration-info { flex: 1; }
+    .integration-info h3 { font-size: 16px; color: #333; margin-bottom: 4px; }
+    .integration-info p { font-size: 12px; color: #666; margin: 0; }
+
+    .integration-status { padding: 4px 12px; border-radius: 15px; font-size: 11px; font-weight: 600; }
+    .integration-status.connected { background: #d4edda; color: #155724; }
+    .integration-status.disconnected { background: #f8f9fa; color: #6c757d; }
+
+    .integration-body { padding: 20px; }
+    .integration-body p { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
+
+    .integration-features { list-style: none; padding: 0; margin: 0 0 20px 0; }
+    .integration-features li { font-size: 12px; color: #666; padding: 6px 0; padding-left: 22px; position: relative; }
+    .integration-features li::before { content: '✓'; position: absolute; left: 0; color: #00b894; font-weight: bold; }
+
+    .integration-actions { display: flex; gap: 10px; }
+    .integration-actions .btn { flex: 1; text-align: center; }
+
+    .btn-connect { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; border: none; }
+    .btn-connect:hover { opacity: 0.9; }
+    .btn-disconnect { background: #fff; color: #dc3545; border: 1px solid #dc3545; }
+    .btn-disconnect:hover { background: #dc3545; color: white; }
+    .btn-settings { background: #fff; color: #6c757d; border: 1px solid #ddd; }
+    .btn-settings:hover { border-color: #0066cc; color: #0066cc; }
+
+    /* Integration Config Modal */
+    .integration-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
+    .integration-modal.show { display: flex; }
+    .integration-modal-content { background: white; padding: 0; border-radius: 12px; width: 500px; max-width: 90%; max-height: 80vh; overflow: hidden; }
+    .integration-modal-header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 20px; }
+    .integration-modal-header h3 { margin: 0 0 5px 0; font-size: 18px; }
+    .integration-modal-header p { margin: 0; font-size: 13px; opacity: 0.9; }
+    .integration-modal-body { padding: 25px; max-height: 400px; overflow-y: auto; }
+    .integration-modal-footer { padding: 15px 25px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 10px; }
+
+    .config-section { margin-bottom: 20px; }
+    .config-section h4 { font-size: 14px; color: #333; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .config-row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .config-row .form-group { flex: 1; margin-bottom: 0; }
+
+    .sync-options { background: #f8f9fa; border-radius: 8px; padding: 15px; }
+    .sync-option { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+    .sync-option input[type="checkbox"] { width: 18px; height: 18px; accent-color: #00b894; }
+    .sync-option label { font-size: 13px; color: #333; cursor: pointer; }
+    .sync-option small { font-size: 11px; color: #888; display: block; margin-left: 28px; }
+  </style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:Order msdt:dt="string">147800.000000000</mso:Order>
+<mso:ContentTypeId msdt:dt="string">0x010100FCE56FA388751B49A2E4121BC784923C</mso:ContentTypeId>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+  <div class="content">
+    <div class="page-header">
+      <h1>Company Management</h1>
+      <p>Manage your company profile, settings, and switch between companies</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Company Switcher -->
+    <div class="company-switcher">
+      <h2>Your Companies</h2>
+      <div class="company-list" id="companyList">
+        <!-- Companies will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Company Settings -->
+    <div class="settings-grid">
+      <!-- Basic Information -->
+      <div class="settings-section">
+        <h2>Basic Information</h2>
+        <form id="basicInfoForm">
+          <div class="form-group">
+            <label>Company Name *</label>
+            <input type="text" id="companyName" required placeholder="Enter company name">
+          </div>
+          <div class="form-group">
+            <label>Trading As (DBA)</label>
+            <input type="text" id="tradingAs" placeholder="Trading name if different">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Registration Number</label>
+              <input type="text" id="regNumber" placeholder="e.g. 2024/123456/07">
+            </div>
+            <div class="form-group">
+              <label>Company Type</label>
+              <select id="companyType">
+                <option value="pty_ltd">Pty Ltd</option>
+                <option value="cc">Close Corporation (CC)</option>
+                <option value="sole_prop">Sole Proprietor</option>
+                <option value="partnership">Partnership</option>
+                <option value="trust">Trust</option>
+                <option value="npc">Non-Profit Company</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Company Logo</label>
+            <div class="logo-upload">
+              <div class="logo-preview" id="logoPreview">
+                <div class="no-logo">No Logo</div>
+              </div>
+              <div>
+                <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="previewLogo(this)">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('logoFile').click()">Upload Logo</button>
+                <small style="display:block; margin-top:5px;">Max 2MB, PNG/JPG</small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tax Information -->
+      <div class="settings-section">
+        <h2>Tax Information</h2>
+        <form id="taxInfoForm">
+          <div class="tax-info-grid">
+            <div class="form-group">
+              <label>Income Tax Number</label>
+              <input type="text" id="incomeTaxNo" placeholder="e.g. 9012345678">
+            </div>
+            <div class="form-group">
+              <label>VAT Number</label>
+              <input type="text" id="vatNumber" placeholder="e.g. 4012345678">
+            </div>
+            <div class="form-group">
+              <label>PAYE Reference</label>
+              <input type="text" id="payeRef" placeholder="e.g. 7012345678">
+            </div>
+            <div class="form-group">
+              <label>UIF Reference</label>
+              <input type="text" id="uifRef" placeholder="UIF reference number">
+            </div>
+            <div class="form-group">
+              <label>SDL Reference</label>
+              <input type="text" id="sdlRef" placeholder="SDL reference number">
+            </div>
+            <div class="form-group">
+              <label>COID Number</label>
+              <input type="text" id="coidNumber" placeholder="Compensation fund number">
+            </div>
+          </div>
+          <div class="form-row" style="margin-top: 10px;">
+            <div class="form-group">
+              <label>Financial Year End</label>
+              <select id="yearEnd">
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="06">June</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>VAT Period</label>
+              <select id="vatPeriod">
+                <option value="monthly">Monthly</option>
+                <option value="bi-monthly">Bi-Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annually">Annually</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="settings-section">
+        <h2>Contact Information</h2>
+        <form id="contactForm">
+          <div class="form-group">
+            <label>Physical Address</label>
+            <textarea id="physicalAddress" placeholder="Street address"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="city" placeholder="City">
+            </div>
+            <div class="form-group">
+              <label>Postal Code</label>
+              <input type="text" id="postalCode" placeholder="Postal code">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Postal Address</label>
+            <textarea id="postalAddress" placeholder="Postal address (if different)"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="phone" placeholder="e.g. 011 123 4567">
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="email" placeholder="company@example.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Website</label>
+            <input type="url" id="website" placeholder="https://www.example.com">
+          </div>
+        </form>
+      </div>
+
+      <!-- Banking Details -->
+      <div class="settings-section">
+        <h2>Banking Details</h2>
+        <form id="bankingForm">
+          <div class="form-group">
+            <label>Bank Name</label>
+            <select id="bankName">
+              <option value="">Select Bank</option>
+              <option value="absa">ABSA</option>
+              <option value="fnb">FNB (First National Bank)</option>
+              <option value="nedbank">Nedbank</option>
+              <option value="standard">Standard Bank</option>
+              <option value="capitec">Capitec</option>
+              <option value="investec">Investec</option>
+              <option value="african">African Bank</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Branch Code</label>
+              <input type="text" id="branchCode" placeholder="e.g. 632005">
+            </div>
+            <div class="form-group">
+              <label>Account Number</label>
+              <input type="text" id="accountNumber" placeholder="Account number">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Account Type</label>
+            <select id="accountType">
+              <option value="cheque">Cheque Account</option>
+              <option value="savings">Savings Account</option>
+              <option value="transmission">Transmission Account</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Holder Name</label>
+            <input type="text" id="accountHolder" placeholder="Name as per bank records">
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      <button type="button" class="btn btn-success" onclick="saveCompany()">Save Company Settings</button>
+    </div>
+
+    <!-- Teach Sean Section -->
+    <div class="teach-sean-section">
+      <h2>
+        Teach Sean
+        <span class="ai-badge">AI Assistant</span>
+      </h2>
+      <p class="section-desc">Teach Sean about this company. Sean will use this knowledge to provide better, more personalized assistance.</p>
+
+      <div class="sean-grid">
+        <!-- What Sean Knows -->
+        <div class="sean-panel">
+          <div class="sean-panel-header">
+            <h3><span class="icon">&#x1F9E0;</span> What Sean Knows</h3>
+            <span style="font-size: 11px; color: #666;" id="knowledgeCount">0 items</span>
+          </div>
+          <div class="sean-panel-body" id="seanKnowledgeList">
+            <div class="no-knowledge">
+              <div class="icon">&#x1F4AD;</div>
+              <div>Sean doesn't know anything specific about this company yet.</div>
+              <div style="margin-top: 5px; font-size: 11px;">Add knowledge using the form on the right.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add New Knowledge -->
+        <div class="sean-panel">
+          <div class="sean-panel-header">
+            <h3><span class="icon">&#x2795;</span> Teach Sean Something New</h3>
+          </div>
+          <div class="sean-panel-body">
+            <div style="margin-bottom: 15px;">
+              <label style="font-weight: 600; display: block; margin-bottom: 5px;">Category</label>
+              <select id="knowledgeCategory" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="general">General Information</option>
+                <option value="process">Business Process</option>
+                <option value="preference">Preference / Style</option>
+                <option value="rule">Rule / Policy</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <label style="font-weight: 600; display: block; margin-bottom: 5px;">What should Sean know?</label>
+              <textarea id="knowledgeContent" placeholder="e.g., 'This company prefers to use FIFO inventory method' or 'All invoices must include the PO number in the reference field'" style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
+              <small style="color: #888; font-size: 11px;">Be specific and clear. Sean will remember this for future interactions.</small>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addKnowledge()" style="width: 100%;">
+              <span style="margin-right: 5px;">&#x1F4BE;</span> Save Knowledge
+            </button>
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+              <h4 style="font-size: 13px; color: #333; margin-bottom: 10px;">Quick Add Examples:</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="quickAdd('preference', 'Prefers formal communication style in all documents')">Formal Style</button>
+                <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="quickAdd('rule', 'All expenses over R500 require manager approval')">Expense Rule</button>
+                <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="quickAdd('process', 'Month-end close is on the 5th of the following month')">Month-End</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrations Section -->
+    <div class="integrations-section">
+      <h2>
+        Integrations
+        <span class="integration-badge">Connect Apps</span>
+      </h2>
+      <p class="section-desc">Connect third-party applications to sync data automatically and streamline your workflow.</p>
+
+      <div class="integrations-grid">
+        <!-- Checkout Charlie Integration -->
+        <div class="integration-card" id="checkoutCharlieCard">
+          <div class="integration-header">
+            <div class="integration-logo checkout-charlie">CC</div>
+            <div class="integration-info">
+              <h3>Checkout Charlie</h3>
+              <p>Point of Sale & Inventory Management</p>
+            </div>
+            <span class="integration-status disconnected" id="checkoutCharlieStatus">Not Connected</span>
+          </div>
+          <div class="integration-body">
+            <p>Sync sales transactions, inventory levels, and customer data from Checkout Charlie POS system directly into your accounting records.</p>
+            <ul class="integration-features">
+              <li>Auto-sync daily sales to income accounts</li>
+              <li>Real-time inventory cost tracking</li>
+              <li>Customer invoices and receipts</li>
+              <li>VAT calculation and reporting</li>
+            </ul>
+            <div class="integration-actions" id="checkoutCharlieActions">
+              <button class="btn btn-connect" onclick="connectCheckoutCharlie()">Connect</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Feeds Integration (Future) -->
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-logo bank-feed">BF</div>
+            <div class="integration-info">
+              <h3>Bank Feeds</h3>
+              <p>Automatic Bank Statement Import</p>
+            </div>
+            <span class="integration-status disconnected">Coming Soon</span>
+          </div>
+          <div class="integration-body">
+            <p>Automatically import bank transactions from major South African banks including FNB, Standard Bank, ABSA, Nedbank, and Capitec.</p>
+            <ul class="integration-features">
+              <li>Daily automatic transaction import</li>
+              <li>Smart transaction categorization</li>
+              <li>Automated bank reconciliation</li>
+              <li>Multi-account support</li>
+            </ul>
+            <div class="integration-actions">
+              <button class="btn btn-secondary" disabled>Coming Soon</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SARS eFiling Integration (Future) -->
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-logo sars">SARS</div>
+            <div class="integration-info">
+              <h3>SARS eFiling</h3>
+              <p>Tax Submission & Compliance</p>
+            </div>
+            <span class="integration-status disconnected">Coming Soon</span>
+          </div>
+          <div class="integration-body">
+            <p>Submit VAT returns, EMP201, and other tax submissions directly to SARS eFiling from within Lorenco Accounting.</p>
+            <ul class="integration-features">
+              <li>Direct VAT return submission</li>
+              <li>EMP201 payroll submissions</li>
+              <li>Tax certificate downloads</li>
+              <li>Compliance status tracking</li>
+            </ul>
+            <div class="integration-actions">
+              <button class="btn btn-secondary" disabled>Coming Soon</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Charlie Config Modal -->
+  <div id="checkoutCharlieModal" class="integration-modal" onclick="if(event.target === this) closeCheckoutCharlieModal()">
+    <div class="integration-modal-content">
+      <div class="integration-modal-header">
+        <h3>Connect Checkout Charlie</h3>
+        <p>Configure your Checkout Charlie integration settings</p>
+      </div>
+      <div class="integration-modal-body">
+        <div class="config-section">
+          <h4>API Credentials</h4>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="text" id="ccApiKey" placeholder="Enter your Checkout Charlie API Key">
+            <small>Find this in Checkout Charlie > Settings > API</small>
+          </div>
+          <div class="form-group">
+            <label>Store ID</label>
+            <input type="text" id="ccStoreId" placeholder="Enter your Store ID">
+            <small>Your unique Checkout Charlie store identifier</small>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>Account Mapping</h4>
+          <div class="config-row">
+            <div class="form-group">
+              <label>Sales Revenue Account</label>
+              <select id="ccSalesAccount">
+                <option value="4000">4000 - Sales Revenue</option>
+                <option value="4100">4100 - Service Revenue</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Cost of Sales Account</label>
+              <select id="ccCostAccount">
+                <option value="5000">5000 - Cost of Goods Sold</option>
+              </select>
+            </div>
+          </div>
+          <div class="config-row">
+            <div class="form-group">
+              <label>Inventory Account</label>
+              <select id="ccInventoryAccount">
+                <option value="1200">1200 - Inventory</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Bank Account</label>
+              <select id="ccBankAccount">
+                <option value="1000">1000 - Bank Account</option>
+                <option value="1010">1010 - Petty Cash</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>Sync Options</h4>
+          <div class="sync-options">
+            <div class="sync-option">
+              <input type="checkbox" id="ccSyncSales" checked>
+              <label for="ccSyncSales">Sync Sales Transactions</label>
+            </div>
+            <small>Import daily sales summaries and individual transactions</small>
+
+            <div class="sync-option">
+              <input type="checkbox" id="ccSyncInventory" checked>
+              <label for="ccSyncInventory">Sync Inventory</label>
+            </div>
+            <small>Keep inventory quantities and costs in sync</small>
+
+            <div class="sync-option">
+              <input type="checkbox" id="ccSyncCustomers">
+              <label for="ccSyncCustomers">Sync Customers</label>
+            </div>
+            <small>Import customer records and purchase history</small>
+
+            <div class="sync-option">
+              <input type="checkbox" id="ccAutoPost" checked>
+              <label for="ccAutoPost">Auto-post to Ledger</label>
+            </div>
+            <small>Automatically post synced transactions to the general ledger</small>
+          </div>
+        </div>
+      </div>
+      <div class="integration-modal-footer">
+        <button class="btn btn-secondary" onclick="closeCheckoutCharlieModal()">Cancel</button>
+        <button class="btn btn-connect" onclick="saveCheckoutCharlieConfig()">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Company Modal -->
+  <div id="addCompanyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:white; padding:25px; border-radius:8px; width:400px; max-width:90%;">
+      <h3 style="margin-bottom:20px;">Add New Company</h3>
+      <div class="form-group">
+        <label>Company Name *</label>
+        <input type="text" id="newCompanyName" placeholder="Enter company name">
+      </div>
+      <div class="form-group">
+        <label>Registration Number</label>
+        <input type="text" id="newCompanyReg" placeholder="e.g. 2024/123456/07">
+      </div>
+      <div class="button-row" style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="createCompany()">Create Company</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let companies = [];
+    let currentCompany = null;
+    let seanKnowledge = [];
+
+    async function init() {
+      await loadCompanies();
+      loadCurrentCompany();
+      loadSeanKnowledge();
+    }
+
+    async function loadCompanies() {
+      try {
+        const res = await fetch('/api/company/list', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          companies = data.companies || [];
+        } else {
+          throw new Error('Failed to load companies');
+        }
+      } catch (err) {
+        console.warn('Failed to load companies, using demo data');
+        companies = [
+          { id: 1, name: 'THEKSTRA BAKKERT (Pty) Ltd', regNumber: '2020/123456/07', isActive: true },
+          { id: 2, name: 'ABC Trading CC', regNumber: 'CK2018/012345/23', isActive: true },
+          { id: 3, name: 'XYZ Consulting', regNumber: '2022/654321/07', isActive: false }
+        ];
+      }
+      renderCompanyList();
+    }
+
+    function renderCompanyList() {
+      const container = document.getElementById('companyList');
+      const activeCompanyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+
+      let html = '';
+      companies.forEach(company => {
+        const isActive = company.id === activeCompanyId;
+        html += `
+          <div class="company-card ${isActive ? 'active' : ''}" onclick="switchCompany(${company.id})">
+            <div class="company-name">${company.name}</div>
+            <div class="company-reg">${company.regNumber || 'No registration'}</div>
+            <span class="company-status ${company.isActive ? 'status-active' : 'status-inactive'}">
+              ${company.isActive ? 'Active' : 'Inactive'}
+            </span>
+            ${isActive ? '<div style="color:#0066cc; font-size:11px; margin-top:5px;">Currently Selected</div>' : ''}
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="add-company-btn" onclick="showAddCompanyModal()">
+          + Add New Company
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    async function switchCompany(companyId) {
+      localStorage.setItem('activeCompanyId', companyId);
+      currentCompany = companies.find(c => c.id === companyId);
+      renderCompanyList();
+      await loadCompanyDetails(companyId);
+      loadSeanKnowledge();
+      showAlert('Switched to ' + currentCompany.name, 'success');
+    }
+
+    async function loadCompanyDetails(companyId) {
+      try {
+        const res = await fetch(`/api/company/${companyId}`, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          populateForm(data);
+        } else {
+          throw new Error('Failed to load company details');
+        }
+      } catch (err) {
+        console.warn('Failed to load company details, using demo data');
+        // Demo data
+        const demoData = {
+          name: currentCompany?.name || 'THEKSTRA BAKKERT (Pty) Ltd',
+          tradingAs: '',
+          regNumber: currentCompany?.regNumber || '2020/123456/07',
+          companyType: 'pty_ltd',
+          incomeTaxNo: '9012345678',
+          vatNumber: '4012345678',
+          payeRef: '7012345678',
+          uifRef: 'U012345678',
+          sdlRef: 'L012345678',
+          coidNumber: '',
+          yearEnd: '02',
+          vatPeriod: 'bi-monthly',
+          physicalAddress: '123 Main Road\nSandton',
+          city: 'Johannesburg',
+          postalCode: '2196',
+          postalAddress: '',
+          phone: '011 123 4567',
+          email: 'info@thekstra.co.za',
+          website: '',
+          bankName: 'fnb',
+          branchCode: '250655',
+          accountNumber: '62012345678',
+          accountType: 'cheque',
+          accountHolder: 'THEKSTRA BAKKERT PTY LTD'
+        };
+        populateForm(demoData);
+      }
+    }
+
+    function populateForm(data) {
+      document.getElementById('companyName').value = data.name || '';
+      document.getElementById('tradingAs').value = data.tradingAs || '';
+      document.getElementById('regNumber').value = data.regNumber || '';
+      document.getElementById('companyType').value = data.companyType || 'pty_ltd';
+      document.getElementById('incomeTaxNo').value = data.incomeTaxNo || '';
+      document.getElementById('vatNumber').value = data.vatNumber || '';
+      document.getElementById('payeRef').value = data.payeRef || '';
+      document.getElementById('uifRef').value = data.uifRef || '';
+      document.getElementById('sdlRef').value = data.sdlRef || '';
+      document.getElementById('coidNumber').value = data.coidNumber || '';
+      document.getElementById('yearEnd').value = data.yearEnd || '02';
+      document.getElementById('vatPeriod').value = data.vatPeriod || 'bi-monthly';
+      document.getElementById('physicalAddress').value = data.physicalAddress || '';
+      document.getElementById('city').value = data.city || '';
+      document.getElementById('postalCode').value = data.postalCode || '';
+      document.getElementById('postalAddress').value = data.postalAddress || '';
+      document.getElementById('phone').value = data.phone || '';
+      document.getElementById('email').value = data.email || '';
+      document.getElementById('website').value = data.website || '';
+      document.getElementById('bankName').value = data.bankName || '';
+      document.getElementById('branchCode').value = data.branchCode || '';
+      document.getElementById('accountNumber').value = data.accountNumber || '';
+      document.getElementById('accountType').value = data.accountType || 'cheque';
+      document.getElementById('accountHolder').value = data.accountHolder || '';
+    }
+
+    function loadCurrentCompany() {
+      const activeCompanyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+      currentCompany = companies.find(c => c.id === activeCompanyId) || companies[0];
+      if (currentCompany) {
+        loadCompanyDetails(currentCompany.id);
+      }
+    }
+
+    async function saveCompany() {
+      const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+
+      const data = {
+        name: document.getElementById('companyName').value,
+        tradingAs: document.getElementById('tradingAs').value,
+        regNumber: document.getElementById('regNumber').value,
+        companyType: document.getElementById('companyType').value,
+        incomeTaxNo: document.getElementById('incomeTaxNo').value,
+        vatNumber: document.getElementById('vatNumber').value,
+        payeRef: document.getElementById('payeRef').value,
+        uifRef: document.getElementById('uifRef').value,
+        sdlRef: document.getElementById('sdlRef').value,
+        coidNumber: document.getElementById('coidNumber').value,
+        yearEnd: document.getElementById('yearEnd').value,
+        vatPeriod: document.getElementById('vatPeriod').value,
+        physicalAddress: document.getElementById('physicalAddress').value,
+        city: document.getElementById('city').value,
+        postalCode: document.getElementById('postalCode').value,
+        postalAddress: document.getElementById('postalAddress').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        website: document.getElementById('website').value,
+        bankName: document.getElementById('bankName').value,
+        branchCode: document.getElementById('branchCode').value,
+        accountNumber: document.getElementById('accountNumber').value,
+        accountType: document.getElementById('accountType').value,
+        accountHolder: document.getElementById('accountHolder').value
+      };
+
+      if (!data.name) {
+        showAlert('Company name is required', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/company/${companyId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          showAlert('Company settings saved successfully!', 'success');
+          // Update company name in list
+          const idx = companies.findIndex(c => c.id === companyId);
+          if (idx !== -1) {
+            companies[idx].name = data.name;
+            companies[idx].regNumber = data.regNumber;
+            renderCompanyList();
+          }
+        } else {
+          throw new Error('Failed to save');
+        }
+      } catch (err) {
+        showAlert('Company settings saved locally (demo mode)', 'info');
+      }
+    }
+
+    function showAddCompanyModal() {
+      document.getElementById('addCompanyModal').style.display = 'flex';
+      document.getElementById('newCompanyName').value = '';
+      document.getElementById('newCompanyReg').value = '';
+    }
+
+    function closeModal() {
+      document.getElementById('addCompanyModal').style.display = 'none';
+    }
+
+    async function createCompany() {
+      const name = document.getElementById('newCompanyName').value;
+      const regNumber = document.getElementById('newCompanyReg').value;
+
+      if (!name) {
+        showAlert('Company name is required', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/company', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+          },
+          body: JSON.stringify({ name, regNumber })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          companies.push({ id: data.id, name, regNumber, isActive: true });
+        } else {
+          throw new Error('Failed to create');
+        }
+      } catch (err) {
+        // Demo mode - add locally
+        const newId = Math.max(...companies.map(c => c.id)) + 1;
+        companies.push({ id: newId, name, regNumber, isActive: true });
+      }
+
+      closeModal();
+      renderCompanyList();
+      showAlert('Company created successfully!', 'success');
+    }
+
+    function resetForm() {
+      loadCompanyDetails(parseInt(localStorage.getItem('activeCompanyId')) || 1);
+    }
+
+    function previewLogo(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" alt="Logo">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    }
+
+    // ========== Teach Sean Functions ==========
+
+    function loadSeanKnowledge() {
+      const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+      const storageKey = `seanKnowledge_${companyId}`;
+
+      try {
+        const stored = localStorage.getItem(storageKey);
+        seanKnowledge = stored ? JSON.parse(stored) : [];
+      } catch (err) {
+        seanKnowledge = [];
+      }
+
+      renderSeanKnowledge();
+    }
+
+    function saveSeanKnowledge() {
+      const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+      const storageKey = `seanKnowledge_${companyId}`;
+      localStorage.setItem(storageKey, JSON.stringify(seanKnowledge));
+    }
+
+    function renderSeanKnowledge() {
+      const container = document.getElementById('seanKnowledgeList');
+      const countEl = document.getElementById('knowledgeCount');
+
+      if (seanKnowledge.length === 0) {
+        container.innerHTML = `
+          <div class="no-knowledge">
+            <div class="icon">&#x1F4AD;</div>
+            <div>Sean doesn't know anything specific about this company yet.</div>
+            <div style="margin-top: 5px; font-size: 11px;">Add knowledge using the form on the right.</div>
+          </div>
+        `;
+        countEl.textContent = '0 items';
+        return;
+      }
+
+      countEl.textContent = seanKnowledge.length + ' item' + (seanKnowledge.length === 1 ? '' : 's');
+
+      const categoryLabels = {
+        'general': 'General',
+        'process': 'Process',
+        'preference': 'Preference',
+        'rule': 'Rule'
+      };
+
+      let html = '';
+      seanKnowledge.forEach((item, index) => {
+        const catClass = 'cat-' + item.category;
+        const dateStr = new Date(item.createdAt).toLocaleDateString('en-ZA', {
+          day: 'numeric', month: 'short', year: 'numeric'
+        });
+
+        html += `
+          <div class="knowledge-item">
+            <span class="category ${catClass}">${categoryLabels[item.category] || item.category}</span>
+            <div class="content">${escapeHtml(item.content)}</div>
+            <div class="meta">
+              <span>Added: ${dateStr}</span>
+              <button class="delete-btn" onclick="deleteKnowledge(${index})">Delete</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function addKnowledge() {
+      const category = document.getElementById('knowledgeCategory').value;
+      const content = document.getElementById('knowledgeContent').value.trim();
+
+      if (!content) {
+        showAlert('Please enter what Sean should know', 'error');
+        return;
+      }
+
+      seanKnowledge.push({
+        id: Date.now(),
+        category: category,
+        content: content,
+        createdAt: new Date().toISOString()
+      });
+
+      saveSeanKnowledge();
+      renderSeanKnowledge();
+
+      // Clear form
+      document.getElementById('knowledgeContent').value = '';
+      document.getElementById('knowledgeCategory').value = 'general';
+
+      showAlert('Knowledge saved! Sean will remember this.', 'success');
+    }
+
+    function quickAdd(category, content) {
+      document.getElementById('knowledgeCategory').value = category;
+      document.getElementById('knowledgeContent').value = content;
+      document.getElementById('knowledgeContent').focus();
+    }
+
+    function deleteKnowledge(index) {
+      if (confirm('Remove this knowledge from Sean?')) {
+        seanKnowledge.splice(index, 1);
+        saveSeanKnowledge();
+        renderSeanKnowledge();
+        showAlert('Knowledge removed', 'info');
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ========== Integrations Functions ==========
+
+    let integrations = {};
+
+    function loadIntegrations() {
+      const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+      const storageKey = `integrations_${companyId}`;
+
+      try {
+        const stored = localStorage.getItem(storageKey);
+        integrations = stored ? JSON.parse(stored) : {};
+      } catch (err) {
+        integrations = {};
+      }
+
+      renderIntegrationStatus();
+    }
+
+    function saveIntegrations() {
+      const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+      const storageKey = `integrations_${companyId}`;
+      localStorage.setItem(storageKey, JSON.stringify(integrations));
+    }
+
+    function renderIntegrationStatus() {
+      // Checkout Charlie
+      const ccCard = document.getElementById('checkoutCharlieCard');
+      const ccStatus = document.getElementById('checkoutCharlieStatus');
+      const ccActions = document.getElementById('checkoutCharlieActions');
+
+      if (integrations.checkoutCharlie && integrations.checkoutCharlie.connected) {
+        ccCard.classList.add('connected');
+        ccStatus.textContent = 'Connected';
+        ccStatus.className = 'integration-status connected';
+        ccActions.innerHTML = `
+          <button type="button" class="btn btn-settings" onclick="openCheckoutCharlieModal()">Settings</button>
+          <button type="button" class="btn btn-disconnect" onclick="disconnectCheckoutCharlie()">Disconnect</button>
+        `;
+      } else {
+        ccCard.classList.remove('connected');
+        ccStatus.textContent = 'Not Connected';
+        ccStatus.className = 'integration-status disconnected';
+        ccActions.innerHTML = `
+          <button type="button" class="btn btn-connect" onclick="connectCheckoutCharlie()">Connect</button>
+        `;
+      }
+    }
+
+    function connectCheckoutCharlie() {
+      openCheckoutCharlieModal();
+    }
+
+    function openCheckoutCharlieModal() {
+      document.getElementById('checkoutCharlieModal').classList.add('show');
+
+      // Populate existing config if any
+      if (integrations.checkoutCharlie) {
+        const cc = integrations.checkoutCharlie;
+        document.getElementById('ccApiKey').value = cc.apiKey || '';
+        document.getElementById('ccStoreId').value = cc.storeId || '';
+        document.getElementById('ccSalesAccount').value = cc.salesAccount || '4000';
+        document.getElementById('ccCostAccount').value = cc.costAccount || '5000';
+        document.getElementById('ccInventoryAccount').value = cc.inventoryAccount || '1200';
+        document.getElementById('ccBankAccount').value = cc.bankAccount || '1000';
+        document.getElementById('ccSyncSales').checked = cc.syncSales !== false;
+        document.getElementById('ccSyncInventory').checked = cc.syncInventory !== false;
+        document.getElementById('ccSyncCustomers').checked = cc.syncCustomers || false;
+        document.getElementById('ccAutoPost').checked = cc.autoPost !== false;
+      }
+    }
+
+    function closeCheckoutCharlieModal() {
+      document.getElementById('checkoutCharlieModal').classList.remove('show');
+    }
+
+    function saveCheckoutCharlieConfig() {
+      const apiKey = document.getElementById('ccApiKey').value.trim();
+      const storeId = document.getElementById('ccStoreId').value.trim();
+
+      if (!apiKey || !storeId) {
+        showAlert('Please enter both API Key and Store ID', 'error');
+        return;
+      }
+
+      integrations.checkoutCharlie = {
+        connected: true,
+        connectedAt: new Date().toISOString(),
+        apiKey: apiKey,
+        storeId: storeId,
+        salesAccount: document.getElementById('ccSalesAccount').value,
+        costAccount: document.getElementById('ccCostAccount').value,
+        inventoryAccount: document.getElementById('ccInventoryAccount').value,
+        bankAccount: document.getElementById('ccBankAccount').value,
+        syncSales: document.getElementById('ccSyncSales').checked,
+        syncInventory: document.getElementById('ccSyncInventory').checked,
+        syncCustomers: document.getElementById('ccSyncCustomers').checked,
+        autoPost: document.getElementById('ccAutoPost').checked
+      };
+
+      saveIntegrations();
+      renderIntegrationStatus();
+      closeCheckoutCharlieModal();
+
+      showAlert('Checkout Charlie connected successfully!', 'success');
+
+      // Trigger initial sync (in production, this would call the API)
+      console.log('Checkout Charlie integration configured:', integrations.checkoutCharlie);
+    }
+
+    function disconnectCheckoutCharlie() {
+      if (confirm('Are you sure you want to disconnect Checkout Charlie?\n\nThis will stop syncing data but won\'t delete any existing transactions.')) {
+        integrations.checkoutCharlie = {
+          connected: false,
+          disconnectedAt: new Date().toISOString()
+        };
+        saveIntegrations();
+        renderIntegrationStatus();
+        showAlert('Checkout Charlie disconnected', 'info');
+      }
+    }
+
+    // ========== Integration API Functions ==========
+
+    // These functions can be called by external apps via the window object
+    window.LorencoIntegrations = {
+      // Get integration status
+      getIntegrationStatus: function(integrationName) {
+        const companyId = parseInt(localStorage.getItem('activeCompanyId')) || 1;
+        const storageKey = `integrations_${companyId}`;
+        const stored = localStorage.getItem(storageKey);
+        const integs = stored ? JSON.parse(stored) : {};
+        return integs[integrationName] || { connected: false };
+      },
+
+      // Post a transaction from external app
+      postTransaction: function(integrationName, transaction) {
+        const status = this.getIntegrationStatus(integrationName);
+        if (!status.connected) {
+          return { success: false, error: 'Integration not connected' };
+        }
+
+        // Validate transaction
+        if (!transaction.date || !transaction.description || !transaction.amount) {
+          return { success: false, error: 'Missing required fields: date, description, amount' };
+        }
+
+        // Check if LedgerSystem is available
+        if (typeof LedgerSystem === 'undefined') {
+          console.error('LedgerSystem not loaded');
+          return { success: false, error: 'Ledger system not available' };
+        }
+
+        try {
+          // Determine accounts based on integration config
+          let accountCode = status.salesAccount || '4000';
+          if (transaction.type === 'expense' || transaction.amount < 0) {
+            accountCode = status.costAccount || '5000';
+          }
+
+          // Post to ledger
+          const journal = LedgerSystem.postBankAllocation({
+            date: transaction.date,
+            description: `[${integrationName}] ${transaction.description}`,
+            amount: transaction.amount,
+            accountCode: accountCode,
+            includeVat: transaction.includeVat !== false,
+            bankAccountCode: status.bankAccount || '1000'
+          });
+
+          return {
+            success: true,
+            journalRef: journal.reference,
+            message: 'Transaction posted to ledger'
+          };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      },
+
+      // Post multiple transactions (batch)
+      postTransactions: function(integrationName, transactions) {
+        const results = [];
+        transactions.forEach(txn => {
+          results.push(this.postTransaction(integrationName, txn));
+        });
+        return {
+          success: results.every(r => r.success),
+          results: results,
+          successCount: results.filter(r => r.success).length,
+          failCount: results.filter(r => !r.success).length
+        };
+      },
+
+      // Get available accounts for mapping
+      getAccounts: function() {
+        if (typeof LedgerSystem !== 'undefined') {
+          return LedgerSystem.getAllAccounts();
+        }
+        return [];
+      },
+
+      // Register webhook callback (for real-time sync)
+      registerCallback: function(integrationName, callback) {
+        if (!window._integrationCallbacks) {
+          window._integrationCallbacks = {};
+        }
+        window._integrationCallbacks[integrationName] = callback;
+        return { success: true, message: 'Callback registered' };
+      }
+    };
+
+    // Update init to load integrations
+    const originalInit = init;
+    init = async function() {
+      await originalInit();
+      loadIntegrations();
+    };
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

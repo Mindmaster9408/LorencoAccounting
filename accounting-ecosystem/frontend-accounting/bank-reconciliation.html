@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorenco Accounting - Bank Reconciliation</title>
+    <script src="js/navigation.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #e6f3ff 100%);
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            height: 56px;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        
+        .nav-item {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item > a {
+            padding: 0 18px;
+            color: #5f6368;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+            letter-spacing: 0.2px;
+        }
+        
+        .nav-item > a::after {
+            content: '▼';
+            font-size: 8px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover > a {
+            color: #0066cc;
+            background: linear-gradient(to bottom, transparent 0%, #e6f3ff 100%);
+        }
+        
+        .nav-item:hover > a::after {
+            transform: rotate(-180deg);
+        }
+        
+        .nav-item > a.active {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .nav-item > a.active::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0066cc 0%, #0099ff 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 260px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border: 1px solid #e8eaed;
+            border-radius: 0 0 12px 12px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-item:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #5f6368;
+            text-decoration: none;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.15s;
+        }
+        
+        .dropdown a::before {
+            content: '→';
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s;
+            color: #0066cc;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown a:hover {
+            background: linear-gradient(90deg, #e6f3ff 0%, #ffffff 100%);
+            color: #0066cc;
+            padding-left: 25px;
+        }
+        
+        .dropdown a:hover::before {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .dropdown-header {
+            padding: 10px 20px 6px;
+            font-size: 11px;
+            color: #9aa0a6;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #fafbfc;
+            letter-spacing: 0.5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 25px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .page-header p {
+            color: #5f6368;
+            font-size: 14px;
+        }
+        
+        .recon-header {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            margin-bottom: 24px;
+        }
+        
+        .recon-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .account-info h2 {
+            font-size: 20px;
+            color: #202124;
+            margin-bottom: 4px;
+        }
+        
+        .account-number {
+            color: #5f6368;
+            font-size: 13px;
+        }
+        
+        .account-selector {
+            padding: 10px 16px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .account-selector:hover {
+            border-color: #0066cc;
+        }
+        
+        .recon-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .detail-box {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #5f6368;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .detail-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #202124;
+        }
+        
+        .detail-value input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            font-weight: 700;
+            color: #202124;
+            padding: 0;
+        }
+        
+        .detail-value input:focus {
+            outline: none;
+        }
+        
+        .detail-value input[type="date"] {
+            font-size: 14px;
+        }
+        
+        .detail-box.highlight {
+            background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%);
+            border-color: #0066cc;
+        }
+        
+        .detail-box.highlight .detail-value {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .recon-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+        
+        .transactions-section {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #202124;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #e8eaed;
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .filter-btn:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .transactions-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e8eaed;
+        }
+        
+        .transactions-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #5f6368;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .transactions-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #202124;
+            font-size: 13px;
+        }
+        
+        .transactions-table tbody tr {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .transactions-table tbody tr:hover {
+            background: #f0f8ff;
+        }
+        
+        .transactions-table tbody tr.reconciled {
+            background: #f0fdf4;
+        }
+        
+        .transactions-table tbody tr.reconciled:hover {
+            background: #dcfce7;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0066cc;
+        }
+        
+        .amount-in {
+            color: #34a853;
+            font-weight: 600;
+        }
+        
+        .amount-out {
+            color: #ea4335;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-unreconciled {
+            background: #fff4e6;
+            color: #f59e0b;
+        }
+        
+        .status-reconciled {
+            background: #d1fae5;
+            color: #10b981;
+        }
+        
+        .summary-panel {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8eaed;
+            height: fit-content;
+            position: sticky;
+            top: 24px;
+        }
+        
+        .summary-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 20px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid #e8eaed;
+        }
+        
+        .summary-label {
+            font-size: 13px;
+            color: #5f6368;
+        }
+        
+        .summary-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #202124;
+        }
+        
+        .summary-value.positive {
+            color: #34a853;
+        }
+        
+        .summary-value.negative {
+            color: #ea4335;
+        }
+        
+        .summary-value.zero {
+            color: #10b981;
+        }
+        
+        .difference-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fff4e6 0%, #fffbeb 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .difference-box.balanced {
+            background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+            border-color: #10b981;
+        }
+        
+        .difference-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: #78350f;
+        }
+        
+        .difference-box.balanced .difference-label {
+            color: #065f46;
+        }
+        
+        .difference-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ea4335;
+        }
+        
+        .difference-box.balanced .difference-amount {
+            color: #10b981;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: white;
+            border: 1px solid #e8eaed;
+            color: #5f6368;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .info-message {
+            margin-top: 20px;
+            padding: 12px;
+            background: #e6f3ff;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #5f6368;
+            line-height: 1.5;
+        }
+        
+        .info-message strong {
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Bank Reconciliation</h1>
+            <p>Reconcile your bank statement with your accounting records</p>
+        </div>
+        
+        <div class="recon-header">
+            <div class="recon-account">
+                <div class="account-info">
+                    <h2>Business Current Account</h2>
+                    <div class="account-number">Account: ****1234 - FNB Business Cheque</div>
+                </div>
+                <select class="account-selector" onchange="switchAccount(this)">
+                    <option value="1" selected>Business Current Account</option>
+                    <option value="2">Business Savings Account</option>
+                    <option value="3">Petty Cash</option>
+                    <option value="4">Credit Card - FNB</option>
+                </select>
+            </div>
+            
+            <div class="recon-details">
+                <div class="detail-box">
+                    <div class="detail-label">Statement Date</div>
+                    <div class="detail-value">
+                        <input type="date" id="statementDate" value="2026-01-15" onchange="updateReconciliation()">
+                    </div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Opening Balance</div>
+                    <div class="detail-value" id="openingBalance">R 28,650.50</div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Statement Balance</div>
+                    <div class="detail-value">
+                        <input type="text" id="statementBalance" value="R 50,580.50" onchange="updateReconciliation()" onfocus="this.select()">
+                    </div>
+                </div>
+                <div class="detail-box highlight">
+                    <div class="detail-label">Cleared Balance</div>
+                    <div class="detail-value" id="clearedBalance">R 28,650.50</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="recon-content">
+            <div class="transactions-section">
+                <div class="section-header">
+                    <h3>Transactions to Reconcile</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-secondary" onclick="selectAll()">Select All</button>
+                        <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <button class="filter-btn active" onclick="filterTransactions('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterTransactions('unreconciled', this)">Unreconciled Only</button>
+                    <button class="filter-btn" onclick="filterTransactions('reconciled', this)">Reconciled</button>
+                </div>
+                
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">✓</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Reference</th>
+                            <th style="text-align: right;">Money In</th>
+                            <th style="text-align: right;">Money Out</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="summary-panel">
+                <h3>Reconciliation Summary</h3>
+                
+                <div class="summary-row">
+                    <span class="summary-label">Statement Balance</span>
+                    <span class="summary-value" id="summaryStatement">R 50,580.50</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">Cleared Balance</span>
+                    <span class="summary-value" id="summaryCleared">R 28,650.50</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">Uncleared Items</span>
+                    <span class="summary-value" id="unclearedCount">8 items</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">Difference</span>
+                    <span class="summary-value negative" id="summaryDifference">R 21,930.00</span>
+                </div>
+                
+                <div class="difference-box" id="differenceBox">
+                    <div class="difference-label">Out of Balance</div>
+                    <div class="difference-amount" id="differenceAmount">R 21,930.00</div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="finishBtn" onclick="finishReconciliation()" disabled>Finish Reconciliation</button>
+                    <button class="btn btn-secondary" onclick="saveProgress()">Save Progress</button>
+                    <button class="btn btn-secondary" onclick="cancelReconciliation()">Cancel</button>
+                </div>
+                
+                <div class="info-message">
+                    <strong>💡 Tip:</strong> Check each transaction that appears on your bank statement. The difference should be R 0.00 before finishing.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Demo transactions data
+        let transactions = [
+            { id: 1, date: '2026-01-14', description: 'Client Payment - ABC Corp', reference: 'PYMT123456', moneyIn: 15500.00, moneyOut: 0, reconciled: false },
+            { id: 2, date: '2026-01-13', description: 'Office Supplies - XYZ Ltd', reference: 'INV-789', moneyIn: 0, moneyOut: 4350.00, reconciled: false },
+            { id: 3, date: '2026-01-12', description: 'Salary Payment - John Doe', reference: 'SAL-001-2026', moneyIn: 0, moneyOut: 18500.00, reconciled: false },
+            { id: 4, date: '2026-01-11', description: 'Service Fee - Monthly', reference: 'FEE-JAN', moneyIn: 0, moneyOut: 250.00, reconciled: false },
+            { id: 5, date: '2026-01-10', description: 'Utility Bill - Electricity', reference: 'DD456789', moneyIn: 0, moneyOut: 3250.00, reconciled: false },
+            { id: 6, date: '2026-01-09', description: 'Customer Receipt - DEF Inc', reference: 'RCT-445', moneyIn: 8750.00, moneyOut: 0, reconciled: false },
+            { id: 7, date: '2026-01-08', description: 'Rent Payment', reference: 'RENT-JAN26', moneyIn: 0, moneyOut: 12000.00, reconciled: false },
+            { id: 8, date: '2026-01-07', description: 'Sales - Cash', reference: 'CASH-007', moneyIn: 6280.00, moneyOut: 0, reconciled: false },
+        ];
+        
+        let currentFilter = 'all';
+        const openingBalance = 28650.50;
+        let statementBalance = 50580.50;
+        
+        // Auto-login for demo
+        const mockUser = {
+            id: 1,
+            email: 'demo@lorenco.com',
+            firstName: 'Demo',
+            lastName: 'User',
+            companyName: 'Business Current Account'
+        };
+        
+        localStorage.setItem('token', 'demo-token-' + Date.now());
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        
+        const fullName = `${mockUser.firstName} ${mockUser.lastName}`;
+        document.getElementById('userName').textContent = fullName;
+        document.getElementById('companyName').textContent = mockUser.companyName;
+        document.getElementById('userAvatar').textContent = mockUser.firstName[0];
+        
+        function renderTransactions() {
+            const tbody = document.getElementById('transactionsBody');
+            let transactionsToShow = transactions;
+            
+            // Apply filter
+            if (currentFilter === 'unreconciled') {
+                transactionsToShow = transactions.filter(t => !t.reconciled);
+            } else if (currentFilter === 'reconciled') {
+                transactionsToShow = transactions.filter(t => t.reconciled);
+            }
+            
+            tbody.innerHTML = '';
+            
+            transactionsToShow.forEach(txn => {
+                const row = document.createElement('tr');
+                row.className = txn.reconciled ? 'reconciled' : '';
+                
+                const moneyIn = txn.moneyIn > 0 ? `R ${txn.moneyIn.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-';
+                const moneyOut = txn.moneyOut > 0 ? `R ${txn.moneyOut.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-';
+                
+                const status = txn.reconciled 
+                    ? '<span class="status-badge status-reconciled">Reconciled</span>'
+                    : '<span class="status-badge status-unreconciled">Unreconciled</span>';
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="checkbox" ${txn.reconciled ? 'checked' : ''} onchange="toggleReconcile(${txn.id}, this.checked)"></td>
+                    <td>${txn.date}</td>
+                    <td>${txn.description}</td>
+                    <td>${txn.reference}</td>
+                    <td style="text-align: right;" class="${txn.moneyIn > 0 ? 'amount-in' : ''}">${moneyIn}</td>
+                    <td style="text-align: right;" class="${txn.moneyOut > 0 ? 'amount-out' : ''}">${moneyOut}</td>
+                    <td>${status}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            updateSummary();
+        }
+        
+        function toggleReconcile(id, checked) {
+            const txn = transactions.find(t => t.id === id);
+            if (txn) {
+                txn.reconciled = checked;
+                renderTransactions();
+            }
+        }
+        
+        function updateSummary() {
+            let clearedBalance = openingBalance;
+            let reconciledCount = 0;
+            
+            transactions.forEach(txn => {
+                if (txn.reconciled) {
+                    clearedBalance += txn.moneyIn - txn.moneyOut;
+                    reconciledCount++;
+                }
+            });
+            
+            const unreconciledCount = transactions.length - reconciledCount;
+            const difference = statementBalance - clearedBalance;
+            
+            // Update display
+            document.getElementById('clearedBalance').textContent = 'R ' + clearedBalance.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('summaryCleared').textContent = 'R ' + clearedBalance.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('unclearedCount').textContent = unreconciledCount + ' items';
+            
+            const diffText = 'R ' + Math.abs(difference).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('summaryDifference').textContent = diffText;
+            document.getElementById('differenceAmount').textContent = diffText;
+            
+            const summaryDiff = document.getElementById('summaryDifference');
+            const diffBox = document.getElementById('differenceBox');
+            const diffLabel = diffBox.querySelector('.difference-label');
+            const finishBtn = document.getElementById('finishBtn');
+            
+            if (Math.abs(difference) < 0.01) {
+                summaryDiff.className = 'summary-value zero';
+                diffBox.className = 'difference-box balanced';
+                diffLabel.textContent = '✓ Balanced';
+                finishBtn.disabled = false;
+            } else {
+                summaryDiff.className = 'summary-value negative';
+                diffBox.className = 'difference-box';
+                diffLabel.textContent = 'Out of Balance';
+                finishBtn.disabled = true;
+            }
+        }
+        
+        function updateReconciliation() {
+            const balanceInput = document.getElementById('statementBalance').value;
+            const balanceMatch = balanceInput.match(/[\d,]+\.?\d*/);
+            if (balanceMatch) {
+                statementBalance = parseFloat(balanceMatch[0].replace(/,/g, ''));
+                document.getElementById('summaryStatement').textContent = 'R ' + statementBalance.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                updateSummary();
+            }
+        }
+        
+        function selectAll() {
+            transactions.forEach(t => t.reconciled = true);
+            renderTransactions();
+        }
+        
+        function clearAll() {
+            transactions.forEach(t => t.reconciled = false);
+            renderTransactions();
+        }
+        
+        function filterTransactions(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTransactions();
+        }
+        
+        function switchAccount(select) {
+            alert('Switching to: ' + select.options[select.selectedIndex].text);
+        }
+        
+        function finishReconciliation() {
+            const reconciledCount = transactions.filter(t => t.reconciled).length;
+            if (confirm(`Complete this reconciliation?\n\n${reconciledCount} transactions will be marked as reconciled.\n\nThis action cannot be undone.`)) {
+                alert('✓ Reconciliation completed successfully!\n\nAll selected transactions have been marked as reconciled.');
+                // In real app, would save to backend
+            }
+        }
+        
+        function saveProgress() {
+            const reconciledCount = transactions.filter(t => t.reconciled).length;
+            alert(`Progress saved!\n\n${reconciledCount} transactions marked as reconciled.`);
+        }
+        
+        function cancelReconciliation() {
+            if (confirm('Cancel this reconciliation?\n\nAny unsaved changes will be lost.')) {
+                window.location.href = 'bank.html';
+            }
+        }
+        
+        // Initialize
+        renderTransactions();
+    </script>
+</body>
+</html>

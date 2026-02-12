@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+        .main-content { padding: 30px; max-width: 800px; margin: 0 auto; }
+        .page-header { margin-bottom: 25px; }
+        .page-header h1 { font-size: 24px; color: #202124; }
+        .section { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e8eaed; margin-bottom: 20px; }
+        .section h2 { margin-bottom: 20px; font-size: 18px; color: #202124; }
+        .avatar-section { text-align: center; margin-bottom: 30px; }
+        .avatar-large { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0066cc, #0099ff); color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 10px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #333; }
+        .form-group input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-group input:disabled { background: #f5f5f5; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn-primary { padding: 10px 20px; background: linear-gradient(135deg, #0066cc, #0099ff); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="page-header"><h1>My Profile</h1></div>
+        <div class="section">
+            <div class="avatar-section">
+                <div class="avatar-large" id="profileAvatar">D</div>
+                <h3 id="profileName">Demo User</h3>
+                <p style="color: #5f6368;" id="profileRole">Administrator</p>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>First Name</label><input type="text" id="firstName" value="Demo"></div>
+                <div class="form-group"><label>Last Name</label><input type="text" id="lastName" value="User"></div>
+            </div>
+            <div class="form-group"><label>Email</label><input type="email" id="email" value="demo@lorenco.com" disabled></div>
+            <div class="form-group"><label>Role</label><input type="text" id="role" value="Admin" disabled></div>
+            <div class="form-group"><label>Company</label><input type="text" id="company" value="Demo Company Ltd" disabled></div>
+            <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+        </div>
+        <div class="section">
+            <h2>Change Password</h2>
+            <div class="form-group"><label>Current Password</label><input type="password" id="currentPw"></div>
+            <div class="form-group"><label>New Password</label><input type="password" id="newPw"></div>
+            <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPw"></div>
+            <button class="btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+    </div>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('profileAvatar').textContent = (user.firstName || 'D')[0].toUpperCase();
+        document.getElementById('profileName').textContent = `${user.firstName || 'Demo'} ${user.lastName || 'User'}`;
+        document.getElementById('profileRole').textContent = user.role || 'Admin';
+        document.getElementById('firstName').value = user.firstName || 'Demo';
+        document.getElementById('lastName').value = user.lastName || 'User';
+        document.getElementById('email').value = user.email || 'demo@lorenco.com';
+        document.getElementById('role').value = user.role || 'Admin';
+        document.getElementById('company').value = user.companyName || 'Demo Company Ltd';
+        
+        function saveProfile() {
+            user.firstName = document.getElementById('firstName').value;
+            user.lastName = document.getElementById('lastName').value;
+            localStorage.setItem('user', JSON.stringify(user));
+            alert('Profile updated!');
+            location.reload();
+        }
+        function changePassword() {
+            const newPw = document.getElementById('newPw').value;
+            const confirmPw = document.getElementById('confirmPw').value;
+            if (newPw !== confirmPw) { alert('Passwords do not match'); return; }
+            if (newPw.length < 8) { alert('Password must be at least 8 characters'); return; }
+            alert('Password updated successfully');
+        }
+    </script>
+</body>
+</html>

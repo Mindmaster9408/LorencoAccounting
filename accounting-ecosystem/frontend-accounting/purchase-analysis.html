@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Analysis - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #0066cc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            padding: 0 25px;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-item > a {
+            display: block;
+            padding: 16px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item > a:hover,
+        .nav-item > a.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            min-width: 220px;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown a {
+            display: block;
+            padding: 10px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .dropdown a:hover {
+            background: rgba(0,102,204,0.08);
+            color: #0066cc;
+        }
+        
+        .dropdown-header {
+            padding: 8px 20px 4px;
+            color: #9aa0a6;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 25px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .report-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .control-group select,
+        .control-group input {
+            padding: 10px 14px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #0066cc;
+            border: 1px solid #0066cc;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .report-header h2 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+        
+        .report-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .report-content {
+            padding: 30px;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .report-table th {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #e8eaed;
+            color: #666;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .report-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f3f4;
+            color: #202124;
+            font-size: 14px;
+        }
+        
+        .report-table tr:hover {
+            background: rgba(0,102,204,0.02);
+        }
+        
+        .section-header {
+            font-weight: 700;
+            font-size: 15px;
+            background: rgba(0,102,204,0.05);
+            color: #0066cc;
+        }
+        
+        .section-total {
+            font-weight: 700;
+            background: rgba(0,102,204,0.08);
+            border-top: 2px solid #0066cc;
+        }
+        
+        .grand-total {
+            font-weight: 700;
+            font-size: 16px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+        }
+        
+        .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .positive {
+            color: #34a853;
+        }
+        
+        .negative {
+            color: #ea4335;
+        }
+        
+        .indent-1 {
+            padding-left: 35px;
+        }
+        
+        .indent-2 {
+            padding-left: 55px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Purchase Analysis</h1>
+            <p>Detailed analysis of purchases by supplier and period</p>
+        </div>
+        
+        <div class="report-controls">
+            <div class="control-group">
+                <label>Date From</label>
+                <input type="date" id="dateFrom" value="2026-01-01">
+            </div>
+            <div class="control-group">
+                <label>Date To</label>
+                <input type="date" id="dateTo" value="2026-01-14">
+            </div>
+            <div class="control-group">
+                <label>Group By</label>
+                <select>
+                    <option>Supplier</option>
+                    <option>Product Category</option>
+                    <option>Department</option>
+                    <option>Cost Center</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Period</label>
+                <select>
+                    <option>Daily</option>
+                    <option>Weekly</option>
+                    <option>Monthly</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="generateReport()">Generate Report</button>
+            <button class="btn-secondary" onclick="exportPDF()">Export PDF</button>
+            <button class="btn-secondary" onclick="exportExcel()">Export Excel</button>
+        </div>
+        
+        <div class="report-card">
+            <div class="report-header">
+                <h2>Demo Company Ltd</h2>
+                <p>Purchase Analysis - 01 January 2026 to 14 January 2026</p>
+            </div>
+            
+            <div class="report-content">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th class="amount">Bills</th>
+                            <th class="amount">Units Purchased</th>
+                            <th class="amount">Purchases (ZAR)</th>
+                            <th class="amount">VAT (ZAR)</th>
+                            <th class="amount">Total (ZAR)</th>
+                            <th class="amount">Paid (ZAR)</th>
+                            <th class="amount">Outstanding (ZAR)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Prime Supplies Ltd</td>
+                            <td class="amount">6</td>
+                            <td class="amount">342</td>
+                            <td class="amount">R 28,500.00</td>
+                            <td class="amount">R 4,275.00</td>
+                            <td class="amount">R 32,775.00</td>
+                            <td class="amount">R 32,775.00</td>
+                            <td class="amount">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Global Materials</td>
+                            <td class="amount">5</td>
+                            <td class="amount">287</td>
+                            <td class="amount">R 24,300.00</td>
+                            <td class="amount">R 3,645.00</td>
+                            <td class="amount">R 27,945.00</td>
+                            <td class="amount">R 15,000.00</td>
+                            <td class="amount negative">R 12,945.00</td>
+                        </tr>
+                        <tr>
+                            <td>Tech Distributors</td>
+                            <td class="amount">4</td>
+                            <td class="amount">156</td>
+                            <td class="amount">R 18,600.00</td>
+                            <td class="amount">R 2,790.00</td>
+                            <td class="amount">R 21,390.00</td>
+                            <td class="amount">R 21,390.00</td>
+                            <td class="amount">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Office World</td>
+                            <td class="amount">3</td>
+                            <td class="amount">198</td>
+                            <td class="amount">R 12,400.00</td>
+                            <td class="amount">R 1,860.00</td>
+                            <td class="amount">R 14,260.00</td>
+                            <td class="amount">R 14,260.00</td>
+                            <td class="amount">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Industrial Parts Co</td>
+                            <td class="amount">3</td>
+                            <td class="amount">124</td>
+                            <td class="amount">R 15,800.00</td>
+                            <td class="amount">R 2,370.00</td>
+                            <td class="amount">R 18,170.00</td>
+                            <td class="amount">R 8,000.00</td>
+                            <td class="amount negative">R 10,170.00</td>
+                        </tr>
+                        <tr>
+                            <td>Logistics Partners</td>
+                            <td class="amount">2</td>
+                            <td class="amount">89</td>
+                            <td class="amount">R 8,200.00</td>
+                            <td class="amount">R 1,230.00</td>
+                            <td class="amount">R 9,430.00</td>
+                            <td class="amount">R 9,430.00</td>
+                            <td class="amount">R 0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Packaging Solutions</td>
+                            <td class="amount">2</td>
+                            <td class="amount">245</td>
+                            <td class="amount">R 6,500.00</td>
+                            <td class="amount">R 975.00</td>
+                            <td class="amount">R 7,475.00</td>
+                            <td class="amount">R 7,475.00</td>
+                            <td class="amount">R 0.00</td>
+                        </tr>
+                        
+                        <tr><td colspan="8" style="height: 10px;"></td></tr>
+                        
+                        <tr class="grand-total">
+                            <td><strong>TOTAL</strong></td>
+                            <td class="amount"><strong>25</strong></td>
+                            <td class="amount"><strong>1,441</strong></td>
+                            <td class="amount"><strong>R 114,300.00</strong></td>
+                            <td class="amount"><strong>R 17,145.00</strong></td>
+                            <td class="amount"><strong>R 131,445.00</strong></td>
+                            <td class="amount"><strong>R 108,330.00</strong></td>
+                            <td class="amount"><strong>R 23,115.00</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-login for demo mode
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token) {
+            const mockUser = {
+                id: 1,
+                email: 'demo@lorenco.com',
+                firstName: 'Demo',
+                lastName: 'User',
+                role: 'admin',
+                companyId: 1,
+                companyName: 'Demo Company Ltd',
+                companyStatus: 'active'
+            };
+            
+            token = 'demo-token-' + Date.now();
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('demoMode', 'true');
+            user = mockUser;
+        }
+        
+        // Display user info
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        document.getElementById('userName').textContent = fullName || user.email || 'User';
+        document.getElementById('companyName').textContent = user.companyName || 'Demo Company Ltd';
+        
+        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        }
+        
+        function generateReport() {
+            alert('Generating report with selected parameters...');
+        }
+        
+        function exportPDF() {
+            alert('Exporting report to PDF...');
+        }
+        
+        function exportExcel() {
+            alert('Exporting report to Excel...');
+        }
+    </script>
+</body>
+</html>

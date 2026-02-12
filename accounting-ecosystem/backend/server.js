@@ -262,10 +262,10 @@ if (payrollRoutes) {
 }
 
 if (accountingRoutes) {
+  // Lorenco Accounting handles its own audit logging via AuditLogger service
   app.use('/api/accounting',
     authenticateToken,
     requireModule('accounting'),
-    auditMiddleware,
     accountingRoutes
   );
   console.log('  \u2705 Accounting module (Lorenco Accounting) — ACTIVE');
@@ -347,14 +347,24 @@ app.get('/sean/*', (req, res) => {
   }
 });
 
+// Accounting: multi-page frontend (Lorenco Accounting has 30+ HTML pages)
+app.get('/accounting', (req, res) => {
+  res.sendFile(path.join(accountingFrontendPath, 'dashboard.html'));
+});
 app.get('/accounting/*', (req, res) => {
-  const indexPath = path.join(accountingFrontendPath, 'index.html');
   const fs = require('fs');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).json({ error: 'Accounting frontend not found' });
+  const requestedFile = req.path.replace('/accounting/', '');
+  const filePath = path.join(accountingFrontendPath, requestedFile);
+  // Try exact path first
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    return res.sendFile(filePath);
   }
+  // Try adding .html extension
+  if (fs.existsSync(filePath + '.html')) {
+    return res.sendFile(filePath + '.html');
+  }
+  // Fallback to dashboard
+  res.sendFile(path.join(accountingFrontendPath, 'dashboard.html'));
 });
 
 // ─── Root — Ecosystem Login Page ─────────────────────────────────────────────

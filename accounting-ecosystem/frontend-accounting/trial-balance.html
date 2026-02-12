@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Balance - Lorenco Accounting</title>
+    <script src="js/navigation.js"></script>
+    <script src="js/ledger.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(0,102,204,0.2);
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 25px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #0066cc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .company-selector:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 16px;
+        }
+        
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .user-menu:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            padding: 0 25px;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-item > a {
+            display: block;
+            padding: 16px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item > a:hover,
+        .nav-item > a.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            min-width: 220px;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown a {
+            display: block;
+            padding: 10px 20px;
+            color: #202124;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .dropdown a:hover {
+            background: rgba(0,102,204,0.08);
+            color: #0066cc;
+        }
+        
+        .dropdown-header {
+            padding: 8px 20px 4px;
+            color: #9aa0a6;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 25px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .report-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .control-group select,
+        .control-group input {
+            padding: 10px 14px;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #0066cc;
+            border: 1px solid #0066cc;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,102,204,0.05);
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .report-header h2 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+        
+        .report-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .report-content {
+            padding: 30px;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .report-table th {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #e8eaed;
+            color: #666;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .report-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f3f4;
+            color: #202124;
+            font-size: 14px;
+        }
+        
+        .report-table tr:hover {
+            background: rgba(0,102,204,0.02);
+        }
+        
+        .section-header {
+            font-weight: 700;
+            font-size: 15px;
+            background: rgba(0,102,204,0.05);
+            color: #0066cc;
+        }
+        
+        .section-total {
+            font-weight: 700;
+            background: rgba(0,102,204,0.08);
+            border-top: 2px solid #0066cc;
+        }
+        
+        .grand-total {
+            font-weight: 700;
+            font-size: 16px;
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            color: white;
+            border: none;
+        }
+        
+        .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .positive {
+            color: #34a853;
+        }
+        
+        .negative {
+            color: #ea4335;
+        }
+        
+        .indent-1 {
+            padding-left: 35px;
+        }
+        
+        .indent-2 {
+            padding-left: 55px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Trial Balance</h1>
+            <p>List of all accounts with debit and credit balances</p>
+        </div>
+        
+        <div class="report-controls">
+            <div class="control-group">
+                <label>As At Date</label>
+                <input type="date" id="asAtDate" value="2026-01-14">
+            </div>
+            <div class="control-group">
+                <label>Account Type</label>
+                <select>
+                    <option>All Accounts</option>
+                    <option>Assets</option>
+                    <option>Liabilities</option>
+                    <option>Equity</option>
+                    <option>Income</option>
+                    <option>Expenses</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Show Zero Balances</label>
+                <select>
+                    <option>No</option>
+                    <option>Yes</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="generateReport()">Generate Report</button>
+            <button class="btn-secondary" onclick="exportPDF()">Export PDF</button>
+            <button class="btn-secondary" onclick="exportExcel()">Export Excel</button>
+        </div>
+        
+        <div class="report-card">
+            <div class="report-header">
+                <h2>Demo Company Ltd</h2>
+                <p>Trial Balance - As at 14 January 2026</p>
+            </div>
+            
+            <div class="report-content">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Account Code</th>
+                            <th>Account Name</th>
+                            <th class="amount">Debit (ZAR)</th>
+                            <th class="amount">Credit (ZAR)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trialBalanceBody">
+                        <tr class="section-header">
+                            <td colspan="4">ASSETS</td>
+                        </tr>
+                        <tr>
+                            <td>1000</td>
+                            <td>Cash and Cash Equivalents</td>
+                            <td class="amount">R 145,200.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>1100</td>
+                            <td>Accounts Receivable</td>
+                            <td class="amount">R 85,600.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>1200</td>
+                            <td>Inventory</td>
+                            <td class="amount">R 62,400.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>1300</td>
+                            <td>Prepaid Expenses</td>
+                            <td class="amount">R 8,500.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>1500</td>
+                            <td>Property, Plant & Equipment</td>
+                            <td class="amount">R 425,000.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>1510</td>
+                            <td>Accumulated Depreciation</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 85,000.00</td>
+                        </tr>
+                        <tr>
+                            <td>1600</td>
+                            <td>Intangible Assets</td>
+                            <td class="amount">R 35,000.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        
+                        <tr><td colspan="4" style="height: 10px;"></td></tr>
+                        
+                        <tr class="section-header">
+                            <td colspan="4">LIABILITIES</td>
+                        </tr>
+                        <tr>
+                            <td>2000</td>
+                            <td>Accounts Payable</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 58,400.00</td>
+                        </tr>
+                        <tr>
+                            <td>2100</td>
+                            <td>Short-term Loans</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 35,000.00</td>
+                        </tr>
+                        <tr>
+                            <td>2200</td>
+                            <td>Accrued Expenses</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 12,600.00</td>
+                        </tr>
+                        <tr>
+                            <td>2300</td>
+                            <td>VAT Payable</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 18,200.00</td>
+                        </tr>
+                        <tr>
+                            <td>2500</td>
+                            <td>Long-term Loans</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 180,000.00</td>
+                        </tr>
+                        <tr>
+                            <td>2600</td>
+                            <td>Deferred Tax Liability</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 22,500.00</td>
+                        </tr>
+                        
+                        <tr><td colspan="4" style="height: 10px;"></td></tr>
+                        
+                        <tr class="section-header">
+                            <td colspan="4">EQUITY</td>
+                        </tr>
+                        <tr>
+                            <td>3000</td>
+                            <td>Share Capital</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 250,000.00</td>
+                        </tr>
+                        <tr>
+                            <td>3100</td>
+                            <td>Retained Earnings</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 100,000.00</td>
+                        </tr>
+                        
+                        <tr><td colspan="4" style="height: 10px;"></td></tr>
+                        
+                        <tr class="section-header">
+                            <td colspan="4">INCOME</td>
+                        </tr>
+                        <tr>
+                            <td>4000</td>
+                            <td>Sales Revenue</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 185,500.00</td>
+                        </tr>
+                        <tr>
+                            <td>4100</td>
+                            <td>Service Revenue</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 42,300.00</td>
+                        </tr>
+                        <tr>
+                            <td>4200</td>
+                            <td>Other Income</td>
+                            <td class="amount">-</td>
+                            <td class="amount">R 3,200.00</td>
+                        </tr>
+                        
+                        <tr><td colspan="4" style="height: 10px;"></td></tr>
+                        
+                        <tr class="section-header">
+                            <td colspan="4">EXPENSES</td>
+                        </tr>
+                        <tr>
+                            <td>5000</td>
+                            <td>Cost of Goods Sold</td>
+                            <td class="amount">R 85,400.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>5100</td>
+                            <td>Direct Labor</td>
+                            <td class="amount">R 28,600.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6000</td>
+                            <td>Salaries & Wages</td>
+                            <td class="amount">R 45,000.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6100</td>
+                            <td>Rent</td>
+                            <td class="amount">R 15,000.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6200</td>
+                            <td>Utilities</td>
+                            <td class="amount">R 3,200.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6300</td>
+                            <td>Office Supplies</td>
+                            <td class="amount">R 2,800.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6400</td>
+                            <td>Marketing</td>
+                            <td class="amount">R 8,500.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6500</td>
+                            <td>Insurance</td>
+                            <td class="amount">R 4,200.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr>
+                            <td>6600</td>
+                            <td>Depreciation</td>
+                            <td class="amount">R 6,300.00</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        
+                        <tr><td colspan="4" style="height: 15px;"></td></tr>
+                        
+                        <tr class="grand-total">
+                            <td colspan="2"><strong>TOTAL</strong></td>
+                            <td class="amount"><strong>R 957,200.00</strong></td>
+                            <td class="amount"><strong>R 957,200.00</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-login for demo mode
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token) {
+            const mockUser = {
+                id: 1,
+                email: 'demo@lorenco.com',
+                firstName: 'Demo',
+                lastName: 'User',
+                role: 'admin',
+                companyId: 1,
+                companyName: 'Demo Company Ltd',
+                companyStatus: 'active'
+            };
+
+            token = 'demo-token-' + Date.now();
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('demoMode', 'true');
+            user = mockUser;
+        }
+
+        // Display user info
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        document.getElementById('userName').textContent = fullName || user.email || 'User';
+        document.getElementById('companyName').textContent = user.companyName || 'Demo Company Ltd';
+
+        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        }
+
+        // ===================================
+        // TRIAL BALANCE FUNCTIONS
+        // ===================================
+
+        function formatCurrency(amount) {
+            if (amount === 0) return '-';
+            return 'R ' + Math.abs(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function loadTrialBalance() {
+            const tbody = document.getElementById('trialBalanceBody');
+            if (!tbody) return;
+
+            // Get trial balance from ledger
+            const tb = LedgerSystem.getTrialBalance();
+
+            // Check if there's any data
+            if (tb.accounts.length === 0) {
+                // Keep demo data if no real data exists
+                console.log('No ledger data found, keeping demo data');
+                return;
+            }
+
+            // Group accounts by type
+            const groups = {
+                asset: { label: 'ASSETS', accounts: [] },
+                liability: { label: 'LIABILITIES', accounts: [] },
+                equity: { label: 'EQUITY', accounts: [] },
+                income: { label: 'INCOME', accounts: [] },
+                expense: { label: 'EXPENSES', accounts: [] }
+            };
+
+            tb.accounts.forEach(acc => {
+                if (groups[acc.type]) {
+                    groups[acc.type].accounts.push(acc);
+                }
+            });
+
+            // Build HTML
+            let html = '';
+
+            Object.entries(groups).forEach(([type, group]) => {
+                if (group.accounts.length > 0) {
+                    html += `<tr class="section-header"><td colspan="4">${group.label}</td></tr>`;
+
+                    group.accounts.forEach(acc => {
+                        // Determine debit/credit display based on account type
+                        let debitDisplay = '-';
+                        let creditDisplay = '-';
+
+                        if (type === 'asset' || type === 'expense') {
+                            // Normal debit balance
+                            if (acc.balance > 0) {
+                                debitDisplay = formatCurrency(acc.balance);
+                            } else if (acc.balance < 0) {
+                                creditDisplay = formatCurrency(acc.balance);
+                            }
+                        } else {
+                            // Normal credit balance (liability, equity, income)
+                            if (acc.balance > 0) {
+                                creditDisplay = formatCurrency(acc.balance);
+                            } else if (acc.balance < 0) {
+                                debitDisplay = formatCurrency(acc.balance);
+                            }
+                        }
+
+                        html += `
+                            <tr>
+                                <td>${acc.code}</td>
+                                <td>${acc.name}</td>
+                                <td class="amount">${debitDisplay}</td>
+                                <td class="amount">${creditDisplay}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `<tr><td colspan="4" style="height: 10px;"></td></tr>`;
+                }
+            });
+
+            // Add totals
+            html += `
+                <tr class="grand-total">
+                    <td colspan="2"><strong>TOTAL</strong></td>
+                    <td class="amount"><strong>${formatCurrency(tb.totalDebit)}</strong></td>
+                    <td class="amount"><strong>${formatCurrency(tb.totalCredit)}</strong></td>
+                </tr>
+            `;
+
+            // Check balance
+            if (!tb.isBalanced) {
+                html += `
+                    <tr style="background: #fff4e6;">
+                        <td colspan="4" style="color: #ea4335; font-weight: 600; text-align: center; padding: 15px;">
+                            ⚠️ Warning: Trial Balance is out of balance by R ${Math.abs(tb.totalDebit - tb.totalCredit).toFixed(2)}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function generateReport() {
+            loadTrialBalance();
+            alert('Trial Balance refreshed from ledger data.');
+        }
+
+        function exportPDF() {
+            alert('Exporting report to PDF...\n\nIn production, this would generate a PDF document.');
+        }
+
+        function exportExcel() {
+            // Export to CSV (basic Excel-compatible format)
+            const tb = LedgerSystem.getTrialBalance();
+
+            let csv = 'Account Code,Account Name,Debit,Credit\n';
+            tb.accounts.forEach(acc => {
+                let debit = '', credit = '';
+                if (acc.type === 'asset' || acc.type === 'expense') {
+                    debit = acc.balance > 0 ? acc.balance.toFixed(2) : '';
+                    credit = acc.balance < 0 ? Math.abs(acc.balance).toFixed(2) : '';
+                } else {
+                    credit = acc.balance > 0 ? acc.balance.toFixed(2) : '';
+                    debit = acc.balance < 0 ? Math.abs(acc.balance).toFixed(2) : '';
+                }
+                csv += `"${acc.code}","${acc.name}",${debit},${credit}\n`;
+            });
+            csv += `"TOTAL","",${tb.totalDebit.toFixed(2)},${tb.totalCredit.toFixed(2)}\n`;
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trial-balance.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Load trial balance on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if LedgerSystem is available and has data
+            if (typeof LedgerSystem !== 'undefined') {
+                const journals = LedgerSystem.getJournals();
+                if (journals.length > 0) {
+                    loadTrialBalance();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
