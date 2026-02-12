@@ -600,6 +600,55 @@
             font-size: 0.75rem;
         }
 
+        /* Account toggle (step 2) */
+        .account-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.03);
+            border: none;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(59,130,246,0.25));
+            color: #fff;
+        }
+        .toggle-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.7);
+        }
+        .existing-verified {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 8px;
+            margin-top: 12px;
+            color: #10b981;
+            font-size: 0.9rem;
+        }
+        .verified-badge {
+            background: #10b981;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .login-card { padding: 30px 24px; }
@@ -724,29 +773,60 @@
 
                 <!-- STEP 2: Your Details (login credentials) -->
                 <div class="step-panel" id="step2">
-                    <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
-                        Create your personal login credentials.
-                    </p>
-                    <div class="reg-row">
-                        <div class="reg-field">
-                            <label>Full Name *</label>
-                            <input type="text" id="regFullName" required placeholder="e.g. Ruan van Loggerenberg">
+                    <!-- Toggle: new vs existing account -->
+                    <div class="account-toggle">
+                        <button type="button" class="toggle-btn active" id="toggleNew" onclick="toggleAccountMode('new')">Create New Account</button>
+                        <button type="button" class="toggle-btn" id="toggleExisting" onclick="toggleAccountMode('existing')">I Already Have an Account</button>
+                    </div>
+
+                    <!-- NEW account fields -->
+                    <div id="newAccountFields">
+                        <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                            Create your personal login credentials.
+                        </p>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Full Name *</label>
+                                <input type="text" id="regFullName" required placeholder="e.g. Ruan van Loggerenberg">
+                            </div>
+                            <div class="reg-field">
+                                <label>Email *</label>
+                                <input type="email" id="regEmail" required placeholder="you@company.co.za">
+                            </div>
                         </div>
-                        <div class="reg-field">
-                            <label>Email *</label>
-                            <input type="email" id="regEmail" required placeholder="you@company.co.za">
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Password *</label>
+                                <input type="password" id="regPassword" required placeholder="Min 8 characters">
+                            </div>
+                            <div class="reg-field">
+                                <label>Confirm Password *</label>
+                                <input type="password" id="regPasswordConfirm" required placeholder="Repeat password">
+                            </div>
                         </div>
                     </div>
-                    <div class="reg-row">
-                        <div class="reg-field">
-                            <label>Password *</label>
-                            <input type="password" id="regPassword" required placeholder="Min 8 characters">
+
+                    <!-- EXISTING account fields -->
+                    <div id="existingAccountFields" style="display:none;">
+                        <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                            Sign in with your existing account to register a new practice or business.
+                        </p>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Email *</label>
+                                <input type="email" id="existingEmail" required placeholder="your@email.co.za">
+                            </div>
+                            <div class="reg-field">
+                                <label>Password *</label>
+                                <input type="password" id="existingPassword" required placeholder="Your existing password">
+                            </div>
                         </div>
-                        <div class="reg-field">
-                            <label>Confirm Password *</label>
-                            <input type="password" id="regPasswordConfirm" required placeholder="Repeat password">
+                        <div class="existing-verified" id="existingVerified" style="display:none;">
+                            <span class="verified-badge">✓ Verified</span>
+                            <span id="existingUserName"></span>
                         </div>
                     </div>
+
                     <div class="reg-actions">
                         <button type="button" class="btn-reg back" onclick="goToStep(1)">← Back</button>
                         <button type="button" class="btn-reg next" onclick="validateStep2()">Continue →</button>
@@ -863,6 +943,7 @@
                     <div class="add-user-form" id="addUserForm">
                         <input type="text" id="newUserName" placeholder="Full name">
                         <input type="email" id="newUserEmail" placeholder="Email address">
+                        <input type="password" id="newUserPassword" placeholder="Password">
                         <select id="newUserRole"></select>
                         <button type="button" class="btn-add-user" onclick="addUserToList()">+ Add</button>
                     </div>
@@ -961,8 +1042,10 @@
         let regState = {
             currentStep: 1,
             accountType: null,       // 'accountant' | 'business'
-            users: [],               // {name, email, role, isLinked}
-            linkedAccountant: null   // if business adds accountant that already exists
+            accountMode: 'new',      // 'new' | 'existing'
+            existingUser: null,      // verified existing user data
+            users: [],               // {name, email, role, password, isLinked}
+            linkedAccountant: null
         };
 
         const accountantRoles = [
@@ -988,7 +1071,7 @@
         }
 
         function resetRegistration() {
-            regState = { currentStep: 1, accountType: null, users: [], linkedAccountant: null };
+            regState = { currentStep: 1, accountType: null, accountMode: 'new', existingUser: null, users: [], linkedAccountant: null };
             document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step1').classList.add('active');
             document.querySelectorAll('.reg-step').forEach(s => { s.classList.remove('active','done'); });
@@ -996,15 +1079,29 @@
             document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('step1Next').disabled = true;
             document.getElementById('accountantLinkNotice').style.display = 'none';
+            document.getElementById('existingVerified').style.display = 'none';
+            toggleAccountMode('new');
             // Clear inputs
             ['regFullName','regEmail','regPassword','regPasswordConfirm',
+             'existingEmail','existingPassword',
              'regPracticeName','regPracticeTradingName','regPracticeRegNumber',
              'regPracticeTaxNumber','regPracticeNumber','regPracticePhone','regPracticeAddress',
              'regCompanyName','regCompanyTradingName','regCompanyRegNumber',
              'regCompanyTaxNumber','regCompanyVatNumber','regCompanyPhone','regCompanyAddress',
-             'newUserName','newUserEmail'
+             'newUserName','newUserEmail','newUserPassword'
             ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
             document.getElementById('usersList').innerHTML = '';
+        }
+
+        /* ── account mode toggle (step 2) ── */
+        function toggleAccountMode(mode) {
+            regState.accountMode = mode;
+            regState.existingUser = null;
+            document.getElementById('toggleNew').classList.toggle('active', mode === 'new');
+            document.getElementById('toggleExisting').classList.toggle('active', mode === 'existing');
+            document.getElementById('newAccountFields').style.display = mode === 'new' ? 'block' : 'none';
+            document.getElementById('existingAccountFields').style.display = mode === 'existing' ? 'block' : 'none';
+            document.getElementById('existingVerified').style.display = 'none';
         }
 
         /* ── account type selection (step 1) ── */
@@ -1017,25 +1114,20 @@
 
         /* ── step navigation ── */
         function goToStep(n) {
-            // Update progress dots
             document.querySelectorAll('.reg-step').forEach(s => {
                 const sn = +s.dataset.step;
                 s.classList.remove('active','done');
                 if (sn < n) s.classList.add('done');
                 if (sn === n) s.classList.add('active');
             });
-            // Show correct panel
             document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step' + n).classList.add('active');
             regState.currentStep = n;
 
-            // When arriving at step 3, show correct sub-panel
             if (n === 3) {
                 document.getElementById('step3Accountant').style.display = regState.accountType === 'accountant' ? 'block' : 'none';
                 document.getElementById('step3Business').style.display   = regState.accountType === 'business'   ? 'block' : 'none';
             }
-
-            // When arriving at step 4, populate role dropdown
             if (n === 4) {
                 populateRoleDropdown();
                 document.getElementById('step4Subtitle').textContent =
@@ -1046,7 +1138,42 @@
         }
 
         /* ── validation helpers ── */
-        function validateStep2() {
+        async function validateStep2() {
+            if (regState.accountMode === 'existing') {
+                // Verify existing account via login
+                const email = document.getElementById('existingEmail').value.trim();
+                const pw    = document.getElementById('existingPassword').value;
+
+                if (!email) return toast('Please enter your email.', 'error');
+                if (!pw)    return toast('Please enter your password.', 'error');
+
+                try {
+                    const res = await fetch(`${API_BASE}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password: pw })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Invalid credentials');
+
+                    // Store verified user
+                    regState.existingUser = {
+                        id: data.user.id,
+                        email: data.user.email,
+                        full_name: data.user.fullName || data.user.full_name,
+                        token: data.token
+                    };
+                    document.getElementById('existingVerified').style.display = 'flex';
+                    document.getElementById('existingUserName').textContent = regState.existingUser.full_name;
+                    toast('Account verified! Continuing...', 'info');
+                    setTimeout(() => goToStep(3), 800);
+                } catch (err) {
+                    return toast(err.message, 'error');
+                }
+                return;
+            }
+
+            // New account validation
             const name  = document.getElementById('regFullName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const pw    = document.getElementById('regPassword').value;
@@ -1084,22 +1211,25 @@
 
         /* ── add / remove users (step 4) ── */
         function addUserToList() {
-            const name  = document.getElementById('newUserName').value.trim();
-            const email = document.getElementById('newUserEmail').value.trim();
-            const role  = document.getElementById('newUserRole').value;
+            const name     = document.getElementById('newUserName').value.trim();
+            const email    = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const role     = document.getElementById('newUserRole').value;
 
             if (!name || !email || !role) return toast('Please fill in name, email and role.', 'error');
             if (!/\S+@\S+\.\S+/.test(email)) return toast('Please enter a valid email.', 'error');
+            if (!password || password.length < 6) return toast('Please enter a password (min 6 characters).', 'error');
             if (regState.users.find(u => u.email.toLowerCase() === email.toLowerCase()))
                 return toast('This email is already added.', 'error');
 
-            const user = { name, email, role, isLinked: false };
+            const user = { name, email, password, role, isLinked: false };
 
             // If business adds someone as accountant, check if they already exist
             if (regState.accountType === 'business' && role === 'accountant') {
                 checkAccountantExists(email, name).then(exists => {
                     if (exists) {
                         user.isLinked = true;
+                        user.password = null; // existing user keeps their password
                         regState.linkedAccountant = { name: exists.name || name, email };
                     }
                     pushUser(user);
@@ -1112,9 +1242,10 @@
         function pushUser(user) {
             regState.users.push(user);
             renderUsers();
-            document.getElementById('newUserName').value  = '';
-            document.getElementById('newUserEmail').value = '';
-            document.getElementById('newUserRole').value  = '';
+            document.getElementById('newUserName').value     = '';
+            document.getElementById('newUserEmail').value    = '';
+            document.getElementById('newUserPassword').value = '';
+            document.getElementById('newUserRole').value     = '';
         }
 
         function removeUser(idx) {
@@ -1168,15 +1299,31 @@
         async function submitRegistration() {
             const btn = document.getElementById('regSubmitBtn');
             btn.disabled = true;
-            btn.textContent = 'Creating account…';
+            btn.textContent = 'Creating account\u2026';
 
             const payload = {
                 account_type: regState.accountType,
-                full_name: document.getElementById('regFullName').value.trim(),
-                email: document.getElementById('regEmail').value.trim(),
-                password: document.getElementById('regPassword').value,
-                users: regState.users
+                users: regState.users.map(u => ({
+                    name: u.name,
+                    email: u.email,
+                    role: u.role,
+                    password: u.password || undefined,
+                    isLinked: u.isLinked
+                }))
             };
+
+            // Existing account mode — use verified user ID
+            if (regState.accountMode === 'existing' && regState.existingUser) {
+                payload.existing_user_id = regState.existingUser.id;
+                payload.email = regState.existingUser.email;
+                payload.full_name = regState.existingUser.full_name;
+                payload.password = '__existing__'; // flag — backend won't re-hash
+            } else {
+                payload.full_name = document.getElementById('regFullName').value.trim();
+                payload.email = document.getElementById('regEmail').value.trim();
+                payload.username = payload.email;
+                payload.password = document.getElementById('regPassword').value;
+            }
 
             // Attach practice or business details
             if (regState.accountType === 'accountant') {
@@ -1210,7 +1357,6 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-                // Show success
                 const entityName = regState.accountType === 'accountant'
                     ? payload.practice.name
                     : payload.business.name;
@@ -1228,7 +1374,9 @@
 
         /* ── fill login from registration ── */
         function fillLoginFromReg() {
-            const email = document.getElementById('regEmail').value.trim();
+            const email = regState.accountMode === 'existing'
+                ? (regState.existingUser ? regState.existingUser.email : '')
+                : document.getElementById('regEmail').value.trim();
             if (email) document.getElementById('loginId').value = email;
         }
 

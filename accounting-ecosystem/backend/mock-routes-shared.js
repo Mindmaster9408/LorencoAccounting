@@ -158,36 +158,47 @@ authRouter.post('/login', async (req, res) => {
  */
 authRouter.post('/register', async (req, res) => {
   try {
-    const { account_type, full_name, email, password, practice, business, users } = req.body;
+    const { account_type, full_name, email, password, practice, business, users, existing_user_id } = req.body;
 
     // Back-compat: also accept legacy fields
     const userName  = req.body.username || email;
     const finalName = full_name || req.body.full_name;
     const pw        = password;
 
-    if (!email || !pw || !finalName) {
-      return res.status(400).json({ error: 'Full name, email, and password are required' });
-    }
+    let newUser;
 
-    // Check existing user
-    const existing = mock.users.find(u => u.email === email);
-    if (existing) {
-      return res.status(409).json({ error: 'Email already registered' });
-    }
+    // ── Existing user adding a new practice/business ──
+    if (existing_user_id) {
+      newUser = mock.users.find(u => u.id === existing_user_id);
+      if (!newUser) {
+        return res.status(404).json({ error: 'Existing user not found' });
+      }
+    } else {
+      // ── New account registration ──
+      if (!email || !pw || !finalName) {
+        return res.status(400).json({ error: 'Full name, email, and password are required' });
+      }
 
-    const password_hash = await bcrypt.hash(pw, 10);
-    const newUser = {
-      id: mock.nextId(),
-      username: userName,
-      email,
-      password_hash,
-      full_name: finalName,
-      account_type: account_type || 'business',
-      is_active: true,
-      is_super_admin: false,
-      created_at: new Date().toISOString(),
-    };
-    mock.users.push(newUser);
+      // Check existing user
+      const existing = mock.users.find(u => u.email === email);
+      if (existing) {
+        return res.status(409).json({ error: 'Email already registered. Use "I Already Have an Account" to add a new practice or business.' });
+      }
+
+      const password_hash = await bcrypt.hash(pw, 10);
+      newUser = {
+        id: mock.nextId(),
+        username: userName,
+        email,
+        password_hash,
+        full_name: finalName,
+        account_type: account_type || 'business',
+        is_active: true,
+        is_super_admin: false,
+        created_at: new Date().toISOString(),
+      };
+      mock.users.push(newUser);
+    }
 
     let company = null;
     const isAccountant = account_type === 'accountant';
@@ -271,17 +282,18 @@ authRouter.post('/register', async (req, res) => {
             role: u.role, is_primary: false, is_active: true,
           });
         } else {
-          // Create placeholder user (will need to set password on first login)
-          const tempHash = await bcrypt.hash('changeme123', 10);
+          // Create new user with the provided password
+          const userPw = u.password || 'changeme123';
+          const userHash = await bcrypt.hash(userPw, 10);
           const teamUser = {
             id: mock.nextId(),
             username: u.email,
             email: u.email,
-            password_hash: tempHash,
+            password_hash: userHash,
             full_name: u.name,
             is_active: true,
             is_super_admin: false,
-            needs_password_reset: true,
+            needs_password_reset: !u.password,
             created_at: new Date().toISOString(),
           };
           mock.users.push(teamUser);
