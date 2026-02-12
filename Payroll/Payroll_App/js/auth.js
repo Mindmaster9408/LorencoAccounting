@@ -272,6 +272,13 @@ const AUTH = {
         registeredCompanies.push(newCompany);
         localStorage.setItem('registered_companies', JSON.stringify(registeredCompanies));
 
+        // Seed demo company data (employees, payroll items, PAYE config, etc.)
+        if (typeof DemoCompanySeed !== 'undefined') {
+            DemoCompanySeed.seedForCompany(newCompany.id);
+            // Update employee count on company record
+            newCompany.employees = DemoCompanySeed.DEMO_EMPLOYEES.length;
+        }
+
         // Create new user with company
         const newUser = {
             id: 'user-' + Math.random().toString(36).substr(2, 9),
@@ -482,6 +489,12 @@ const AUTH = {
         var registeredCompanies = this.getRegisteredCompanies();
         registeredCompanies.push(newCompany);
         localStorage.setItem('registered_companies', JSON.stringify(registeredCompanies));
+
+        // Seed demo company data (employees, payroll items, PAYE config, etc.)
+        if (typeof DemoCompanySeed !== 'undefined') {
+            DemoCompanySeed.seedForCompany(newCompany.id);
+            newCompany.employees = DemoCompanySeed.DEMO_EMPLOYEES.length;
+        }
 
         return { success: true, company: newCompany };
     },

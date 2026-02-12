@@ -835,10 +835,7 @@
         localStorage.setItem('token', 'demo-token-' + Date.now());
         localStorage.setItem('user', JSON.stringify(mockUser));
         
-        const fullName = `${mockUser.firstName} ${mockUser.lastName}`;
-        document.getElementById('userName').textContent = fullName;
-        document.getElementById('companyName').textContent = mockUser.companyName;
-        document.getElementById('userAvatar').textContent = mockUser.firstName[0];
+        // User info display handled by navigation.js
         
         function renderTransactions() {
             const tbody = document.getElementById('transactionsBody');

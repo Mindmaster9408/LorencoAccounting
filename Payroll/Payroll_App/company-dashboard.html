@@ -562,6 +562,7 @@
     <script src="js/data-access.js"></script>
     <script src="js/permissions.js"></script>
     <script src="js/audit.js"></script>
+    <script src="js/demo-company-seed.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let employees = [];
@@ -576,6 +577,12 @@
             }
 
             currentCompanyId = session.company_id;
+
+            // Auto-seed demo data for new companies on first visit
+            if (typeof DemoCompanySeed !== 'undefined' && !DemoCompanySeed.isSeeded(currentCompanyId)) {
+                DemoCompanySeed.seedForCompany(currentCompanyId);
+            }
+
             loadDashboard();
         });
 

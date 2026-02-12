@@ -1838,7 +1838,7 @@
     </div>
     
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = '/api/accounting';
         
         // Check authentication - Demo Mode
         let token = localStorage.getItem('token');
@@ -1865,16 +1865,7 @@
             user = mockUser;
         }
         
-        // Display user info (elements injected by navigation.js)
-        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-        const userNameEl = document.getElementById('userName');
-        const companyNameEl = document.getElementById('companyName');
-        const userAvatarEl = document.getElementById('userAvatar');
-        if (userNameEl) userNameEl.textContent = fullName || user.email || 'User';
-        if (companyNameEl) companyNameEl.textContent = user.companyName || 'My Company';
-        
-        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
-        if (userAvatarEl) userAvatarEl.textContent = initial;
+        // User info display handled by navigation.js
         
         // Sean AI is always enabled for demo
         localStorage.setItem('seanAIEnabled', 'true');

@@ -481,7 +481,7 @@
     </div>
     
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = '/api/accounting';
         
         // Check authentication - Demo Mode
         let token = localStorage.getItem('token');
@@ -508,19 +508,8 @@
             user = mockUser;
         }
         
-        // Display user info
-        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-        document.getElementById('userName').textContent = fullName || user.email || 'User';
-        document.getElementById('companyName').textContent = user.companyName || 'My Company';
-        
-        // Set user avatar initial
-        const initial = (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase();
-        document.getElementById('userAvatar').textContent = initial;
-        
-        // Show demo notice if in demo mode
-        if (localStorage.getItem('demoMode') === 'true') {
-            document.getElementById('demoNotice').style.display = 'block';
-        }
+        // User info display is handled by navigation.js
+        // Navigation.js uses IDs: navUserName, navCompanyName, navUserAvatar, demoBanner
         
         async function fetchWithAuth(url, options = {}) {
             options.headers = {
@@ -626,18 +615,7 @@
             }
         }
         
-        function logout() {
-            fetchWithAuth(`${API_URL}/auth/logout`, { method: 'POST' });
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/';
-        }
-        
-        function toggleUserMenu() {
-            // Placeholder for user menu dropdown
-            const menu = confirm('Logout?');
-            if (menu) logout();
-        }
+        // Logout is handled by navigation.js
         
         loadDashboard();
     </script>

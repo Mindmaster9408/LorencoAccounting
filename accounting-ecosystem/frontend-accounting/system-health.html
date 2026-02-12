@@ -359,10 +359,7 @@
             user = mockUser;
         }
         
-        document.getElementById('userName').textContent = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User';
-        document.getElementById('companyName').textContent = user.companyName || 'Demo Company Ltd';
-        document.getElementById('userAvatar').textContent = (user.firstName?.[0] || 'U').toUpperCase();
-        }
+        // User info display handled by navigation.js
         
         function refreshData() {
             alert('Refreshing system health data...');
