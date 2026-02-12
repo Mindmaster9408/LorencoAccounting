@@ -154,38 +154,101 @@ authRouter.post('/login', async (req, res) => {
 });
 
 /**
- * POST /api/auth/register
+ * POST /api/auth/register  (enhanced: supports accountant / business flows)
  */
 authRouter.post('/register', async (req, res) => {
   try {
-    const { username, email, password, full_name, company_name, trading_name } = req.body;
+    const { account_type, full_name, email, password, practice, business, users } = req.body;
 
-    if (!username || !email || !password || !full_name) {
-      return res.status(400).json({ error: 'Username, email, password, and full name are required' });
+    // Back-compat: also accept legacy fields
+    const userName  = req.body.username || email;
+    const finalName = full_name || req.body.full_name;
+    const pw        = password;
+
+    if (!email || !pw || !finalName) {
+      return res.status(400).json({ error: 'Full name, email, and password are required' });
     }
 
-    // Check existing
-    const existing = mock.users.find(u => u.username === username || u.email === email);
+    // Check existing user
+    const existing = mock.users.find(u => u.email === email);
     if (existing) {
-      return res.status(409).json({ error: 'Username or email already registered' });
+      return res.status(409).json({ error: 'Email already registered' });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    const password_hash = await bcrypt.hash(pw, 10);
     const newUser = {
-      id: mock.nextId(), username, email, password_hash, full_name,
-      is_active: true, is_super_admin: false,
+      id: mock.nextId(),
+      username: userName,
+      email,
+      password_hash,
+      full_name: finalName,
+      account_type: account_type || 'business',
+      is_active: true,
+      is_super_admin: false,
       created_at: new Date().toISOString(),
     };
     mock.users.push(newUser);
 
     let company = null;
-    if (company_name) {
+    const isAccountant = account_type === 'accountant';
+
+    // Create company / practice entity
+    if (isAccountant && practice) {
       company = {
         id: mock.nextId(),
-        company_name, trading_name: trading_name || company_name,
-        is_active: true, modules_enabled: ['pos'],
+        company_name: practice.name,
+        trading_name: practice.trading_name || practice.name,
+        reg_number: practice.reg_number || null,
+        tax_number: practice.tax_number || null,
+        practice_number: practice.practice_number || null,
+        phone: practice.phone || null,
+        address: practice.address || null,
+        company_type: 'accounting_practice',
+        is_active: true,
+        modules_enabled: ['accounting', 'payroll', 'pos'],
         subscription_status: 'active',
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mock.companies.push(company);
+      mock.userCompanyAccess.push({
+        user_id: newUser.id, company_id: company.id,
+        role: 'partner', is_primary: true, is_active: true,
+      });
+    } else if (business) {
+      company = {
+        id: mock.nextId(),
+        company_name: business.name || req.body.company_name,
+        trading_name: business.trading_name || business.name || req.body.trading_name || '',
+        reg_number: business.reg_number || null,
+        tax_number: business.tax_number || null,
+        vat_number: business.vat_number || null,
+        phone: business.phone || null,
+        address: business.address || null,
+        company_type: 'business',
+        is_active: true,
+        modules_enabled: ['pos'],
+        subscription_status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mock.companies.push(company);
+      mock.userCompanyAccess.push({
+        user_id: newUser.id, company_id: company.id,
+        role: 'owner', is_primary: true, is_active: true,
+      });
+    } else if (req.body.company_name) {
+      // Legacy fallback
+      company = {
+        id: mock.nextId(),
+        company_name: req.body.company_name,
+        trading_name: req.body.trading_name || req.body.company_name,
+        company_type: 'business',
+        is_active: true,
+        modules_enabled: ['pos'],
+        subscription_status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       mock.companies.push(company);
       mock.userCompanyAccess.push({
@@ -194,20 +257,73 @@ authRouter.post('/register', async (req, res) => {
       });
     }
 
+    // Process additional users
+    if (Array.isArray(users) && company) {
+      for (const u of users) {
+        if (!u.email || !u.name || !u.role) continue;
+
+        // Check if user already exists (accountant linking)
+        const existingUser = mock.users.find(eu => eu.email === u.email);
+        if (existingUser) {
+          // Just add company access (accountant linking)
+          mock.userCompanyAccess.push({
+            user_id: existingUser.id, company_id: company.id,
+            role: u.role, is_primary: false, is_active: true,
+          });
+        } else {
+          // Create placeholder user (will need to set password on first login)
+          const tempHash = await bcrypt.hash('changeme123', 10);
+          const teamUser = {
+            id: mock.nextId(),
+            username: u.email,
+            email: u.email,
+            password_hash: tempHash,
+            full_name: u.name,
+            is_active: true,
+            is_super_admin: false,
+            needs_password_reset: true,
+            created_at: new Date().toISOString(),
+          };
+          mock.users.push(teamUser);
+          mock.userCompanyAccess.push({
+            user_id: teamUser.id, company_id: company.id,
+            role: u.role, is_primary: false, is_active: true,
+          });
+        }
+      }
+    }
+
     const token = jwt.sign({
       userId: newUser.id, username: newUser.username, email: newUser.email,
       fullName: newUser.full_name, companyId: company ? company.id : null,
-      role: company ? 'business_owner' : null,
+      role: company ? (isAccountant ? 'partner' : 'owner') : null,
     }, JWT_SECRET, { expiresIn: '8h' });
 
     res.status(201).json({
       success: true, token,
       user: { id: newUser.id, username: newUser.username, email: newUser.email, fullName: newUser.full_name },
       company: company ? { id: company.id, company_name: company.company_name } : null,
+      usersAdded: (users || []).length,
     });
   } catch (err) {
     console.error('Mock register error:', err);
     res.status(500).json({ error: 'Server error during registration' });
+  }
+});
+
+/**
+ * GET /api/auth/check-accountant?email=xxx
+ * Returns whether an accountant with this email already has an account
+ */
+authRouter.get('/check-accountant', (req, res) => {
+  const email = (req.query.email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  const user = mock.users.find(u => u.email.toLowerCase() === email && u.is_active);
+  if (user) {
+    res.json({ exists: true, name: user.full_name });
+  } else {
+    res.json({ exists: false });
   }
 });
 

@@ -242,7 +242,7 @@
         /* Direct app links */
         .app-links {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
         }
         .app-link {
@@ -276,7 +276,322 @@
         .app-link.pos .icon { background: rgba(59, 130, 246, 0.2); }
         .app-link.payroll .icon { background: rgba(16, 185, 129, 0.2); }
         .app-link.accounting .icon { background: rgba(245, 158, 11, 0.2); }
-        .app-link.sean .icon { background: rgba(139, 92, 246, 0.2); }
+
+        /* ── Register Button ─────────────────────────────────── */
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 2px solid rgba(102, 126, 234, 0.4);
+            color: #a3b1f0;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 14px;
+        }
+        .btn-register:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ── Registration Modal ──────────────────────────────── */
+        .reg-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 12, 41, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+        .reg-overlay.show { display: flex; }
+        .reg-modal {
+            background: #1e1b3a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 560px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+            margin: auto;
+        }
+        .reg-header {
+            padding: 28px 28px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reg-header h2 {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .reg-close {
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .reg-close:hover { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .reg-body { padding: 24px 28px 28px; }
+
+        /* ── Steps / Progress ────────────────────────────────── */
+        .reg-steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+        .reg-step {
+            flex: 1;
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            transition: background 0.3s;
+        }
+        .reg-step.active { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .reg-step.done { background: #10b981; }
+
+        /* ── Type Selector ───────────────────────────────────── */
+        .type-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .type-card {
+            padding: 24px 18px;
+            background: rgba(255,255,255,0.04);
+            border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .type-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        .type-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.12);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        }
+        .type-card .type-icon {
+            font-size: 2.4rem;
+            margin-bottom: 10px;
+        }
+        .type-card .type-title {
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .type-card .type-desc {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        /* ── Reg Form Fields ─────────────────────────────────── */
+        .reg-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .reg-row.full { grid-template-columns: 1fr; }
+        .reg-field label {
+            display: block;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .reg-field input, .reg-field select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .reg-field input::placeholder { color: rgba(255,255,255,0.3); }
+        .reg-field input:focus, .reg-field select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.06);
+        }
+        .reg-field select option { background: #1e1b3a; color: white; }
+
+        /* ── Step Panels ─────────────────────────────────────── */
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+
+        /* ── Reg Buttons ─────────────────────────────────────── */
+        .reg-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn-reg {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+        }
+        .btn-reg.back {
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+        }
+        .btn-reg.back:hover { color: white; }
+        .btn-reg.next {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+        }
+        .btn-reg.next:hover { box-shadow: 0 4px 15px rgba(102,126,234,0.4); transform: translateY(-1px); }
+        .btn-reg.next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ── User Row (Add Users step) ───────────────────────── */
+        .users-list { margin-bottom: 16px; }
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .user-row .user-info { flex: 1; }
+        .user-row .user-name { color: white; font-weight: 600; font-size: 0.9rem; }
+        .user-row .user-email { color: rgba(255,255,255,0.4); font-size: 0.78rem; }
+        .user-row .user-role {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(102,126,234,0.15);
+            color: #a3b1f0;
+        }
+        .user-row .btn-remove-user {
+            width: 28px; height: 28px;
+            background: rgba(239,68,68,0.15);
+            border: none;
+            border-radius: 8px;
+            color: #fca5a5;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .user-row .btn-remove-user:hover { background: rgba(239,68,68,0.3); }
+        .add-user-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .add-user-form input, .add-user-form select {
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .add-user-form input::placeholder { color: rgba(255,255,255,0.3); }
+        .add-user-form input:focus, .add-user-form select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .add-user-form select option { background: #1e1b3a; color: white; }
+        .btn-add-user {
+            padding: 10px 16px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #6ee7b7;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-add-user:hover { background: rgba(16,185,129,0.25); }
+
+        .accountant-link-notice {
+            padding: 14px 16px;
+            background: rgba(102,126,234,0.1);
+            border: 1px solid rgba(102,126,234,0.2);
+            border-radius: 12px;
+            color: #a3b1f0;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            display: none;
+        }
+        .accountant-link-notice.show { display: block; }
+
+        /* ── Success screen ──────────────────────────────────── */
+        .reg-success {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .reg-success .icon { font-size: 3.5rem; margin-bottom: 16px; }
+        .reg-success h3 { color: white; font-size: 1.3rem; margin-bottom: 8px; }
+        .reg-success p { color: rgba(255,255,255,0.5); margin-bottom: 24px; line-height: 1.5; }
+
+        /* ── Toast ────────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: #ef4444; }
+
+        @media (max-width: 500px) {
+            .type-cards { grid-template-columns: 1fr; }
+            .add-user-form { grid-template-columns: 1fr; }
+            .reg-row { grid-template-columns: 1fr; }
+        }
 
         .footer {
             text-align: center;
@@ -286,10 +601,14 @@
         }
 
         /* Responsive */
-        @media (max-width: 500px) {
+        @media (max-width: 600px) {
             .login-card { padding: 30px 24px; }
             .brand h1 { font-size: 1.6rem; }
             .app-links { grid-template-columns: 1fr; }
+            .reg-modal { width: 95vw; max-height: 90vh; }
+            .type-cards { flex-direction: column; }
+            .reg-row { flex-direction: column; }
+            .add-user-form { flex-direction: column; }
         }
     </style>
 </head>
@@ -351,11 +670,11 @@
                     <div class="icon">&#128200;</div>
                     <span>Accounting</span>
                 </a>
-                <a href="/sean" class="app-link sean">
-                    <div class="icon">&#129302;</div>
-                    <span>SEAN AI</span>
-                </a>
             </div>
+
+            <button type="button" class="btn-register" onclick="openRegister()">
+                Create an Account
+            </button>
         </div>
 
         <div class="footer">
@@ -363,14 +682,227 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- REGISTRATION MODAL                                                  -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="reg-overlay" id="regOverlay">
+        <div class="reg-modal">
+            <div class="reg-header">
+                <h2 id="regTitle">Create Your Account</h2>
+                <button class="reg-close" onclick="closeRegister()">✕</button>
+            </div>
+            <div class="reg-body">
+                <!-- Progress -->
+                <div class="reg-steps" id="regSteps">
+                    <div class="reg-step active" data-step="1"></div>
+                    <div class="reg-step" data-step="2"></div>
+                    <div class="reg-step" data-step="3"></div>
+                    <div class="reg-step" data-step="4"></div>
+                </div>
+
+                <!-- STEP 1: Choose Account Type -->
+                <div class="step-panel active" id="step1">
+                    <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                        What type of account are you creating?
+                    </p>
+                    <div class="type-cards">
+                        <div class="type-card" onclick="selectAccountType('accountant')" id="typeAccountant">
+                            <div class="type-icon">📋</div>
+                            <div class="type-title">Accounting Practice</div>
+                            <div class="type-desc">For accounting firms managing multiple clients</div>
+                        </div>
+                        <div class="type-card" onclick="selectAccountType('business')" id="typeBusiness">
+                            <div class="type-icon">🏢</div>
+                            <div class="type-title">Business Owner</div>
+                            <div class="type-desc">For businesses managing their own finances</div>
+                        </div>
+                    </div>
+                    <div class="reg-actions">
+                        <button type="button" class="btn-reg next" id="step1Next" disabled onclick="goToStep(2)">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Your Details (login credentials) -->
+                <div class="step-panel" id="step2">
+                    <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                        Create your personal login credentials.
+                    </p>
+                    <div class="reg-row">
+                        <div class="reg-field">
+                            <label>Full Name *</label>
+                            <input type="text" id="regFullName" required placeholder="e.g. Ruan van Loggerenberg">
+                        </div>
+                        <div class="reg-field">
+                            <label>Email *</label>
+                            <input type="email" id="regEmail" required placeholder="you@company.co.za">
+                        </div>
+                    </div>
+                    <div class="reg-row">
+                        <div class="reg-field">
+                            <label>Password *</label>
+                            <input type="password" id="regPassword" required placeholder="Min 8 characters">
+                        </div>
+                        <div class="reg-field">
+                            <label>Confirm Password *</label>
+                            <input type="password" id="regPasswordConfirm" required placeholder="Repeat password">
+                        </div>
+                    </div>
+                    <div class="reg-actions">
+                        <button type="button" class="btn-reg back" onclick="goToStep(1)">← Back</button>
+                        <button type="button" class="btn-reg next" onclick="validateStep2()">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Practice / Business Details -->
+                <div class="step-panel" id="step3">
+                    <!-- Accountant Practice -->
+                    <div id="step3Accountant" style="display:none;">
+                        <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                            Enter your accounting practice details.
+                        </p>
+                        <div class="reg-row full">
+                            <div class="reg-field">
+                                <label>Practice Name *</label>
+                                <input type="text" id="regPracticeName" placeholder="e.g. Lorenco Accounting Services">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Trading Name</label>
+                                <input type="text" id="regPracticeTradingName" placeholder="e.g. Lorenco Accounting">
+                            </div>
+                            <div class="reg-field">
+                                <label>Registration Number</label>
+                                <input type="text" id="regPracticeRegNumber" placeholder="e.g. 2024/123456/07">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Tax Number</label>
+                                <input type="text" id="regPracticeTaxNumber" placeholder="e.g. 9876543210">
+                            </div>
+                            <div class="reg-field">
+                                <label>Practice Number</label>
+                                <input type="text" id="regPracticeNumber" placeholder="IRBA / SAIPA number">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Phone</label>
+                                <input type="tel" id="regPracticePhone" placeholder="021 555 0100">
+                            </div>
+                            <div class="reg-field">
+                                <label>Address</label>
+                                <input type="text" id="regPracticeAddress" placeholder="Street, City, Code">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Owner -->
+                    <div id="step3Business" style="display:none;">
+                        <p style="color:rgba(255,255,255,0.5); margin-bottom:18px; font-size:0.9rem;">
+                            Enter your business details.
+                        </p>
+                        <div class="reg-row full">
+                            <div class="reg-field">
+                                <label>Company Name *</label>
+                                <input type="text" id="regCompanyName" placeholder="e.g. Green Valley Trading">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Trading Name</label>
+                                <input type="text" id="regCompanyTradingName" placeholder="e.g. Green Valley">
+                            </div>
+                            <div class="reg-field">
+                                <label>Registration Number</label>
+                                <input type="text" id="regCompanyRegNumber" placeholder="e.g. 2024/654321/07">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Tax Number</label>
+                                <input type="text" id="regCompanyTaxNumber" placeholder="e.g. 1234567890">
+                            </div>
+                            <div class="reg-field">
+                                <label>VAT Number</label>
+                                <input type="text" id="regCompanyVatNumber" placeholder="If VAT registered">
+                            </div>
+                        </div>
+                        <div class="reg-row">
+                            <div class="reg-field">
+                                <label>Phone</label>
+                                <input type="tel" id="regCompanyPhone" placeholder="021 555 0200">
+                            </div>
+                            <div class="reg-field">
+                                <label>Address</label>
+                                <input type="text" id="regCompanyAddress" placeholder="Street, City, Code">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reg-actions">
+                        <button type="button" class="btn-reg back" onclick="goToStep(2)">← Back</button>
+                        <button type="button" class="btn-reg next" onclick="validateStep3()">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Add Users -->
+                <div class="step-panel" id="step4">
+                    <p style="color:rgba(255,255,255,0.5); margin-bottom:6px; font-size:0.9rem;" id="step4Subtitle">
+                        Add team members to your practice (you can also do this later).
+                    </p>
+
+                    <div class="users-list" id="usersList">
+                        <!-- JS-populated -->
+                    </div>
+
+                    <p style="color:rgba(255,255,255,0.4); font-size:0.78rem; margin-bottom:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                        Add a Team Member
+                    </p>
+                    <div class="add-user-form" id="addUserForm">
+                        <input type="text" id="newUserName" placeholder="Full name">
+                        <input type="email" id="newUserEmail" placeholder="Email address">
+                        <select id="newUserRole"></select>
+                        <button type="button" class="btn-add-user" onclick="addUserToList()">+ Add</button>
+                    </div>
+
+                    <div class="accountant-link-notice" id="accountantLinkNotice">
+                        🔗 <strong id="linkedAccountantName"></strong> already has an account.
+                        This company will be added to their client list automatically.
+                    </div>
+
+                    <div class="reg-actions">
+                        <button type="button" class="btn-reg back" onclick="goToStep(3)">← Back</button>
+                        <button type="button" class="btn-reg next" id="regSubmitBtn" onclick="submitRegistration()">
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 5: Success -->
+                <div class="step-panel" id="step5">
+                    <div class="reg-success">
+                        <div class="icon">🎉</div>
+                        <h3>Registration Complete!</h3>
+                        <p id="regSuccessMsg">Your account has been created. You can now sign in.</p>
+                        <button type="button" class="btn-reg next" onclick="closeRegister(); fillLoginFromReg();">Sign In Now →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
     <script>
         const API_BASE = window.location.origin;
 
-        // Check if already logged into ecosystem
+        /* ── existing session check ── */
         (function checkExistingSession() {
             const token = localStorage.getItem('eco_token');
             if (token) {
-                // Verify token is still valid
                 fetch(`${API_BASE}/api/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
@@ -397,46 +929,315 @@
             const btn = document.getElementById('btnLogin');
             const loginId = document.getElementById('loginId').value.trim();
             const password = document.getElementById('password').value;
-
-            if (!loginId || !password) {
-                return showError('Please enter your email and password.');
-            }
+            if (!loginId || !password) return showError('Please enter your email and password.');
 
             btn.classList.add('loading');
             btn.disabled = true;
-
             try {
                 const res = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: loginId, password })
                 });
-
                 const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
 
-                if (!res.ok) {
-                    throw new Error(data.error || 'Login failed');
-                }
-
-                // Store ecosystem session
                 localStorage.setItem('eco_token', data.token);
                 localStorage.setItem('eco_user', JSON.stringify(data.user));
-                if (data.companies) {
-                    localStorage.setItem('eco_companies', JSON.stringify(data.companies));
-                }
-                if (data.isSuperAdmin) {
-                    localStorage.setItem('eco_super_admin', 'true');
-                }
-
-                // Navigate to ecosystem dashboard
+                if (data.companies) localStorage.setItem('eco_companies', JSON.stringify(data.companies));
+                if (data.isSuperAdmin) localStorage.setItem('eco_super_admin', 'true');
                 window.location.href = '/dashboard';
-
             } catch (err) {
                 showError(err.message);
             } finally {
                 btn.classList.remove('loading');
                 btn.disabled = false;
             }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           REGISTRATION FLOW
+           ═══════════════════════════════════════════════════════════════════ */
+        let regState = {
+            currentStep: 1,
+            accountType: null,       // 'accountant' | 'business'
+            users: [],               // {name, email, role, isLinked}
+            linkedAccountant: null   // if business adds accountant that already exists
+        };
+
+        const accountantRoles = [
+            { value: 'partner',    label: 'Partner' },
+            { value: 'accountant', label: 'Accountant' },
+            { value: 'clerk',      label: 'Clerk' },
+            { value: 'admin',      label: 'Admin' }
+        ];
+        const businessRoles = [
+            { value: 'owner',      label: 'Owner' },
+            { value: 'admin',      label: 'Admin' },
+            { value: 'finance',    label: 'Finance' },
+            { value: 'accountant', label: 'Accountant' }
+        ];
+
+        /* ── open / close ── */
+        function openRegister() {
+            document.getElementById('regOverlay').classList.add('show');
+            resetRegistration();
+        }
+        function closeRegister() {
+            document.getElementById('regOverlay').classList.remove('show');
+        }
+
+        function resetRegistration() {
+            regState = { currentStep: 1, accountType: null, users: [], linkedAccountant: null };
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            document.querySelectorAll('.reg-step').forEach(s => { s.classList.remove('active','done'); });
+            document.querySelector('.reg-step[data-step="1"]').classList.add('active');
+            document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('step1Next').disabled = true;
+            document.getElementById('accountantLinkNotice').style.display = 'none';
+            // Clear inputs
+            ['regFullName','regEmail','regPassword','regPasswordConfirm',
+             'regPracticeName','regPracticeTradingName','regPracticeRegNumber',
+             'regPracticeTaxNumber','regPracticeNumber','regPracticePhone','regPracticeAddress',
+             'regCompanyName','regCompanyTradingName','regCompanyRegNumber',
+             'regCompanyTaxNumber','regCompanyVatNumber','regCompanyPhone','regCompanyAddress',
+             'newUserName','newUserEmail'
+            ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+            document.getElementById('usersList').innerHTML = '';
+        }
+
+        /* ── account type selection (step 1) ── */
+        function selectAccountType(type) {
+            regState.accountType = type;
+            document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(type === 'accountant' ? 'typeAccountant' : 'typeBusiness').classList.add('selected');
+            document.getElementById('step1Next').disabled = false;
+        }
+
+        /* ── step navigation ── */
+        function goToStep(n) {
+            // Update progress dots
+            document.querySelectorAll('.reg-step').forEach(s => {
+                const sn = +s.dataset.step;
+                s.classList.remove('active','done');
+                if (sn < n) s.classList.add('done');
+                if (sn === n) s.classList.add('active');
+            });
+            // Show correct panel
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('step' + n).classList.add('active');
+            regState.currentStep = n;
+
+            // When arriving at step 3, show correct sub-panel
+            if (n === 3) {
+                document.getElementById('step3Accountant').style.display = regState.accountType === 'accountant' ? 'block' : 'none';
+                document.getElementById('step3Business').style.display   = regState.accountType === 'business'   ? 'block' : 'none';
+            }
+
+            // When arriving at step 4, populate role dropdown
+            if (n === 4) {
+                populateRoleDropdown();
+                document.getElementById('step4Subtitle').textContent =
+                    regState.accountType === 'accountant'
+                        ? 'Add team members to your practice (you can also do this later).'
+                        : 'Add team members to your business (you can also do this later).';
+            }
+        }
+
+        /* ── validation helpers ── */
+        function validateStep2() {
+            const name  = document.getElementById('regFullName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pw    = document.getElementById('regPassword').value;
+            const pw2   = document.getElementById('regPasswordConfirm').value;
+
+            if (!name)                return toast('Please enter your full name.', 'error');
+            if (!email)               return toast('Please enter your email address.', 'error');
+            if (!/\S+@\S+\.\S+/.test(email)) return toast('Please enter a valid email address.', 'error');
+            if (pw.length < 8)        return toast('Password must be at least 8 characters.', 'error');
+            if (pw !== pw2)           return toast('Passwords do not match.', 'error');
+
+            goToStep(3);
+        }
+
+        function validateStep3() {
+            if (regState.accountType === 'accountant') {
+                if (!document.getElementById('regPracticeName').value.trim())
+                    return toast('Please enter your practice name.', 'error');
+            } else {
+                if (!document.getElementById('regCompanyName').value.trim())
+                    return toast('Please enter your company name.', 'error');
+            }
+            goToStep(4);
+        }
+
+        /* ── role dropdown ── */
+        function populateRoleDropdown() {
+            const sel = document.getElementById('newUserRole');
+            sel.innerHTML = '<option value="">-- Select Role --</option>';
+            const roles = regState.accountType === 'accountant' ? accountantRoles : businessRoles;
+            roles.forEach(r => {
+                sel.innerHTML += `<option value="${r.value}">${r.label}</option>`;
+            });
+        }
+
+        /* ── add / remove users (step 4) ── */
+        function addUserToList() {
+            const name  = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const role  = document.getElementById('newUserRole').value;
+
+            if (!name || !email || !role) return toast('Please fill in name, email and role.', 'error');
+            if (!/\S+@\S+\.\S+/.test(email)) return toast('Please enter a valid email.', 'error');
+            if (regState.users.find(u => u.email.toLowerCase() === email.toLowerCase()))
+                return toast('This email is already added.', 'error');
+
+            const user = { name, email, role, isLinked: false };
+
+            // If business adds someone as accountant, check if they already exist
+            if (regState.accountType === 'business' && role === 'accountant') {
+                checkAccountantExists(email, name).then(exists => {
+                    if (exists) {
+                        user.isLinked = true;
+                        regState.linkedAccountant = { name: exists.name || name, email };
+                    }
+                    pushUser(user);
+                });
+            } else {
+                pushUser(user);
+            }
+        }
+
+        function pushUser(user) {
+            regState.users.push(user);
+            renderUsers();
+            document.getElementById('newUserName').value  = '';
+            document.getElementById('newUserEmail').value = '';
+            document.getElementById('newUserRole').value  = '';
+        }
+
+        function removeUser(idx) {
+            const removed = regState.users.splice(idx, 1)[0];
+            if (removed && removed.isLinked) {
+                regState.linkedAccountant = null;
+                document.getElementById('accountantLinkNotice').style.display = 'none';
+            }
+            renderUsers();
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('usersList');
+            if (regState.users.length === 0) {
+                list.innerHTML = '<p style="color:rgba(255,255,255,0.3); text-align:center; padding:12px; font-size:0.85rem;">No team members added yet.</p>';
+                return;
+            }
+            const roleLabels = {};
+            [...accountantRoles, ...businessRoles].forEach(r => roleLabels[r.value] = r.label);
+
+            list.innerHTML = regState.users.map((u, i) => `
+                <div class="user-row">
+                    <div class="user-info">
+                        <strong>${u.name}</strong>
+                        <span>${u.email}</span>
+                    </div>
+                    <span class="user-role">${roleLabels[u.role] || u.role}${u.isLinked ? ' 🔗' : ''}</span>
+                    <button type="button" onclick="removeUser(${i})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.1rem;" title="Remove">✕</button>
+                </div>
+            `).join('');
+        }
+
+        /* ── check if accountant already exists ── */
+        async function checkAccountantExists(email, fallbackName) {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/check-accountant?email=${encodeURIComponent(email)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists) {
+                        const notice = document.getElementById('accountantLinkNotice');
+                        document.getElementById('linkedAccountantName').textContent = data.name || fallbackName;
+                        notice.style.display = 'flex';
+                        return { name: data.name || fallbackName };
+                    }
+                }
+            } catch (e) { /* ignore */ }
+            return null;
+        }
+
+        /* ── submit registration ── */
+        async function submitRegistration() {
+            const btn = document.getElementById('regSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+
+            const payload = {
+                account_type: regState.accountType,
+                full_name: document.getElementById('regFullName').value.trim(),
+                email: document.getElementById('regEmail').value.trim(),
+                password: document.getElementById('regPassword').value,
+                users: regState.users
+            };
+
+            // Attach practice or business details
+            if (regState.accountType === 'accountant') {
+                payload.practice = {
+                    name:            document.getElementById('regPracticeName').value.trim(),
+                    trading_name:    document.getElementById('regPracticeTradingName').value.trim(),
+                    reg_number:      document.getElementById('regPracticeRegNumber').value.trim(),
+                    tax_number:      document.getElementById('regPracticeTaxNumber').value.trim(),
+                    practice_number: document.getElementById('regPracticeNumber').value.trim(),
+                    phone:           document.getElementById('regPracticePhone').value.trim(),
+                    address:         document.getElementById('regPracticeAddress').value.trim()
+                };
+            } else {
+                payload.business = {
+                    name:          document.getElementById('regCompanyName').value.trim(),
+                    trading_name:  document.getElementById('regCompanyTradingName').value.trim(),
+                    reg_number:    document.getElementById('regCompanyRegNumber').value.trim(),
+                    tax_number:    document.getElementById('regCompanyTaxNumber').value.trim(),
+                    vat_number:    document.getElementById('regCompanyVatNumber').value.trim(),
+                    phone:         document.getElementById('regCompanyPhone').value.trim(),
+                    address:       document.getElementById('regCompanyAddress').value.trim()
+                };
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+                // Show success
+                const entityName = regState.accountType === 'accountant'
+                    ? payload.practice.name
+                    : payload.business.name;
+                document.getElementById('regSuccessMsg').textContent =
+                    `Your ${regState.accountType === 'accountant' ? 'practice' : 'business'} "${entityName}" has been created. You can now sign in with your credentials.`;
+                goToStep(5);
+
+            } catch (err) {
+                toast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Complete Registration';
+            }
+        }
+
+        /* ── fill login from registration ── */
+        function fillLoginFromReg() {
+            const email = document.getElementById('regEmail').value.trim();
+            if (email) document.getElementById('loginId').value = email;
+        }
+
+        /* ── toast helper ── */
+        function toast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + type;
+            setTimeout(() => el.classList.remove('show'), 4000);
         }
     </script>
 </body>
