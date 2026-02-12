@@ -131,8 +131,8 @@
             
             if (session) {
                 // User is logged in, redirect based on role
-                if (session.role === 'super_admin') {
-                    window.location.href = 'super-admin-dashboard.html';
+                if (session.role === 'super_admin' || session.is_super_admin) {
+                    window.location.href = 'company-selection.html';
                 } else if (session.company_id) {
                     window.location.href = 'company-dashboard.html';
                 } else {

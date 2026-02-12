@@ -639,7 +639,7 @@
 
                         // Redirect based on role
                         if (session.role === 'super_admin' || session.is_super_admin) {
-                            window.location.href = 'super-admin-dashboard.html';
+                            window.location.href = 'company-selection.html';
                         } else if (session.company_id) {
                             window.location.href = 'company-dashboard.html';
                         } else {
@@ -656,7 +656,7 @@
             if (AUTH.isAuthenticated()) {
                 const session = AUTH.getSession();
                 if (session.role === 'super_admin' || session.is_super_admin) {
-                    window.location.href = 'super-admin-dashboard.html';
+                    window.location.href = 'company-selection.html';
                 } else if (session.company_id) {
                     window.location.href = 'company-dashboard.html';
                 } else {

@@ -160,27 +160,37 @@ authRouter.post('/register', async (req, res) => {
   try {
     const { account_type, full_name, email, password, practice, business, users, existing_user_id } = req.body;
 
-    // Back-compat: also accept legacy fields
-    const userName  = req.body.username || email;
-    const finalName = full_name || req.body.full_name;
-    const pw        = password;
+    console.log('[REGISTER] Payload:', JSON.stringify({ account_type, email, full_name: !!full_name, password: !!password, existing_user_id, usersCount: (users||[]).length }));
 
     let newUser;
 
     // ── Existing user adding a new practice/business ──
     if (existing_user_id) {
-      newUser = mock.users.find(u => u.id === existing_user_id);
+      newUser = mock.users.find(u => u.id === parseInt(existing_user_id) || u.id === existing_user_id);
       if (!newUser) {
+        console.log('[REGISTER] Existing user not found, id:', existing_user_id, 'available ids:', mock.users.map(u => u.id));
         return res.status(404).json({ error: 'Existing user not found' });
       }
+      console.log('[REGISTER] Using existing user:', newUser.email);
     } else {
       // ── New account registration ──
-      if (!email || !pw || !finalName) {
-        return res.status(400).json({ error: 'Full name, email, and password are required' });
+      const finalName = full_name || req.body.full_name || '';
+      const pw = password || '';
+      const finalEmail = email || '';
+      const userName = req.body.username || finalEmail;
+
+      if (!finalEmail) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      if (!pw) {
+        return res.status(400).json({ error: 'Password is required' });
+      }
+      if (!finalName) {
+        return res.status(400).json({ error: 'Full name is required' });
       }
 
       // Check existing user
-      const existing = mock.users.find(u => u.email === email);
+      const existing = mock.users.find(u => u.email === finalEmail);
       if (existing) {
         return res.status(409).json({ error: 'Email already registered. Use "I Already Have an Account" to add a new practice or business.' });
       }
@@ -189,7 +199,7 @@ authRouter.post('/register', async (req, res) => {
       newUser = {
         id: mock.nextId(),
         username: userName,
-        email,
+        email: finalEmail,
         password_hash,
         full_name: finalName,
         account_type: account_type || 'business',

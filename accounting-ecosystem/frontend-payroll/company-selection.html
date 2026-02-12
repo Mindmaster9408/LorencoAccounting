@@ -273,9 +273,8 @@
                 return;
             }
 
-            if (session.role === 'super_admin') {
-                window.location.href = 'super-admin-dashboard.html';
-                return;
+            if (session.role === 'super_admin' || session.is_super_admin) {
+                // Super admins see all companies in the selection page
             }
 
             // Set user info

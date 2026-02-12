@@ -943,7 +943,7 @@
                     <div class="add-user-form" id="addUserForm">
                         <input type="text" id="newUserName" placeholder="Full name">
                         <input type="email" id="newUserEmail" placeholder="Email address">
-                        <input type="password" id="newUserPassword" placeholder="Password">
+                        <input type="password" id="newUserPassword" placeholder="Password (optional)">
                         <select id="newUserRole"></select>
                         <button type="button" class="btn-add-user" onclick="addUserToList()">+ Add</button>
                     </div>
@@ -1218,7 +1218,7 @@
 
             if (!name || !email || !role) return toast('Please fill in name, email and role.', 'error');
             if (!/\S+@\S+\.\S+/.test(email)) return toast('Please enter a valid email.', 'error');
-            if (!password || password.length < 6) return toast('Please enter a password (min 6 characters).', 'error');
+            if (password && password.length < 6) return toast('Password must be at least 6 characters.', 'error');
             if (regState.users.find(u => u.email.toLowerCase() === email.toLowerCase()))
                 return toast('This email is already added.', 'error');
 
@@ -1317,13 +1317,15 @@
                 payload.existing_user_id = regState.existingUser.id;
                 payload.email = regState.existingUser.email;
                 payload.full_name = regState.existingUser.full_name;
-                payload.password = '__existing__'; // flag — backend won't re-hash
+                // No password needed — existing user already authenticated
             } else {
                 payload.full_name = document.getElementById('regFullName').value.trim();
                 payload.email = document.getElementById('regEmail').value.trim();
                 payload.username = payload.email;
                 payload.password = document.getElementById('regPassword').value;
             }
+
+            console.log('[REG] Submitting payload:', JSON.stringify({...payload, password: payload.password ? '***' : undefined}));
 
             // Attach practice or business details
             if (regState.accountType === 'accountant') {

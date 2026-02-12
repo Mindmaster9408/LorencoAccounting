@@ -58,7 +58,7 @@ const AUTH = (function() {
                     // Determine redirect
                     let redirect = 'company-selection.html';
                     if (session.is_super_admin) {
-                        redirect = 'super-admin-dashboard.html';
+                        redirect = 'company-selection.html';
                     } else if (session.company_id) {
                         redirect = 'company-dashboard.html';
                     }
