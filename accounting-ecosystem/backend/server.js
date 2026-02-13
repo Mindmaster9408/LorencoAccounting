@@ -5,14 +5,11 @@
  * Unified modular Express server for:
  *   - Checkout Charlie POS    (module: pos)
  *   - Lorenco Paytime Payroll (module: payroll)
- *   - General Accounting      (module: accounting)  — future
+ *   - General Accounting      (module: accounting)
  *
  * Modules are conditionally loaded based on env config.
  * Shared routes (auth, users, companies, employees, audit) are always active.
- *
- * MOCK MODE: Set MOCK_MODE=true in .env to run without Supabase.
- *   All data is served from in-memory mock stores.
- *   See TEST-CREDENTIALS.md for test accounts.
+ * All data is stored in Supabase/PostgreSQL.
  * ============================================================================
  */
 
@@ -25,78 +22,37 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-// ─── Mock Mode Detection ────────────────────────────────────────────────────
-const MOCK_MODE = (process.env.MOCK_MODE || '').toLowerCase() === 'true';
-
 // ─── Config ──────────────────────────────────────────────────────────────────
-let supabase, checkConnection, ensureDefaultCompany;
-if (!MOCK_MODE) {
-  ({ supabase, checkConnection, ensureDefaultCompany } = require('./config/database'));
-}
+const { supabase, checkConnection, ensureDefaultCompany } = require('./config/database');
 const { isModuleEnabled, getEnabledModules, getAllModules } = require('./config/modules');
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 const { authenticateToken } = require('./middleware/auth');
-let auditMiddleware;
-if (!MOCK_MODE) {
-  ({ auditMiddleware } = require('./middleware/audit'));
-} else {
-  // No-op audit middleware in mock mode (mock routes handle their own auditing)
-  auditMiddleware = (req, res, next) => next();
-}
+const { auditMiddleware } = require('./middleware/audit');
 const { requireModule } = require('./middleware/module-check');
 
-// ─── Route Loading (Mock vs Real) ───────────────────────────────────────────
-let authRoutes, companiesRoutes, usersRoutes, employeesRoutes, auditRoutes, customersRoutes;
+// ─── Route Loading ──────────────────────────────────────────────────────────
+const authRoutes = require('./shared/routes/auth');
+const companiesRoutes = require('./shared/routes/companies');
+const usersRoutes = require('./shared/routes/users');
+const employeesRoutes = require('./shared/routes/employees');
+const auditRoutes = require('./shared/routes/audit');
+const customersRoutes = require('./shared/routes/customers');
+const ecoClientsRoutes = require('./shared/routes/eco-clients');
+
 let posRoutes, payrollRoutes, accountingRoutes, seanRoutes, interCompanyRoutes;
 let receiptsRoutes, barcodesRoutes, reportsRoutes;
-let auditForensicRoutes;
-let ecoClientsRoutes;
 
-if (MOCK_MODE) {
-  // ── Mock Routes ──
-  const mockShared = require('./mock-routes-shared');
-  authRoutes = mockShared.authRouter;
-  companiesRoutes = mockShared.companiesRouter;
-  usersRoutes = mockShared.usersRouter;
-  employeesRoutes = mockShared.employeesRouter;
-  auditRoutes = mockShared.auditRouter;
-  ecoClientsRoutes = mockShared.ecoClientsRouter;
-
-  // ── Mock Extras (Customers, Receipts, Barcodes, Reports) ──
-  const mockExtras = require('./mock-routes-extras');
-  customersRoutes = mockExtras.customersRouter;
-  receiptsRoutes = mockExtras.receiptsRouter;
-  barcodesRoutes = mockExtras.barcodeRouter;
-  reportsRoutes = mockExtras.reportsRouter;
-  auditForensicRoutes = mockExtras.auditForensicRouter;
-
-  if (isModuleEnabled('pos'))     posRoutes = require('./mock-routes-pos');
-  if (isModuleEnabled('payroll')) payrollRoutes = require('./mock-routes-payroll');
-  if (isModuleEnabled('sean'))       seanRoutes = require('./sean/routes');
-  if (isModuleEnabled('accounting')) accountingRoutes = require('./mock-routes-accounting');
-  // Inter-company always loads when SEAN is enabled (it relies on SEAN's mock store)
-  if (isModuleEnabled('sean'))       interCompanyRoutes = require('./inter-company/routes');
-} else {
-  // ── Real Supabase Routes ──
-  authRoutes = require('./shared/routes/auth');
-  companiesRoutes = require('./shared/routes/companies');
-  usersRoutes = require('./shared/routes/users');
-  employeesRoutes = require('./shared/routes/employees');
-  auditRoutes = require('./shared/routes/audit');
-  customersRoutes = require('./shared/routes/customers');
-
-  if (isModuleEnabled('pos')) {
-    posRoutes = require('./modules/pos');
-    receiptsRoutes = require('./modules/pos/routes/receipts');
-    barcodesRoutes = require('./modules/pos/routes/barcodes');
-    reportsRoutes = require('./modules/pos/routes/reports');
-  }
-  if (isModuleEnabled('payroll'))    payrollRoutes = require('./modules/payroll');
-  if (isModuleEnabled('accounting')) accountingRoutes = require('./modules/accounting');
-  if (isModuleEnabled('sean'))       seanRoutes = require('./sean/routes');
-  if (isModuleEnabled('sean'))       interCompanyRoutes = require('./inter-company/routes');
+if (isModuleEnabled('pos')) {
+  posRoutes = require('./modules/pos');
+  receiptsRoutes = require('./modules/pos/routes/receipts');
+  barcodesRoutes = require('./modules/pos/routes/barcodes');
+  reportsRoutes = require('./modules/pos/routes/reports');
 }
+if (isModuleEnabled('payroll'))    payrollRoutes = require('./modules/payroll');
+if (isModuleEnabled('accounting')) accountingRoutes = require('./modules/accounting');
+if (isModuleEnabled('sean'))       seanRoutes = require('./sean/routes');
+if (isModuleEnabled('sean'))       interCompanyRoutes = require('./inter-company/routes');
 
 // ─── Express App ─────────────────────────────────────────────────────────────
 const app = express();
@@ -153,19 +109,13 @@ if (process.env.NODE_ENV !== 'test') {
 // ─── Health & Status Endpoints (no auth required) ────────────────────────────
 
 app.get('/api/health', async (req, res) => {
-  let dbOk = false;
-  if (MOCK_MODE) {
-    dbOk = true; // Mock mode — no database needed
-  } else {
-    dbOk = await checkConnection();
-  }
+  const dbOk = await checkConnection();
   const enabledModules = getEnabledModules();
   res.status(dbOk ? 200 : 503).json({
     status: dbOk ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    database: MOCK_MODE ? 'mock (in-memory)' : (dbOk ? 'connected' : 'disconnected'),
-    mockMode: MOCK_MODE,
+    database: dbOk ? 'connected' : 'disconnected',
     modules: enabledModules.map(m => m.key),
     uptime: Math.floor(process.uptime())
   });
@@ -184,12 +134,8 @@ app.use('/api/companies', authenticateToken, companiesRoutes);
 app.use('/api/users', authenticateToken, usersRoutes);
 app.use('/api/employees', authenticateToken, employeesRoutes);
 app.use('/api/audit', authenticateToken, auditRoutes);
-if (ecoClientsRoutes) {
-  app.use('/api/eco-clients', authenticateToken, ecoClientsRoutes);
-}
-if (customersRoutes) {
-  app.use('/api/customers', customersRoutes);
-}
+app.use('/api/eco-clients', authenticateToken, ecoClientsRoutes);
+app.use('/api/customers', customersRoutes);
 
 // ─── Top-level POS-related Routes (receipts, barcodes, reports, analytics) ──
 if (receiptsRoutes) {
@@ -225,9 +171,6 @@ app.post('/api/scheduling/time/clock-in', authenticateToken, (req, res) => res.j
 app.post('/api/scheduling/time/clock-out', authenticateToken, (req, res) => res.json({ success: true, clocked_out_at: new Date().toISOString() }));
 app.get('/api/loss-prevention/alerts', authenticateToken, (req, res) => res.json({ alerts: [] }));
 app.get('/api/audit/suspicious-activity', authenticateToken, (req, res) => res.json({ activities: [] }));
-if (auditForensicRoutes) {
-  app.use('/api/audit', authenticateToken, auditForensicRoutes);
-}
 
 // ─── Module Routes (conditionally registered) ───────────────────────────────
 
@@ -273,7 +216,7 @@ if (accountingRoutes) {
     requireModule('accounting'),
     accountingRoutes
   );
-  console.log('  \u2705 Accounting module (Lorenco Accounting) — ACTIVE');
+  console.log('  ✅ Accounting module (Lorenco Accounting) — ACTIVE');
 } else {
   console.log('  ⬜ Accounting module (Lorenco Accounting) — disabled');
 }
@@ -438,48 +381,30 @@ let server;
 
 async function start() {
   console.log('\n╔══════════════════════════════════════════════════════════╗');
-  if (MOCK_MODE) {
-    console.log('║   ACCOUNTING ECOSYSTEM — Starting Server (MOCK MODE)    ║');
-  } else {
-    console.log('║        ACCOUNTING ECOSYSTEM — Starting Server           ║');
-  }
+  console.log('║        ACCOUNTING ECOSYSTEM — Starting Server           ║');
   console.log('╚══════════════════════════════════════════════════════════╝\n');
 
-  if (MOCK_MODE) {
-    // Initialize mock data store
-    const { initMockData } = require('./mock-data');
-    await initMockData();
-    // Initialize SEAN mock data if module enabled
-    if (isModuleEnabled('sean')) {
-      const { initSeanMockData } = require('./sean/mock-store');
-      initSeanMockData();
-    }
-    console.log('🎭 MOCK MODE ACTIVE — No database required');
-    console.log('   All data is in-memory and resets on restart\n');
-  } else {
-    // 1. Test database connection
-    console.log('🔌 Connecting to Supabase...');
-    const connected = await checkConnection();
-    if (!connected) {
-      console.error('❌ Cannot reach Supabase. Check your .env credentials.');
-      console.error('   💡 Tip: Set MOCK_MODE=true in .env to test without a database.');
-      process.exit(1);
-    }
-    console.log('✅ Supabase connection verified\n');
-
-    // 2. Ensure default company exists (Bug Fix #1)
-    await ensureDefaultCompany();
-
-    // 3. Seed master admin if no users exist
-    const { seedMasterAdmin } = require('./config/seed');
-    await seedMasterAdmin(supabase);
+  // 1. Test database connection
+  console.log('🔌 Connecting to Supabase...');
+  const connected = await checkConnection();
+  if (!connected) {
+    console.error('❌ Cannot reach Supabase. Check your .env credentials.');
+    process.exit(1);
   }
+  console.log('✅ Supabase connection verified\n');
 
-  // 3. Display module status
+  // 2. Ensure default company exists (Bug Fix #1)
+  await ensureDefaultCompany();
+
+  // 3. Seed master admin if no users exist
+  const { seedMasterAdmin } = require('./config/seed');
+  await seedMasterAdmin(supabase);
+
+  // 4. Display module status
   console.log('📦 Module Status:');
   // Module loading messages already printed above during route registration
 
-  // 4. Start listening
+  // 5. Start listening
   server = app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`   ─── Ecosystem ───`);
@@ -506,15 +431,8 @@ async function start() {
     if (accountingRoutes) {
       console.log(`   Accounting frontend: http://localhost:${PORT}/accounting`);
     }
-    if (MOCK_MODE) {
-      console.log(`\n   🎭 MOCK MODE — Test credentials:`);
-      console.log(`      POS:     pos@test.com     / pos123`);
-      console.log(`      Payroll: payroll@test.com  / payroll123`);
-      console.log(`      Admin:   admin@test.com    / admin123`);
-      console.log(`      Master:  ruanvlog@lorenco.co.za / Mindmaster@277477`);
-    }
     console.log(`\n   Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   Database:    ${MOCK_MODE ? 'MOCK (in-memory)' : 'Supabase'}`);
+    console.log(`   Database:    Supabase`);
     console.log('─'.repeat(58) + '\n');
   });
 

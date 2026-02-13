@@ -10,14 +10,11 @@
  *   5. Employee cost analysis (true cost breakdown)
  *   6. Learning (remembers patterns, improves over time)
  *
- * Works with both MOCK_MODE (in-memory) and Supabase (production).
  * Privacy-first: All company data stays encrypted. Zero external API costs.
  * ============================================================================
  */
 
 const SeanEncryption = require('./encryption');
-
-const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 class PayrollIntelligence {
 
@@ -811,18 +808,16 @@ class PayrollIntelligence {
       timestamp: new Date().toISOString()
     };
 
-    // In mock mode, store in the SEAN mock store
-    if (MOCK_MODE) {
-      const { mockSeanStore } = require('./mock-store');
-      if (mockSeanStore && mockSeanStore.addCodexEntry) {
-        await mockSeanStore.addCodexEntry({
-          company_id: this.companyId,
-          encrypted_data: JSON.stringify(entry),
-          category: 'payroll',
-          context_hash: SeanEncryption.hashContext(JSON.stringify(context)),
-          confidence: 100
-        });
-      }
+    // Store learning in SEAN's codex via Supabase
+    const { supabaseSeanStore } = require('./supabase-store');
+    if (supabaseSeanStore && supabaseSeanStore.createCodexEntry) {
+      await supabaseSeanStore.createCodexEntry({
+        company_id: this.companyId,
+        encrypted_data: JSON.stringify(entry),
+        category: 'payroll',
+        context_hash: SeanEncryption.hashContext(JSON.stringify(context)),
+        confidence: 100
+      });
     }
 
     return { success: true, learned: true, context: 'payroll_processing' };

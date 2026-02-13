@@ -30,17 +30,10 @@ const InvoiceSender = require('./invoice-sender');
 const InvoiceReceiver = require('./invoice-receiver');
 const PaymentSync = require('./payment-sync');
 
-// ─── Data Store Selection ────────────────────────────────────────────────
+// ─── Data Store ─────────────────────────────────────────────────────────
 
-const MOCK_MODE = process.env.MOCK_MODE === 'true';
-let dataStore;
-
-if (MOCK_MODE) {
-  const { mockSeanStore } = require('../sean/mock-store');
-  dataStore = mockSeanStore;
-} else {
-  dataStore = null;
-}
+const { supabaseSeanStore } = require('../sean/supabase-store');
+const dataStore = supabaseSeanStore;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 

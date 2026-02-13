@@ -30,20 +30,10 @@ const { ALLOCATION_CATEGORIES, suggestCategoryLocal, getAlternativeSuggestions, 
 const { processCalculation, parseCalculationRequest, formatZAR } = require('./calculations');
 const { parseTeachMessage } = require('./knowledge-base');
 
-// ─── Data Store Selection ────────────────────────────────────────────────────
+// ─── Data Store ─────────────────────────────────────────────────────────────
 
-const MOCK_MODE = process.env.MOCK_MODE === 'true';
-
-let dataStore;
-if (MOCK_MODE) {
-  const { mockSeanStore } = require('./mock-store');
-  dataStore = mockSeanStore;
-} else {
-  // TODO: Implement supabase-store.js for production
-  // const { supabaseSeanStore } = require('./supabase-store');
-  // dataStore = supabaseSeanStore;
-  dataStore = null;
-}
+const { supabaseSeanStore } = require('./supabase-store');
+const dataStore = supabaseSeanStore;
 
 // ─── Helper: Get Engine for Request ──────────────────────────────────────────
 
@@ -260,7 +250,7 @@ router.get('/stats', async (req, res) => {
       companyId,
       ...stats,
       version: '1.0.0',
-      mode: MOCK_MODE ? 'mock' : 'live'
+      mode: 'live'
     });
   } catch (err) {
     console.error('SEAN /stats error:', err.message);

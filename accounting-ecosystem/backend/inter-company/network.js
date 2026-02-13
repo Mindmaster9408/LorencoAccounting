@@ -15,11 +15,12 @@
  */
 
 const crypto = require('crypto');
+const { supabase } = require('../config/database');
 
 class InterCompanyNetwork {
 
   /**
-   * @param {object} dataStore - Mock or real data store
+   * @param {object} dataStore - Supabase data store for relationships/invoices
    */
   constructor(dataStore) {
     this.store = dataStore;
@@ -67,12 +68,20 @@ class InterCompanyNetwork {
    * @param {number} requestingCompanyId - The company doing the search
    */
   async findCompanies(searchParams, requestingCompanyId) {
-    // In mock mode, use mock company data
-    // In production, this would query the companies table
-    const mockCompanies = this.getMockCompanies();
+    // Query real companies from Supabase
+    const { data: companies, error } = await supabase
+      .from('companies')
+      .select('id, company_name, trading_name, tax_number, vat_number, email_domain, invitation_code, inter_company_enabled, city, industry')
+      .eq('is_active', true);
+
+    if (error || !companies) {
+      console.error('InterCompany findCompanies error:', error?.message);
+      return [];
+    }
+
     const results = [];
 
-    for (const company of mockCompanies) {
+    for (const company of companies) {
       // Don't return the requesting company
       if (company.id === requestingCompanyId) continue;
       // Only return companies with inter-company enabled
@@ -109,8 +118,9 @@ class InterCompanyNetwork {
       }
 
       // Company name — fuzzy match
-      if (searchParams.name && company.name) {
-        const similarity = this.nameSimilarity(searchParams.name, company.name);
+      const companyName = company.trading_name || company.company_name;
+      if (searchParams.name && companyName) {
+        const similarity = this.nameSimilarity(searchParams.name, companyName);
         if (similarity > 0.6) {
           const nameScore = Math.round(similarity * 80);
           if (nameScore > matchScore) {
@@ -123,7 +133,7 @@ class InterCompanyNetwork {
       if (matchScore > 0) {
         results.push({
           companyId: company.id,
-          companyName: company.name,
+          companyName: company.trading_name || company.company_name,
           matchScore,
           matchType,
           // Don't reveal sensitive info until connected
@@ -147,7 +157,7 @@ class InterCompanyNetwork {
   async createRelationship(companyAId, companyBId, initiatedBy) {
     // Check if relationship already exists
     if (this.store && this.store.findRelationship) {
-      const existing = this.store.findRelationship(companyAId, companyBId);
+      const existing = await this.store.findRelationship(companyAId, companyBId);
       if (existing) {
         return {
           success: false,
@@ -173,7 +183,7 @@ class InterCompanyNetwork {
     };
 
     if (this.store && this.store.addRelationship) {
-      const saved = this.store.addRelationship(relationship);
+      const saved = await this.store.addRelationship(relationship);
       relationship.id = saved.id;
     }
 
@@ -192,7 +202,7 @@ class InterCompanyNetwork {
     }
 
     // Find the relationship in store
-    const relationships = this.store.getRelationships(companyId);
+    const relationships = await this.store.getRelationships(companyId);
     const rel = relationships.find(r => r.id === relationshipId);
 
     if (!rel) {
@@ -226,7 +236,7 @@ class InterCompanyNetwork {
     if (!this.store || !this.store.getRelationships) {
       return [];
     }
-    return this.store.getRelationships(companyId);
+    return await this.store.getRelationships(companyId);
   }
 
   // ─── Utilities ───────────────────────────────────────────────────────
@@ -242,42 +252,6 @@ class InterCompanyNetwork {
     const intersection = [...wordsA].filter(w => wordsB.has(w)).length;
     const union = new Set([...wordsA, ...wordsB]).size;
     return union === 0 ? 0 : intersection / union;
-  }
-
-  // Mock companies for discovery testing
-  getMockCompanies() {
-    return [
-      {
-        id: 1, name: 'Lorenco Accounting (Pty) Ltd',
-        tax_number: '9876543210', vat_number: '4567890123',
-        email_domain: 'lorenco.co.za', city: 'Pretoria', industry: 'Accounting',
-        invitation_code: 'IC-LORENCO1', inter_company_enabled: true
-      },
-      {
-        id: 2, name: 'Turkstra Konstruksie (Edms) Bpk',
-        tax_number: '1234567890', vat_number: '4012345678',
-        email_domain: 'turkstra.co.za', city: 'Potchefstroom', industry: 'Construction',
-        invitation_code: 'IC-TURKSTRA', inter_company_enabled: true
-      },
-      {
-        id: 3, name: 'Van der Merwe Transport',
-        tax_number: '5555555555', vat_number: '4098765432',
-        email_domain: 'vdmtransport.co.za', city: 'Johannesburg', industry: 'Transport',
-        invitation_code: 'IC-VDMTRANS', inter_company_enabled: true
-      },
-      {
-        id: 4, name: 'Boland Supplies CC',
-        tax_number: '7777777777', vat_number: '4055556666',
-        email_domain: 'bolandsupplies.co.za', city: 'Paarl', industry: 'Wholesale',
-        invitation_code: 'IC-BOLAND01', inter_company_enabled: true
-      },
-      {
-        id: 5, name: 'Die Burger Drukkers',
-        tax_number: '8888888888', vat_number: null,
-        email_domain: 'dieburger.co.za', city: 'Cape Town', industry: 'Printing',
-        invitation_code: 'IC-BURGER01', inter_company_enabled: false
-      }
-    ];
   }
 }
 

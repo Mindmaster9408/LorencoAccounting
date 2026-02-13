@@ -32,9 +32,8 @@ function authenticateToken(req, res, next) {
     req.companyId = decoded.companyId || null;
 
     // Allow super admins / global admins to override company via X-Company-Id header
-    // In mock mode, allow any user to override for testing inter-company flows
     const headerCompanyId = req.headers['x-company-id'];
-    if (headerCompanyId && (decoded.isGlobalAdmin || decoded.role === 'super_admin' || process.env.MOCK_MODE === 'true')) {
+    if (headerCompanyId && (decoded.isGlobalAdmin || decoded.role === 'super_admin')) {
       const parsed = parseInt(headerCompanyId, 10);
       if (!isNaN(parsed)) {
         req.companyId = parsed;

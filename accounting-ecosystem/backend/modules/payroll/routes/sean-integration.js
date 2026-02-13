@@ -20,17 +20,32 @@ const router = express.Router();
 const { requireCompany, requirePermission } = require('../../../middleware/auth');
 const PayrollIntelligence = require('../../../sean/payroll-intelligence');
 
-const MOCK_MODE = process.env.MOCK_MODE === 'true';
+const { supabase } = require('../../../config/database');
 
 /**
- * Build data provider based on mode (mock in-memory vs Supabase).
+ * Build Supabase data provider for PayrollIntelligence.
+ * Provides employees and payroll data from real database.
  */
 function getDataProvider() {
-  if (MOCK_MODE) {
-    return require('../../../mock-data');
-  }
-  // TODO: Supabase data provider
-  return require('../../../mock-data');
+  return {
+    supabase,
+    async getEmployees(companyId) {
+      const { data } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('is_active', true);
+      return data || [];
+    },
+    async getPayrollPeriods(companyId) {
+      const { data } = await supabase
+        .from('payroll_periods')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('period_start', { ascending: false });
+      return data || [];
+    }
+  };
 }
 
 /**
